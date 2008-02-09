@@ -24,7 +24,6 @@ public final class HttpRequestFirstLineInterpreter {
         
         @Override
         public String toString() {
-            // TODO Auto-generated method stub
             return this.versionToke;
         };
     }
@@ -72,7 +71,6 @@ public final class HttpRequestFirstLineInterpreter {
      */
     public void interpret() throws HttpRequestInterpreterException {
         String[] tokens = this.firstLine.trim().split(" ");
-        System.out.println("First line from the request: " + this.firstLine);
         this.isRequestMethodValid(tokens[0]);
         this.isRequestURIValid(tokens[1]);
         this.isRequestVersionValid(tokens[2]);

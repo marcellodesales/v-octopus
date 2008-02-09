@@ -126,8 +126,6 @@ public class Request {
                     break;
                 }
                 
-                System.out.println("Request Line: " + requestLine);
-                
                 if (this.requestFirstLine == null) {
                     HttpRequestFirstLineInterpreter.createNewInterpreter(requestLine).interpret();
                     this.requestFirstLine = requestLine;

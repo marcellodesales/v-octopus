@@ -6,6 +6,8 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -21,7 +23,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class VOctopusWebServer {
 
-	private static final int PORT = 1025;
+	private static final String SERVER_NAME_VERSION = "VOctopus/0.1";
+
+    private static final int PORT = 1025;
 
 	/**
 	 * The pool of threads will be used to control the requests to the server. If has the following
@@ -69,15 +73,20 @@ public class VOctopusWebServer {
 			req.print();
 
 				PrintWriter writer = new PrintWriter(out, true);
-				writer.println("<html><title>This is the page</title>");
-				writer.println("<body>herehre</body></html>");
-				
-			System.out.println("Connection closed by server...");
+				writer.println("HTTP/1.1 200 OK");
+				writer.println("Date: " + new SimpleDateFormat("EEE,.MMM.d yyyy HH:mm:ss z").format(new Date()));
+				writer.println("Server: " + SERVER_NAME_VERSION); 
+				writer.println("Content-Type: text/html");
+				writer.println("");
+				writer.println("<html><title>VOctopus Web Server 0.1</title>");
+				writer.println("<body><B>Hello World from the Ocean!!! </b>");
+				writer.println("<BR><BR>VOctopus Web Server is running...</body></html>");
 			
 			//The buffer needs to be closed.
 			if (out != null) {
 				out.close();
 			} 
+			System.out.println("Connection closed by server...");
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
