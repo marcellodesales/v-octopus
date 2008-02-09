@@ -18,7 +18,7 @@ import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestHeaderFieldsInterpr
 /**
  * This is the request the implementation of the HTTP request method. 
  * @author Marcello de Sales
- * @version 0.1 Feb 9, 2008 7:35:50 PM
+ * @version 0.1 Feb 8, 2008 7:35:50 PM
  */
 public class Request {
 

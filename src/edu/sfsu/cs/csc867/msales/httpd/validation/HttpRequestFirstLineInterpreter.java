@@ -11,10 +11,25 @@ package edu.sfsu.cs.csc867.msales.httpd.validation;
 public final class HttpRequestFirstLineInterpreter {
 
     /**
-     * Ths default version of the HTTP protocol that is accepted
+     * The versions of the HTTP protocol that are accepted
      */
-    private static final String DEFAILT_PROTOCOL_VERSION = "HTTP/1.1";
-
+    private enum ProtocolVersion {
+        HTTP_1_1("HTTP/1.1"),
+        HTTP_1_0("HTTP/1.0");
+        
+        private String versionToke;
+        private ProtocolVersion(String versionToken) {
+            this.versionToke = versionToken;
+        }
+        
+        @Override
+        public String toString() {
+            // TODO Auto-generated method stub
+            return this.versionToke;
+        };
+    }
+    
+    
     /**
      * The first line of the request with the protocol URI and protocol version
      */
@@ -26,7 +41,7 @@ public final class HttpRequestFirstLineInterpreter {
      * Feb 8, 2008 6:57:32 PM
      */
     public enum REQUEST_METHOD_TOKENS {
-        OPTIONS, GET, HEAD, POST, DELETE
+        GET, HEAD, POST, PUT
     }
 
     /**
@@ -70,8 +85,14 @@ public final class HttpRequestFirstLineInterpreter {
      */
     private void isRequestVersionValid(String requestVersion)
             throws InvalidHttpRequestVersionTokenException {
-        if (requestVersion == null || requestVersion.equals("")
-                || !requestVersion.equals(DEFAILT_PROTOCOL_VERSION)) {
+        boolean foundIt = false;
+        for (ProtocolVersion version : ProtocolVersion.values()) {
+            if (version.toString().equals(requestVersion)) {
+                foundIt = true;
+                break;
+            }
+        }
+        if (!foundIt) {
             throw new InvalidHttpRequestVersionTokenException(requestVersion);
         }
     }
