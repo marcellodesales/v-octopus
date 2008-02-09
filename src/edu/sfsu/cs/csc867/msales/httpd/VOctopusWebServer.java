@@ -1,9 +1,7 @@
 package edu.sfsu.cs.csc867.msales.httpd;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -15,20 +13,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
- * Title: WebServer.java
- * </p>
- * 
- * <p>
- * Description: This is the main class of the server. This is where everything
- * is instantiated and configured. Here is also where multithreading of the
- * server will occur.
- * </p>
- * 
- * <p>
- * Copyright: Copyright (c) 2005
- * </p>
- * 
- * <p>
  * Company: V-Ocean, Inc.
  * </p>
  * 
@@ -37,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class VOctopusWebServer {
 
-	private static final int PORT = 82;
+	private static final int PORT = 1025;
 
 	/**
 	 * The pool of threads will be used to control the requests to the server. If has the following
@@ -55,6 +39,9 @@ public class VOctopusWebServer {
 			new LinkedBlockingQueue<Runnable>(100),
 			new ThreadPoolExecutor.DiscardOldestPolicy());
 
+	/**
+	 * Prints the clients thread pool.
+	 */
 	private static void printServerPoolStatus() {
 
 		ThreadPoolExecutor pool = (ThreadPoolExecutor) threadsPool;
@@ -68,39 +55,27 @@ public class VOctopusWebServer {
 
 	}
 
-	private static void printClientInformation(Socket clientSocket) {
-		System.out.println();
-		System.out.println("Client connected from " + clientSocket.getInetAddress());
-	}
-
-	private static void decorateClient() {
-
-	}
-
-	private static void handleClientConnection(Socket clientSocket) {
-		String inbuf;
+	/**
+	 * Hands the client connection, handling the Request and Response.
+	 * @param clientSocket
+	 * @throws HttpErrorException
+	 */
+	private static void handleClientConnection(Socket clientSocket) throws HttpErrorException {
 		try {
-
-			BufferedReader in = new BufferedReader(new InputStreamReader(
-					clientSocket.getInputStream()));
 			BufferedWriter out = new BufferedWriter(new OutputStreamWriter(
 					clientSocket.getOutputStream()));
 
-			do {
-				inbuf = in.readLine();
-				System.out.println("Client connected from " + clientSocket.getInetAddress());
-				System.out.println(inbuf);
-				
+			Request req = Request.buildRequest(clientSocket);
+			req.print();
+
 				PrintWriter writer = new PrintWriter(out, true);
 				writer.println("<html><title>This is the page</title>");
 				writer.println("<body>herehre</body></html>");
 				
-			} while (inbuf != null && !inbuf.equals("QUIT"));
+			System.out.println("Connection closed by server...");
 			
-			System.out.println("Connection closed by client...");
-			
-			if (inbuf != null) {
-				in.close();
+			//The buffer needs to be closed.
+			if (out != null) {
 				out.close();
 			} 
 			
@@ -126,13 +101,17 @@ public class VOctopusWebServer {
 		try {
 			ServerSocket socketServer = new ServerSocket(PORT);
 			while (true) {
-				System.out.println("V-Octopus Web Serving running on port "
-						+ PORT);
+				System.out.println("V-Octopus Web Serving running on port " + PORT);
+				
 				final Socket clientSocket = socketServer.accept();
 
 				Runnable connectionHandler = new Runnable() {
 					public void run() {
-						handleClientConnection(clientSocket);
+						try {
+							handleClientConnection(clientSocket);
+						} catch (HttpErrorException e) {
+						    e.printStackTrace();
+						}
 					}
 				};
 				
