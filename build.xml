@@ -1,0 +1,138 @@
+<project name="V-Octopus Web Server" default="package" basedir=".">
+
+	<description>
+	    Builds the executables for the V-Octopus Web Server.
+    </description>
+	<!-- set global properties for this build -->
+	<property name="src" location="src" />
+	<property name="build" location="classes" />
+    <property name="build-temp" location="tmp/classes" />
+	<property name="dist" location="dist" />
+	<property name="lib.dir" location="lib" />
+	<property name="app.name" value="v-octopus-webserver" />
+	<property name="user" value="Marcello de Sales (msales@sfsu.edu)" />
+	<property name="main-class" value="edu.sfsu.cs.csc867.msales.httpd.VOctopusWebServer" />
+    <property name="version.num" value="0.1"/>
+    <buildnumber file="build.num"/>
+
+    <property name="gc.username" value="marcello.sales"/>
+    <property name="gc.password" value="k6c4m9a5"/>
+	<property name="gc.summary" value="This is the 0.1 version uploaded via Apache ANT, using the Google Code ANT Task"/>
+	
+	<target name="init">
+	    <tstamp />
+		<tstamp>
+			  <format property="build.dir.day" pattern="MM-dd" />
+		  </tstamp>
+
+	    <!-- Create the build directory structure used by compile -->
+	    <!--<mkdir dir="${build}" />-->
+	</target>
+
+    <target name="del" description="clean up">
+        <delete>
+            <fileset dir="${build-temp}" includes="**/*.class" />
+            <fileset dir="${build-temp}" includes="**/*.xml" />
+        </delete>
+    </target>
+
+	<patternset id="jar.files">
+	    <include name="**/*.xml" />
+	</patternset>
+
+	<patternset id="source.files">
+		<!-- include everything we want in the src directory
+                  that we didn't want in the jar itself -->
+		<include name="**/*.java" />
+	</patternset>
+
+	<target name="compile" depends="init,del" description="Compile the source ">
+		<!-- Compile the java code from ${src} into ${build} -->
+		<mkdir dir="${build-temp}" />
+		<javac debug="on" srcdir="${src}" destdir="${build-temp}" />
+		<copy todir="${build-temp}">
+			<fileset dir="${src}">
+				<patternset refid="jar.files" />
+				<exclude name="log4j.*"/>
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="dist" depends="compile" description="generate the distribution">
+		<mkdir dir="${dist}" />
+		<delete file="${dist}/MANIFEST.MF"/>
+		
+		<manifest file="${dist}/MANIFEST.MF">
+			<attribute name="Manifest-Version" value="1.0" />
+			<attribute name="Created-By" value="CSC876 - SFSU" />
+	        <attribute name="Built-By" value="${user}"/>
+	        <attribute name="Main-Class" value="${main-class}"/>
+	        <attribute name="Implementation-Version" value="${version.num}-b${build.number}"/> 
+	    </manifest>
+
+		<property name="jar_build_name" value="${app.name}-${DSTAMP}${TSTAMP}-${version.num}-b${build.number}.jar"/>
+		
+		<mkdir dir="${dist}/${build.dir.day}"/>
+		<jar jarfile="${dist}/${build.dir.day}/${jar_build_name}" 
+			 basedir="${build-temp}"
+			 manifest="${dist}/MANIFEST.MF"/>
+		
+		<copy file="${dist}/${build.dir.day}/${jar_build_name}" tofile="${dist}/${app.name}-${version.num}.jar" />
+	</target>
+	
+	<target name="package" depends="dist" description="Package everything and zip the distribution">
+		<property name="exec-dir" value="${dist}/exec" />
+		<delete dir="${exec-dir}"/>
+		
+		<mkdir dir="${exec-dir}"/>
+		<mkdir dir="${exec-dir}/bin"/>
+		<mkdir dir="${exec-dir}/config"/>
+		<mkdir dir="${exec-dir}/scripts"/>
+		<mkdir dir="${exec-dir}/webocean"/>
+		
+		<copy file="${dist}/${app.name}-${version.num}.jar" todir="${exec-dir}/bin"/>
+		<delete file="${dist}/${app.name}-${version.num}.jar"/>
+		<copy file="/etc/mime.types" todir="${exec-dir}/config" />
+		<copy file="/etc/apache2/httpd.conf" todir="${exec-dir}/config" />
+		
+		<echo file="${exec-dir}/vocotpus-start.sh">#!/bin/bash
+java -jar bin/${app.name}-${version.num}.jar
+		</echo>
+
+        <echo file="${exec-dir}/webocean/index.html">&lt;html>&lt;title>V-Octopus Web Server - It Workds!!!&lt;/title>
+   &lt;body>
+      &lt;h3>It's works! V-Octopus Server is running!&lt;/h3>&lt;BR/>&lt;BR/>
+      &lt;li>Check the configuration file at {V-OCTOPUS}/config/v-octopus.httpd.conf for general settings&lt;/li>
+   &lt;/body>
+&lt;/html>
+        </echo>
+
+		<chmod perm="755" file="${exec-dir}/vocotpus-start.sh" />
+
+		<zip destfile="${dist}/${app.name}-${version.num}.zip">
+			  <fileset dir="${exec-dir}">
+			    <include name="**/*"/>
+			  </fileset>
+		</zip>
+	</target>
+	
+	<target name="release" depends="package" description="Upload the distribution to google code">
+        <taskdef classname="net.bluecow.googlecode.ant.GoogleCodeUploadTask" 
+        	     classpath="${lib.dir}/ant-googlecode.jar" 
+                 name="gcupload"/>
+        <gcupload username="${gc.username}" password="${gc.password}" projectname="v-octopus"
+                  filename="${dist}/${app.name}-${version.num}.zip" targetfilename="${dist}/${app.name}-${version.num}.zip"
+                  summary="${gc.summary}" />
+	</target>
+	
+    <target name="validate" description="perform code validation and checkstyle on modified files in your workspace. Usage: needs to be run before checking in code">
+        <ant antfile="/tools/ant/checkstyle.xml" target="checkstyle-local"/>
+        <ant antfile="${SATURN}/tools/ant/test.xml" target="test-validate"/>
+    </target>
+
+	<target name="clean" description="clean up">
+		<!-- Delete the ${build} and ${dist} directory trees -->
+		<delete dir="${dist}" />
+	</target>
+
+</project>
