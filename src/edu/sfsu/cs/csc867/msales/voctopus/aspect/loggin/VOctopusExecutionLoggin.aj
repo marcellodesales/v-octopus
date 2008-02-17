@@ -23,7 +23,7 @@ public aspect VOctopusExecutionLoggin {
 
     pointcut excludedObjectCalls() : execution(* Logger.*(..));
       
-    pointcut loggableCalls() : vOcotpusPackage() && !aspects();
+    pointcut loggableCalls() : vOcotpusPackage() && !aspects() && !excludedObjectCalls();
       
     before() : loggableCalls() {
         
