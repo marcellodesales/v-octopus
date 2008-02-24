@@ -10,8 +10,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import edu.sfsu.cs.csc867.msales.httpd.HttpErrorException;
-import edu.sfsu.cs.csc867.msales.httpd.Request;
-import edu.sfsu.cs.csc867.msales.httpd.Response;
+import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
 
 /**
  * The VoctopusWebServer is the main class from the server. It spawns the threads of the clients on the pool and keeps
@@ -59,18 +58,24 @@ public class VOctopusWebServer {
      * 
      * @param clientSocket
      * @throws HttpErrorException
+     * @throws HttpRequestInterpreterException 
      */
-    private static void handleClientConnection(Socket clientSocket) throws HttpErrorException {
+    private static void handleClientConnection(Socket clientSocket) {
+            
+        RequestResponseMediator mediator;
         try {
-
-            Request req = Request.buildNewRequest(clientSocket);
-            req.print();
-            Response res = Response.buildNewResponse(req);
-            res.processRequest(clientSocket.getOutputStream());
-
-        } catch (IOException ioe) {
-            throw HttpErrorException.buildNewException(ioe);
-        }
+            mediator = new RequestResponseMediator(new HttpClientConnection(clientSocket));
+            mediator.sendResponse();
+        } catch (HttpRequestInterpreterException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } 
+        
+        //            
+        //            Request req = Request.buildNewRequest(clientSocket);
+        //            req.print();
+        //            Response res = Response.buildNewResponse(req);
+        //            res.processRequest(clientSocket.getOutputStream());
     }
 
     /**
@@ -95,19 +100,14 @@ public class VOctopusWebServer {
         try {
             ServerSocket socketServer = new ServerSocket(Integer.parseInt(listeningPort));
             while (true) {
-                System.out.println();
                 final Socket clientSocket = socketServer.accept();
                 Runnable connectionHandler = new Runnable() {
                     public void run() {
-                        try {
-                            long initial = System.currentTimeMillis();
-                            handleClientConnection(clientSocket);
-                            long end = System.currentTimeMillis();
-                            System.out.println("Served " + clientSocket.getInetAddress().getHostAddress() + " in "
-                                    + (end - initial) + "ms");
-                        } catch (HttpErrorException e) {
-                            e.printStackTrace();
-                        }
+                        long initial = System.currentTimeMillis();
+                        handleClientConnection(clientSocket);
+                        long end = System.currentTimeMillis();
+                        System.out.println("Served " + clientSocket.getInetAddress().getHostAddress() + " in "
+                                + (end - initial) + "ms");
                     }
                 };
 

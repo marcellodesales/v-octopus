@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The management of the configuration files from the server. This simpleton controls must load the following files:
+ * The management of the configuration files from the server. This sinpleton controls must load the following files:
  * <li>Load httpd.conf file as the main configuration resource.
  * <li>Load mime.types values
  * 
@@ -44,6 +44,13 @@ public final class VOctopusConfigurationManager {
      * The root directory for the server.
      */
     private String serverRootPath;
+    
+    /**
+     * It is the alias reserved for the execution of cgi-bin scripts (python, perl, ruby...)
+     */
+    private static String[] scriptAlias = new String[2];
+
+    private static String[] wsAlias = new String[2];
 
     /**
      * All the Properties from the server.
@@ -55,8 +62,16 @@ public final class VOctopusConfigurationManager {
          * The main configuration file that must exist before the execution.
          */
         HTTPD_CONF("httpd.conf"),
+        
         /**
-         * Complete list of aliases from the httpd.conf file.
+         * Complete list of aliases from the httpd.conf file. 
+         *     #ScriptAlias: This controls which directories contain server scripts.
+         *     # ScriptAliases are essentially the same as Aliases, except that
+         *     # documents in the realname directory are treated as applications and
+         *     # run by the server when requested rather than as documents sent to the client.
+         *     # The same rules about trailing "/" apply to ScriptAlias directives as to
+         *     # Alias.
+         *     #
          */
         ALIAS("httpd.conf"),
         /**
@@ -139,7 +154,42 @@ public final class VOctopusConfigurationManager {
     public String getServerRootPath() {
         return serverRootPath;
     }
+    
+    /**
+     * @return The document root of the server.
+     */
+    public String getDocumentRoot() {
+        return WebServerProperties.HTTPD_CONF.serverProps.get("DocumentRoot");
+    }
+    
+    /**
+     * @return The default path for the cgi scripts from the url.
+     */
+    public static String getDefaultCGIPath() {
+        return scriptAlias[0];
+    }
+    
+    /**
+     * @return The directory file where CGI scripts must be located based on the script alias configuration.
+     */
+    public static File getCGIServerPath() {
+        return new File(scriptAlias[1]);
+    }
 
+    /**
+     * @return The default path for the web services jars from the url.
+     */
+    public static String getDefaultWebservicesPath() {
+        return wsAlias[0];
+    }
+    
+    /**
+     * @return The directory file where web services jars must be located based on the web services alias configuration.
+     */
+    public static File getWebServicesServerPath() {
+        return new File(wsAlias[1]);
+    }
+    
     /**
      * Sets the path of the root to the server
      * 
@@ -150,7 +200,7 @@ public final class VOctopusConfigurationManager {
 
         File configFile = new File(serverRootPath + "/conf/httpd.conf");
         BufferedReader configReader = new BufferedReader(new FileReader(configFile));
-
+        this.serverRootPath = serverRootPath;
         String configProperty = null;
         String[] vals;
         while ((configProperty = configReader.readLine()) != null) {
@@ -159,11 +209,21 @@ public final class VOctopusConfigurationManager {
             } else if (configProperty.contains("\"")) {
                 configProperty = configProperty.replace("\"", "");
             }
-            vals = configProperty.split(" ");
+            vals = configProperty.replace("$VOCTOPUS_SERVER_ROOT", serverRootPath).split(" ");
             if (vals.length == 2) {
+                vals[1] = vals[1];
                 WebServerProperties.HTTPD_CONF.getProperties().put(vals[0].trim(), vals[1].trim());
             } else {
-                WebServerProperties.ALIAS.getProperties().put(vals[1].trim(), vals[2].trim());
+             
+                if (vals[0].equals("ScriptAlias")) {
+                    scriptAlias[0] = vals[1];
+                    scriptAlias[1] = vals[2];
+                } else
+                if (vals[0].equals("WebServices")) {
+                    wsAlias[0] = vals[1];
+                    wsAlias[1] = vals[2];
+                } 
+                WebServerProperties.ALIAS.getProperties().put(vals[0].trim(), vals[1].trim());
             }
         }
         configReader.close();
@@ -200,7 +260,7 @@ public final class VOctopusConfigurationManager {
                 }
                 WebServerProperties.MIME_TYPES.getProperties().put(vals[0].trim(), vals[1]);
             } else {
-                WebServerProperties.MIME_TYPES.getProperties().put(mimeTypesProperty, null);
+                WebServerProperties.MIME_TYPES.getProperties().put(mimeTypesProperty, "");
             }
         }
         mimeReader.close();
