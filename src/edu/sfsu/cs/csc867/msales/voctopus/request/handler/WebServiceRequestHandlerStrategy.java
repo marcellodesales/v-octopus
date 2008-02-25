@@ -9,8 +9,8 @@ import java.io.IOException;
  */
 public class WebServiceRequestHandlerStrategy extends AbstractRequestHandler {
 
-    public WebServiceRequestHandlerStrategy(File requestedFile) {
-        super(requestedFile, RequestType.ASCII);
+    public WebServiceRequestHandlerStrategy(File requestedFile, String handlerFound) {
+        super(requestedFile, RequestType.ASCII, handlerFound);
         // TODO Auto-generated constructor stub
     }
 

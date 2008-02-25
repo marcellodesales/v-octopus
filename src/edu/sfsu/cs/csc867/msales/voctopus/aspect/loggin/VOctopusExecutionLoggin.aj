@@ -19,7 +19,7 @@ public aspect VOctopusExecutionLoggin {
     
     pointcut aspects() : within(VOctopusExecutionLoggin);
     
-    pointcut vOcotpusPackage() : execution(* edu.sfsu.cs.csc867.msales.voctopus..*(..)) || execution(edu.sfsu.cs.csc867.msales.voctopus..new(..));
+    pointcut vOcotpusPackage() : execution(* edu.sfsu.cs.csc867.msales.voctopus..public(..)) || execution(edu.sfsu.cs.csc867.msales.voctopus..new(..));
 
     pointcut excludedObjectCalls() : execution(* Logger.*(..));
       

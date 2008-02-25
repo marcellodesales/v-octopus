@@ -10,8 +10,8 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
      */
     private Map<String, String> requestParameters;
 
-    public ScriptRequestHandlerStrategy(Map<String, String> requestParameters, File requestedFile) {
-        super(requestedFile, RequestType.ASCII);
+    public ScriptRequestHandlerStrategy(Map<String, String> requestParameters, File requestedFile, String handlerFound) {
+        super(requestedFile, RequestType.ASCII, handlerFound);
         this.requestParameters = requestParameters;
         //TODO: THE ASCII is just to consider execution that returns ASCII, needs refactoring
         //to get the type from the execution from the script.

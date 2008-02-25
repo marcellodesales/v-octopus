@@ -9,8 +9,8 @@ import java.io.IOException;
  */
 public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandler  {
 
-    public DirectoryContentRequestHandlerStrategy(File requestedFile) {
-        super(requestedFile, RequestType.ASCII);
+    public DirectoryContentRequestHandlerStrategy(File requestedFile, String handlerFound) {
+        super(requestedFile, RequestType.ASCII, handlerFound);
         // TODO Auto-generated constructor stub
     }
 

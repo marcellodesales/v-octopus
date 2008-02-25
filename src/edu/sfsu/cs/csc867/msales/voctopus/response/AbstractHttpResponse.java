@@ -106,8 +106,8 @@ public abstract class AbstractHttpResponse implements HttpResponse {
 
             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(clientOutput));
             PrintWriter writer = new PrintWriter(out, true);
+            writeResponseToClient(new PrintWriter(System.out));
             writeResponseToClient(writer);
-        
             //The buffer needs to be closed.
             if (out != null) {
                 try {

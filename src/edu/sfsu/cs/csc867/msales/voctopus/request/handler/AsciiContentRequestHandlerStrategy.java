@@ -14,12 +14,13 @@ import java.util.List;
 
 public class AsciiContentRequestHandlerStrategy extends AbstractRequestHandler {
     
-    public AsciiContentRequestHandlerStrategy(File requestedFile) {
-        super(requestedFile, RequestType.ASCII);
+    public AsciiContentRequestHandlerStrategy(File requestedFile, String handlerFound) {
+        super(requestedFile, RequestType.ASCII, handlerFound);
         // TODO Auto-generated constructor stub
     }
 
     public String[] getResourceLines() throws IOException {
+        System.out.println("serving the file " + this.getRequestedResource());
         FileChannel channel=new FileInputStream(this.getRequestedResource()).getChannel();
         MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY,0,this.getRequestedResource().length());
         

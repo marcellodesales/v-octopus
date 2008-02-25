@@ -10,8 +10,8 @@ import java.io.IOException;
  */
 public class BinaryContentRequestHandlerStrategy extends AbstractRequestHandler {
 
-    public BinaryContentRequestHandlerStrategy(File requestedFile) {
-        super(requestedFile, RequestType.BINARY);
+    public BinaryContentRequestHandlerStrategy(File requestedFile, String handlerFound) {
+        super(requestedFile, RequestType.BINARY, handlerFound);
         // TODO Auto-generated constructor stub
     }
 

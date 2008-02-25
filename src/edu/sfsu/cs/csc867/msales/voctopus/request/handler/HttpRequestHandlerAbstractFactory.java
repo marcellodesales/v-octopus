@@ -44,7 +44,7 @@ public class HttpRequestHandlerAbstractFactory {
      * @return an instance for the Directory  content request.
      */
     private HttpRequestHandler createDirectoryHandler(File dirFile) {
-        return new DirectoryContentRequestHandlerStrategy(dirFile);
+        return new DirectoryContentRequestHandlerStrategy(dirFile, "directory listing");
     }
     
     /**
@@ -67,28 +67,31 @@ public class HttpRequestHandlerAbstractFactory {
                 String[] varValue = cgiP.split("=");
                 cgiParams.put(varValue[0], varValue[1]);
             }
-            return new ScriptRequestHandlerStrategy(cgiParams, file);
+            return new ScriptRequestHandlerStrategy(cgiParams, file, requestedExtension);
             
         } else 
         if (path.contains(VOctopusConfigurationManager.getDefaultWebservicesPath())) {
-            return new WebServiceRequestHandlerStrategy(file);
+            return new WebServiceRequestHandlerStrategy(file, requestedExtension);
         }
         
-        String handlerFound = null;
-        String mimeValue = null;
+        String handlerFound = "";
+        String mimeValue = "";
+        outer:
         for (String handlerType : mimes.keySet()) {
-            boolean contains = mimes.get(handlerType).contains(requestedExtension);
             mimeValue = mimes.get(handlerType);
-            if (contains || (mimeValue != null && !mimeValue.equals("") && mimeValue.contains(requestedExtension))) {
-                handlerFound = handlerType;
-                break;
+            for (String mimeExts : mimeValue.replace(",", "").split(" ")) {
+                if (mimeExts.equals(requestedExtension)) {
+                    handlerFound = handlerType;
+                    System.out.println(handlerType+", "+mimeValue+" FOUND FOR "+requestedExtension);
+                    break outer;
+                }
             }
         }
         
         if (handlerFound.contains("text/")) {
-            return new AsciiContentRequestHandlerStrategy(file);
+            return new AsciiContentRequestHandlerStrategy(file, handlerFound);
         } else {
-            return new BinaryContentRequestHandlerStrategy(file);
+            return new BinaryContentRequestHandlerStrategy(file, handlerFound);
         }
     }
 

@@ -1,7 +1,6 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request;
 
 import java.io.File;
-import java.io.OutputStream;
 import java.net.URI;
 
 /**

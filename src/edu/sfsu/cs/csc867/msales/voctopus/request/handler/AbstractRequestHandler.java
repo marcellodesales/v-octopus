@@ -29,15 +29,23 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
      * The type of the request, depending on the mime types
      */
     private RequestType requestType;
+
+    private String handlerFound;
     
     /**
      * Constructs a new request handler.
-     * @param requestedFile
-     * @param requestType
+     * @param requestedFile the file requested 
+     * @param requestType the request type that was bound to the handler 
+     * @param handlerFound the handler found on the configuration file.
      */
-    public AbstractRequestHandler(File requestedFile, RequestType requestType) {
+    public AbstractRequestHandler(File requestedFile, RequestType requestType, String handlerFound) {
         this.physicalFile = requestedFile;
         this.requestType = requestType;
+        this.handlerFound = handlerFound;
+        System.out.println("Selected handler: " + this);
+        System.out.println("File to be handled: " + requestedFile);
+        System.out.println("REquest type: " + requestType);
+        System.out.println("Handler found: " + this.handlerFound);
     }
     
     /**
@@ -51,7 +59,6 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getRequestedResource()
      */
     public File getRequestedResource() {
-        
         return this.physicalFile;
     }
     

@@ -2,7 +2,6 @@ package edu.sfsu.cs.csc867.msales.voctopus.request;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -113,6 +112,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
         try {
             return this.requestHandler.getResourceLines();
         } catch (IOException e) {
+            e.printStackTrace();
             return new String[] {""};
         }
     }

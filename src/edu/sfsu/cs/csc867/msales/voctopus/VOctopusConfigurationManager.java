@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 /**
@@ -118,13 +120,13 @@ public final class VOctopusConfigurationManager {
 
             case ALIAS:
                 if (this.aliasesProps == null) {
-                    this.aliasesProps = new HashMap<String, String>();
+                    this.aliasesProps = new LinkedHashMap<String, String>();
                 }
                 return this.aliasesProps;
 
             case MIME_TYPES:
                 if (this.mimeTypesProps == null) {
-                    this.mimeTypesProps = new HashMap<String, String>();
+                    this.mimeTypesProps = new LinkedHashMap<String, String>();
                 }
                 return this.mimeTypesProps;
             default:
@@ -134,7 +136,7 @@ public final class VOctopusConfigurationManager {
 
         /**
          * @param key is the key that identifies a value on the configuration files.
-         * @return the value of the key from the configuration file instance of the enumaration.
+         * @return the value of the key from the configuration file instance of the enumeration.
          */
         public String getPropertyValue(String key) {
             return this.getProperties().get(key);
@@ -249,13 +251,12 @@ public final class VOctopusConfigurationManager {
                 continue;
             }
             if (mimeTypesProperty.contains("\t")) {
-                vals = mimeTypesProperty.split("\t");
-                for (String val : vals) {
-                    if (val.equals("")) {
-                        continue;
-                    } else {
-                        vals[1] = val;
-                        break;
+                vals = mimeTypesProperty.trim().split("\t");
+                if (vals.length > 2) {
+                    for (int ind = 2; ind < vals.length; ind++) {
+                        if (!vals[ind].equals("") && (vals[1].equals(""))) {
+                            vals[1] = vals[ind];
+                        } 
                     }
                 }
                 WebServerProperties.MIME_TYPES.getProperties().put(vals[0].trim(), vals[1]);

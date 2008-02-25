@@ -23,14 +23,12 @@ public class VOctopusWebServer {
     static {
         final String VOCTOPUS_SERVER_ROOT = "VOCTOPUS_SERVER_ROOT";
 
-        // TODO: Change this property to the configuration file....
-        System.setProperty(VOCTOPUS_SERVER_ROOT, "/home/marcello/development/workspace-sfsu/voctopusHttpd");
-
         try {
 
-            VOctopusConfigurationManager.getInstance().setServerRootPath(System.getProperty(VOCTOPUS_SERVER_ROOT));
+            VOctopusConfigurationManager.getInstance().setServerRootPath(System.getenv(VOCTOPUS_SERVER_ROOT));
 
         } catch (FileNotFoundException e) {
+            e.printStackTrace();
             System.out.println("YOU HAVE TO SET THE FOLLOWING ROOT DIRECTORY: " + VOCTOPUS_SERVER_ROOT);
             System.exit(0);
             // TODO: LOGGIN NEEDED
@@ -122,6 +120,7 @@ public class VOctopusWebServer {
         } catch (IOException ioe) {
             // TODO generate output to the log files
             System.out.println("An unexpected error occurred with the server... please check the " + "the log file");
+            System.out.println(ioe.getMessage());
             System.exit(0);
         }
     }
