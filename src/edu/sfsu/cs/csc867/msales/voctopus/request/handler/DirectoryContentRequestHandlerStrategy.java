@@ -4,8 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.text.SimpleDateFormat;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import edu.sfsu.cs.csc867.msales.voctopus.VOctopusConfigurationManager;
 
@@ -38,10 +38,6 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
         builder.append("A.l:link {color: #6f6f6f}\n");
         builder.append("A.u:link {color: green}\n");
         builder.append("//--></style>\n");
-        builder.append("<script><!--\n");
-        builder.append("var rc=404;\n");
-        builder.append("//-->\n");
-        builder.append("</script>\n");
         builder.append("</head>\n");
         builder.append("<body text=#000000 bgcolor=#ffffff>\n");
         builder.append("<table border=0 cellpadding=2 cellspacing=0 width=100%><tr><td rowspan=3 width=1% nowrap>\n");
@@ -73,7 +69,7 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
      */
     public String[] getResourceLines() throws IOException {
         
-        Set<String> files = new LinkedHashSet<String>();
+        List<String> files = new ArrayList<String>();
         
         //files.add("<tr><th><img src=\"/icons/folder.gif\" alt=\"[ICO]\"></th>");
         files.add("<tr><th><a href=\"?C=N;O=D\">Name</a></th>\n");
@@ -93,7 +89,6 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
                 //files.add("<img src=\"/icons/file.gif\" alt=\"[DIR]\"></td>\n");
                 files.add("<td width=\"50%\"><a href=\"" + file.getName() + "\">" + file.getName() + "</a></td>\n");
             }
-            
             files.add("<td width=\"40%\" align=\"right\">" + 
                     new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(file.lastModified()) + "</td>\n");
             files.add("<td width=\"10%\" align=\"right\">" + (file.isDirectory() ? "=" : file.length()) + 
@@ -109,7 +104,7 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
             System.out.println("serving the directory " + this.getRequestedFile().getParent());
 
             String nameDomainPort = VOctopusConfigurationManager.getInstance().getServerVersion() +" Server at "
-                        + this.getRequestedResource().getHost() + " Port " + 
+                        + VOctopusConfigurationManager.getInstance().getServerName() + " Port " + 
                         VOctopusConfigurationManager.getInstance().getServerPort(); 
             String line = builder.toString();
             line = line.replace("$REQUESTED_DIRECTORY", this.getRequestedResource().getPath());

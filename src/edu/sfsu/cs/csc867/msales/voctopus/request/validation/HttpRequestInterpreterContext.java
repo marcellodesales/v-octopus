@@ -1,6 +1,5 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request.validation;
 
-import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;

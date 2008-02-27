@@ -6,7 +6,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 
 /**
@@ -17,6 +16,8 @@ import java.util.Map;
  * @author marcello Feb 14, 2008 12:57:13 PM
  */
 public final class VOctopusConfigurationManager {
+
+    private static final String VOCTOPUS_VERSION = "vOctopus 0.2";
 
     /**
      * TheradLocal instance for this singleton.
@@ -268,6 +269,10 @@ public final class VOctopusConfigurationManager {
     }
 
     public String getServerVersion() {
+        return VOCTOPUS_VERSION;
+    }
+    
+    public String getServerName() {
         return WebServerProperties.HTTPD_CONF.getPropertyValue("ServerName");
     }
 

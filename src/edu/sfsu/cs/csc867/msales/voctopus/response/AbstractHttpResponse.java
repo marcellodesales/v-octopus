@@ -26,8 +26,6 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 public abstract class AbstractHttpResponse implements HttpResponse {
 
     private static final String RESPONSE_DATE_FORMAT = "EEE, MMM d yyyy HH:mm:ss z";
-
-    private static final String SERVER_NAME_VERSION = VOctopusConfigurationManager.getInstance().getServerVersion();
     
     private HttpRequest request;
     
@@ -85,9 +83,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
     }
     
     private long getRequestSize() {
-        long size = this.request.getRequestedResource().length();
-        if (this.request.getStatus().equals(ReasonPhrase.STATUS_200) 
-                && size == 0) {
+        if (this.request.getStatus().equals(ReasonPhrase.STATUS_200) && !this.request.getRequestedResource().isFile()) {
             //TODO: Decide if this was a request to a directory, Script or something else and create more holders
             long nsize = 0;
             for (String lines : this.getResponseBody()) {
@@ -101,7 +97,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
     
     private Date getLastModified() {
         if (this.request.getStatus().equals(ReasonPhrase.STATUS_200) 
-                && this.request.getRequestedResource().length() == 0) {
+                && !this.request.getRequestedResource().isFile()) {
             return new Date();
         } else {
             return new Date(this.request.getRequestedResource().lastModified());
@@ -113,9 +109,9 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         
         String[] more = new String[] {
                 "Date: " + new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(new Date()),
-                "Server: " + SERVER_NAME_VERSION,
+                "Server: " + VOctopusConfigurationManager.getInstance().getServerVersion(),
                 "Content-Type: " + this.request.getContentType(),
-                "Content-Length: " + this.getRequestSize(), 
+               // "Content-Length: " + this.getRequestSize(), 
                 "Last-Modified: " + new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(this.getLastModified())
         };
         for (String headerVar : more) {
@@ -128,7 +124,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
      * @param writer
      */
     private void writeBody(PrintWriter writer) {
-        for(String line : this.request.getResourceLines()) {
+        for(String line : this.getResponseBody()) {
             writer.println(line);
         }
     }

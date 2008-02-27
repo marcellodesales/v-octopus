@@ -3,6 +3,8 @@ package edu.sfsu.cs.csc867.msales.voctopus.request;
 import java.net.URI;
 import java.util.Map;
 
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandlerAbstractFactory;
+
 
 /**
  * @author marcello
@@ -11,13 +13,12 @@ import java.util.Map;
 public class HttpScriptRequest extends AbstractHttpRequest {
 
     public HttpScriptRequest(String methodType, URI uri, String version, Map<String, String> headerVars) {
-        super(methodType, uri, version, headerVars, null);
-        // TODO Auto-generated constructor stub
+        super(methodType, uri, version, headerVars, 
+                HttpRequestHandlerAbstractFactory.getInstance().createRequestHandler(uri, headerVars));
     }
 
     public String[] getResourceLines() {
         // TODO Auto-generated method stub
         return null;
     }
-
 }

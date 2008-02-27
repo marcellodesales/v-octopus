@@ -1,6 +1,5 @@
 package edu.sfsu.cs.csc867.msales.voctopus;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
