@@ -2,6 +2,7 @@ package edu.sfsu.cs.csc867.msales.voctopus;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.Executor;
@@ -22,14 +23,30 @@ public class VOctopusWebServer {
 
     static {
         final String VOCTOPUS_SERVER_ROOT = "VOCTOPUS_SERVER_ROOT";
-
+        final String serverRootPath = System.getenv(VOCTOPUS_SERVER_ROOT);
         try {
-
-            VOctopusConfigurationManager.getInstance().setServerRootPath(System.getenv(VOCTOPUS_SERVER_ROOT));
-
+            if (serverRootPath != null) {
+                VOctopusConfigurationManager.getInstance().setServerRootPath(serverRootPath);
+            } else {
+                System.out.println("############### ERROR INITIALIZING VOCTOPUS WEB SERVER ####################");
+                System.out.println("# CAUSE: In order to run vOctopus YOU HAVE TO SET THE FOLLOWING ENV VAR: '" + 
+                        VOCTOPUS_SERVER_ROOT + "'");
+                System.out.println("# SOLUTION: ");
+                System.out.println("#   * Linux/MAC: export VOCTOPUS_SERVER_ROOT=vOctopus_Installation_dir");
+                System.out.println("#   * Windows: set VOCTOPUS_SERVER_ROOT=vOctopus_Installation_dir");
+                System.out.println("###########################################################################");
+                System.exit(0);
+                // TODO: LOGGIN NEEDED
+            }
         } catch (FileNotFoundException e) {
+            System.out.println("############### ERROR INITIALIZING VOCTOPUS WEB SERVER ####################");
+            System.out.println("# CAUSE: Your environment var 'VOCTOPUS_SERVER_ROOT' is set to: '" + 
+                    VOCTOPUS_SERVER_ROOT + "' However, I coundn't find the needed configuration files there...");
             e.printStackTrace();
-            System.out.println("YOU HAVE TO SET THE FOLLOWING ROOT DIRECTORY: " + VOCTOPUS_SERVER_ROOT);
+            System.out.println("# SOLUTION: ");
+            System.out.println("#   * Add the complete deployment of the server on this directory;");
+            System.out.println("#   * Change the environment variable the place where I can find the configuration files");
+            System.out.println("###########################################################################");
             System.exit(0);
             // TODO: LOGGIN NEEDED
         } catch (IOException e) {
@@ -67,13 +84,7 @@ public class VOctopusWebServer {
         } catch (HttpRequestInterpreterException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-        } 
-        
-        //            
-        //            Request req = Request.buildNewRequest(clientSocket);
-        //            req.print();
-        //            Response res = Response.buildNewResponse(req);
-        //            res.processRequest(clientSocket.getOutputStream());
+        }
     }
 
     /**
@@ -91,8 +102,6 @@ public class VOctopusWebServer {
     public static void main(String[] args) {
 
         String listeningPort = VOctopusConfigurationManager.WebServerProperties.HTTPD_CONF.getPropertyValue("Listen");
-
-        System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
         System.out.println("V-Octopus Web Serving running, waiting connections on port " + listeningPort);
 
         try {
@@ -114,13 +123,27 @@ public class VOctopusWebServer {
             }
 
         } catch (NumberFormatException nfe) {
-            System.out
-                    .println("The server port must be specified correctly. Check the configuration file for the Listen value");
+            System.out.println("############### ERROR INITIALIZING VOCTOPUS WEB SERVER ####################");
+            System.out.println("# CAUSE: The values for the port of the webserver couldn't be determined..."); 
+            nfe.printStackTrace();
+            System.out.println("# SOLUTION:");
+            System.out.println("#   * Make sure that the constant 'Listen' specifies an integer value for the port," +
+            		"considering that you have sufficient privilegues to use it.");
+            System.out.println("###########################################################################");
             System.exit(0);
+            
+        } catch (BindException be) {
+            System.out.println("############### ERROR INITIALIZING VOCTOPUS WEB SERVER ####################");
+            String port = VOctopusConfigurationManager.WebServerProperties.HTTPD_CONF.getPropertyValue("Listen");
+            System.out.println("# CAUSE: The port specified in the configuration file is in use: " + port); 
+            System.out.println("# SOLUTION:");
+            System.out.println("#   * Change the specified port on the httpd.conf file an available one;");
+            System.out.println("#   * Stop the application running on that port and try restarting the server again.");
+            System.out.println("###########################################################################");
+            System.exit(0);
+            
         } catch (IOException ioe) {
-            // TODO generate output to the log files
-            System.out.println("An unexpected error occurred with the server... please check the " + "the log file");
-            System.out.println(ioe.getMessage());
+  
             System.exit(0);
         }
     }

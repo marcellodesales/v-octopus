@@ -1,5 +1,7 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request;
 
+import java.io.FileNotFoundException;
+
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestHeaderFieldVarExpression;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterContext;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestMethodExpression;
@@ -34,6 +36,11 @@ public class HttpRequestAbstractFactory {
         return singleton.get();
     }
 
+    /**
+     * @param firstLineExpr
+     * @param vars
+     * @return a new instance of an HttpRequest.
+     */
     public HttpRequest createHttpRequest(HttpRequestMethodExpression firstLineExpr,
             HttpRequestHeaderFieldVarExpression[] vars) {
 

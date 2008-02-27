@@ -8,7 +8,8 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import edu.sfsu.cs.csc867.msales.httpd.HttpErrorException;
+import edu.sfsu.cs.csc867.msales.voctopus.VOctopusConfigurationManager;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 
 /**
@@ -24,66 +25,26 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
  */
 public abstract class AbstractHttpResponse implements HttpResponse {
 
-    private static final String RESPONSE_DATE_FORMAT = "EEE,.MMM.d yyyy HH:mm:ss z";
+    private static final String RESPONSE_DATE_FORMAT = "EEE, MMM d yyyy HH:mm:ss z";
 
-    private static final String SERVER_NAME_VERSION = "VOctopus/0.1";
-    
-    private enum ReasonPhrase {
-        STATUS_100("Continue"),
-        STATUS_101("Switching Protocols"),
-        STATUS_200("OK"),
-        STATUS_201("Created"),
-        STATUS_202("Accepted"),
-        STATUS_203("Non-Authoritative Information"),
-        STATUS_204("No Content"),
-        STATUS_205("Reset Content"),
-        STATUS_206("Partial Content"),
-        STATUS_300("Multiple Choices"),
-        STATUS_301("Moved Permanently"),
-        STATUS_302("Found"),
-        STATUS_303("See Other"),
-        STATUS_304("Not Modified"),
-        STATUS_305("Use Proxy"),
-        STATUS_307("Temporary Redirect"),
-        STATUS_400("Bad Request"),
-        STATUS_401("Unauthorized"),
-        STATUS_402("Payment Required"),
-        STATUS_403("Forbidden"),
-        STATUS_404("Not Found"),
-        STATUS_405("Method Not Allowed"),
-        STATUS_406("Not Acceptable");
-
-        private String humanValue;
-        private ReasonPhrase(String humanValue) {
-            this.humanValue = humanValue;
-        }
-        
-        @Override
-        public String toString() {
-            return this.humanValue;
-        }
-        
-        public static ReasonPhrase getReasonPhrase(int code) {
-            for (ReasonPhrase key : ReasonPhrase.values()) {
-                if (key.toString().contains(String.valueOf(code))) {
-                    return key;
-                }
-            }
-            return STATUS_406;
-        }
-    }
+    private static final String SERVER_NAME_VERSION = VOctopusConfigurationManager.getInstance().getServerVersion();
     
     private HttpRequest request;
+    
+    private String[] responseBody;
     
     public AbstractHttpResponse(HttpRequest originatingRequest) {
         this.request = originatingRequest;
     }
     
     public String[] getResponseBody() {
-        return this.request.getResourceLines();
+        if (this.responseBody == null) {
+            responseBody = this.request.getResourceLines();
+        }
+        return this.responseBody;
     }
     
-    public int getStatusCode() {
+    public ReasonPhrase getStatusCode() {
         return this.request.getStatus();
     }
     
@@ -94,33 +55,26 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         StringBuilder header = new StringBuilder();
         header.append(this.request.getRequestVersion());
         header.append(" ");
-        header.append(this.getStatusCode());
-        header.append(" ");
-        header.append(ReasonPhrase.getReasonPhrase(this.request.getStatus()));
+        header.append(this.request.getStatus());
         return header.toString();
     }
     
     public void sendResponse(OutputStream clientOutput){
-        
-        try {
 
-            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(clientOutput));
-            PrintWriter writer = new PrintWriter(out, true);
-            writeResponseToClient(new PrintWriter(System.out));
-            writeResponseToClient(writer);
-            //The buffer needs to be closed.
-            if (out != null) {
-                try {
+        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(clientOutput));
+        PrintWriter writer = new PrintWriter(out, true);
+        writeResponseToClient(writer);
+        //The buffer needs to be closed.
+        if (out != null) {
+            try {
+              //if the connection sends the acknowledgment to close it, then close it
+              //usually with a file
+                if (!this.request.keepAlive()) {
                     out.close();
-                } catch (IOException ioe) {
-                    throw HttpErrorException.buildNewException(ioe);
                 }
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
             }
-        
-        } catch (HttpErrorException e) {
-            // TODO Auto-generated catch block
-            //Must SEND AN ERROR CODE TO THE CLIENT.
-            e.printStackTrace();
         }
     }
     
@@ -130,18 +84,41 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         writeBody(writer);
     }
     
-    private String[] getResponseHeaderVars() {
-        return new String[] {
-                "Date: " + new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(new Date()),
-                "Server: " + SERVER_NAME_VERSION,
-                "Content-Type: " + this.request.getContentType()
-        };
+    private long getRequestSize() {
+        long size = this.request.getRequestedResource().length();
+        if (this.request.getStatus().equals(ReasonPhrase.STATUS_200) 
+                && size == 0) {
+            //TODO: Decide if this was a request to a directory, Script or something else and create more holders
+            long nsize = 0;
+            for (String lines : this.getResponseBody()) {
+                nsize += lines.length();
+            }
+            return nsize;
+        } else {
+            return this.request.getRequestedResource().length();
+        }
     }
     
+    private Date getLastModified() {
+        if (this.request.getStatus().equals(ReasonPhrase.STATUS_200) 
+                && this.request.getRequestedResource().length() == 0) {
+            return new Date();
+        } else {
+            return new Date(this.request.getRequestedResource().lastModified());
+        }
+    }
+        
     private void writeHeader(PrintWriter writer) {
         writer.println(this.getResponseHeader());
         
-        for (String headerVar : this.getResponseHeaderVars()) {
+        String[] more = new String[] {
+                "Date: " + new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(new Date()),
+                "Server: " + SERVER_NAME_VERSION,
+                "Content-Type: " + this.request.getContentType(),
+                "Content-Length: " + this.getRequestSize(), 
+                "Last-Modified: " + new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(this.getLastModified())
+        };
+        for (String headerVar : more) {
             writer.println(headerVar);
         }
     }

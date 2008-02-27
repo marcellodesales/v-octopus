@@ -10,7 +10,6 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
  */
 public class AsciiContentResponseDecorator extends AbstractHttpResponse {
 
-
     public AsciiContentResponseDecorator(HttpRequest originatingRequest) {
         super(originatingRequest);
         // TODO Auto-generated constructor stub

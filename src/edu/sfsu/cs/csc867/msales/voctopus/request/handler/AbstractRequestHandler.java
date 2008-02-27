@@ -1,6 +1,9 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request.handler;
 
 import java.io.File;
+import java.net.URI;
+
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
 
 
 public abstract class AbstractRequestHandler implements HttpRequestHandler {
@@ -14,8 +17,7 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
      * The content type identified from the mime-types.
      */
     private String contentType;
-    
-    
+
     /**
      * Defines if the requested resource if binary or a text file.
      * @author marcello
@@ -30,22 +32,55 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
      */
     private RequestType requestType;
 
-    private String handlerFound;
+    /**
+     * The status as the result of the request processing
+     */
+    private ReasonPhrase status;
+
+    /**
+     * Original requested URI by the client.
+     */
+    private URI uri;
     
     /**
      * Constructs a new request handler.
-     * @param requestedFile the file requested 
+     * @param uri the uri requested by the client connection
+     * @param requestedFile the file on the time of the request. It can be the 404 file.
      * @param requestType the request type that was bound to the handler 
      * @param handlerFound the handler found on the configuration file.
      */
-    public AbstractRequestHandler(File requestedFile, RequestType requestType, String handlerFound) {
+    public AbstractRequestHandler(URI uri, File requestedFile, RequestType requestType, String handlerFound) {
         this.physicalFile = requestedFile;
         this.requestType = requestType;
-        this.handlerFound = handlerFound;
-        System.out.println("Selected handler: " + this);
-        System.out.println("File to be handled: " + requestedFile);
-        System.out.println("REquest type: " + requestType);
-        System.out.println("Handler found: " + this.handlerFound);
+        this.contentType = handlerFound;
+        this.uri = uri;
+//        System.out.println("Selected handler: " + this);
+//        System.out.println("File to be handled: " + requestedFile);
+//        System.out.println("REquest type: " + requestType);
+//        System.out.println("Handler found: " + this.handlerFound);
+    }
+    
+    /**
+     * @return if the requested resource exists.
+     *
+     */
+    public boolean requestedResourceExists() {
+        //TODO: It must handle CGI scripts, Web Services, Etc.
+        if (this instanceof DirectoryContentRequestHandlerStrategy 
+                || this instanceof ScriptRequestHandlerStrategy
+                || this instanceof UnknownContentRequestHandlerStrategy
+                || this instanceof WebServiceRequestHandlerStrategy) {
+            return true;
+        } else
+        if (this instanceof AsciiContentRequestHandlerStrategy
+                || this instanceof BinaryContentRequestHandlerStrategy) {
+            return this.physicalFile.exists();
+        } else return false;
+        
+    }
+    
+    public URI getRequestedResource() {
+        return this.uri;
     }
     
     /**
@@ -58,15 +93,15 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
     /* (non-Javadoc)
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getRequestedResource()
      */
-    public File getRequestedResource() {
+    public File getRequestedFile() {
         return this.physicalFile;
     }
     
     /* (non-Javadoc)
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getStatus()
      */
-    public int getStatus() {
-        return this.physicalFile.exists() ? 200 : 404;
+    public ReasonPhrase getStatus() {
+        return this.status;
     }
     
     /* (non-Javadoc)
@@ -81,6 +116,14 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
      */
     public boolean isRequestedResourceBinary() {
         return this.requestType.equals(RequestType.BINARY);
+    }
+    
+    
+    /* (non-Javadoc)
+     * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#setStatus(edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase)
+     */
+    public void setStatus(ReasonPhrase status) {
+        this.status = status;
     }
 }
 

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import edu.sfsu.cs.csc867.msales.voctopus.VOctopusConfigurationManager;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
 
 /**
  * This abstract factory is responsible for the construction of the handlers.
@@ -14,6 +15,7 @@ import edu.sfsu.cs.csc867.msales.voctopus.VOctopusConfigurationManager;
  */
 public class HttpRequestHandlerAbstractFactory {
     
+    private static final String TEXT_HTML = "text/html";
     /**
      * TheradLocal instance for this singleton.
      */
@@ -43,21 +45,34 @@ public class HttpRequestHandlerAbstractFactory {
      * @param dirFile is the directory file from the file system.
      * @return an instance for the Directory  content request.
      */
-    private HttpRequestHandler createDirectoryHandler(File dirFile) {
-        return new DirectoryContentRequestHandlerStrategy(dirFile, "directory listing");
+    private HttpRequestHandler createDirectoryHandler(URI uri, File dirFile) {
+        return requestedFileExistsWithStatus(ReasonPhrase.STATUS_200, 
+                new DirectoryContentRequestHandlerStrategy(uri, dirFile, TEXT_HTML));
+    }
+    
+    private HttpRequestHandler requestedFileExistsWithStatus(ReasonPhrase status, HttpRequestHandler handler) {
+        handler.setStatus(status);
+        return handler;
     }
     
     /**
      * Creates a handler for a request for a file from the file system.
+     * @param fileExists 
      * @param uri is the request identification of the request.
      * @param file is the file located on the file system.
      * @return The request handler for the file on the file system.
      */
-    private HttpRequestHandler createFileHandler(URI uri, File file) {
+    private HttpRequestHandler createFileHandler(boolean fileExists, URI uri, File file) {
         String path = file.getPath();
         String requestedExtension = path.substring(path.lastIndexOf(".") + 1);
         Map<String, String> mimes = VOctopusConfigurationManager.WebServerProperties.MIME_TYPES.getProperties();
         String cgiPath = VOctopusConfigurationManager.getDefaultCGIPath();
+     
+        if (!fileExists) {
+            return this.requestedFileExistsWithStatus(ReasonPhrase.STATUS_404, 
+                    new ScriptRequestHandlerStrategy(null, uri, file, TEXT_HTML));
+        }
+
         if (path.contains(cgiPath)) {
             //remove the ? question mark
             String params = uri.getQuery().substring(1);
@@ -67,11 +82,13 @@ public class HttpRequestHandlerAbstractFactory {
                 String[] varValue = cgiP.split("=");
                 cgiParams.put(varValue[0], varValue[1]);
             }
-            return new ScriptRequestHandlerStrategy(cgiParams, file, requestedExtension);
+            return this.requestedFileExistsWithStatus(ReasonPhrase.STATUS_200, 
+                    new ScriptRequestHandlerStrategy(cgiParams, uri, file, requestedExtension));
             
         } else 
         if (path.contains(VOctopusConfigurationManager.getDefaultWebservicesPath())) {
-            return new WebServiceRequestHandlerStrategy(file, requestedExtension);
+            return this.requestedFileExistsWithStatus(ReasonPhrase.STATUS_200,
+                    new WebServiceRequestHandlerStrategy(uri, file, requestedExtension));
         }
         
         String handlerFound = "";
@@ -82,16 +99,17 @@ public class HttpRequestHandlerAbstractFactory {
             for (String mimeExts : mimeValue.replace(",", "").split(" ")) {
                 if (mimeExts.equals(requestedExtension)) {
                     handlerFound = handlerType;
-                    System.out.println(handlerType+", "+mimeValue+" FOUND FOR "+requestedExtension);
                     break outer;
                 }
             }
         }
         
         if (handlerFound.contains("text/")) {
-            return new AsciiContentRequestHandlerStrategy(file, handlerFound);
+            return this.requestedFileExistsWithStatus(ReasonPhrase.STATUS_200,
+                    new AsciiContentRequestHandlerStrategy(uri, file, handlerFound));
         } else {
-            return new BinaryContentRequestHandlerStrategy(file, handlerFound);
+            return this.requestedFileExistsWithStatus(ReasonPhrase.STATUS_200,
+                    new BinaryContentRequestHandlerStrategy(uri, file, handlerFound));
         }
     }
 
@@ -104,24 +122,30 @@ public class HttpRequestHandlerAbstractFactory {
     public HttpRequestHandler createRequestHandler(URI uri, Map<String, String> headerVars) {
         String fileSystem = VOctopusConfigurationManager.getInstance().getDocumentRoot() + uri.getPath();
         File file = new File(fileSystem);
-        File dir = null;
         HttpRequestHandler handler = null;
+        
         if (file.isDirectory()) {
-            dir = file;
             file = new File(file.getAbsolutePath() + "/index.html");
             if (!file.exists()) {
                 file = new File(file.getAbsolutePath() + "/index.htm");
                 if (!file.exists()) {
-                    handler = createDirectoryHandler(dir);
+                    //in this case it is the directory
+                    handler = createDirectoryHandler(uri, new File(fileSystem));
                 } else {
-                    handler = createFileHandler(uri, file);
+                    handler = createFileHandler(true, uri, file);
                 }
             } else {
-                handler = createFileHandler(uri, file);
+                handler = createFileHandler(true, uri, file);
             }
             
         } else {
-            handler = createFileHandler(uri, file);
+            //File Not Found, then return an ascii handler.
+            if (!file.exists()) {
+                file = new File(VOctopusConfigurationManager.getInstance().getDocumentRoot() + "/404.html");
+                handler = createFileHandler(false, uri, file);
+            } else {
+                handler = createFileHandler(true, uri, file);
+            }
         }
         return handler;
     }

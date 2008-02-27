@@ -2,6 +2,7 @@ package edu.sfsu.cs.csc867.msales.voctopus.request.handler;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 
 
 /**
@@ -10,8 +11,8 @@ import java.io.IOException;
  */
 public class BinaryContentRequestHandlerStrategy extends AbstractRequestHandler {
 
-    public BinaryContentRequestHandlerStrategy(File requestedFile, String handlerFound) {
-        super(requestedFile, RequestType.BINARY, handlerFound);
+    public BinaryContentRequestHandlerStrategy(URI uri, File requestedFile, String handlerFound) {
+        super(uri, requestedFile, RequestType.BINARY, handlerFound);
         // TODO Auto-generated constructor stub
     }
 

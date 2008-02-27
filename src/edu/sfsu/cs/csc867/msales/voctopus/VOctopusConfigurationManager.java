@@ -266,4 +266,12 @@ public final class VOctopusConfigurationManager {
         }
         mimeReader.close();
     }
+
+    public String getServerVersion() {
+        return WebServerProperties.HTTPD_CONF.getPropertyValue("ServerName");
+    }
+
+    public String getServerPort() {
+        return WebServerProperties.HTTPD_CONF.getPropertyValue("Listen");
+    }
 }

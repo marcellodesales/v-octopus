@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
-
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
 /**
  * The abstract Http request holds all the information from the request.
  * 
@@ -74,7 +74,6 @@ public abstract class AbstractHttpRequest implements HttpRequest {
                 requestParameters.put(vV[0], vV[1]);
             };
         }
-
     }
     
     /* (non-Javadoc)
@@ -88,13 +87,13 @@ public abstract class AbstractHttpRequest implements HttpRequest {
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getRequestedResource()
      */
     public File getRequestedResource() {
-        return this.requestHandler.getRequestedResource();
+        return this.requestHandler.getRequestedFile();
     }
 
     /* (non-Javadoc)
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getStatus()
      */
-    public int getStatus() {
+    public ReasonPhrase getStatus() {
         return this.requestHandler.getStatus();
     }
     
@@ -148,5 +147,19 @@ public abstract class AbstractHttpRequest implements HttpRequest {
      */
     public Map<String, String> getRequestParameters() {
         return requestParameters;
+    }
+    
+    /* (non-Javadoc)
+     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#isRequestSuccessful()
+     */
+    public boolean isRequestSuccessful() {
+        return this.requestHandler.requestedResourceExists();
+    }
+    
+    /* (non-Javadoc)
+     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#keepAlive()
+     */
+    public boolean keepAlive() {
+        return false;
     }
 }

@@ -2,6 +2,7 @@ package edu.sfsu.cs.csc867.msales.voctopus.request.handler;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 
 /**
  * @author marcello
@@ -9,8 +10,8 @@ import java.io.IOException;
  */
 public class WebServiceRequestHandlerStrategy extends AbstractRequestHandler {
 
-    public WebServiceRequestHandlerStrategy(File requestedFile, String handlerFound) {
-        super(requestedFile, RequestType.ASCII, handlerFound);
+    public WebServiceRequestHandlerStrategy(URI uri, File requestedFile, String handlerFound) {
+        super(uri, requestedFile, RequestType.ASCII, handlerFound);
         // TODO Auto-generated constructor stub
     }
 

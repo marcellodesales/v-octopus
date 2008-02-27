@@ -1,5 +1,6 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request.validation;
 
+import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -150,7 +151,6 @@ public class HttpRequestInterpreterContext {
      * @return the resulting instance of the HttpRequest depending on the type of the request
      */
     public HttpRequest getParsedRequest(HttpRequestMethodExpression firstLineExpr, HttpRequestHeaderFieldVarExpression[] vars) {
-        
         return HttpRequestAbstractFactory.getInstance().createHttpRequest(firstLineExpr, vars);
     }
 
