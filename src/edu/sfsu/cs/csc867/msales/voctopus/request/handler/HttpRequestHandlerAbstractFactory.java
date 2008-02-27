@@ -104,6 +104,10 @@ public class HttpRequestHandlerAbstractFactory {
             }
         }
         
+        if (handlerFound.equals("")) {
+            return this.requestedFileExistsWithStatus(ReasonPhrase.STATUS_200,
+                    new UnknownContentRequestHandlerStrategy(uri, file));
+        } else
         if (handlerFound.contains("text/")) {
             return this.requestedFileExistsWithStatus(ReasonPhrase.STATUS_200,
                     new AsciiContentRequestHandlerStrategy(uri, file, handlerFound));
@@ -125,17 +129,22 @@ public class HttpRequestHandlerAbstractFactory {
         HttpRequestHandler handler = null;
         
         if (file.isDirectory()) {
-            file = new File(file.getAbsolutePath() + "/index.html");
-            if (!file.exists()) {
-                file = new File(file.getAbsolutePath() + "/index.htm");
+
+            boolean foundIndexFile = false;
+            String[] exts = VOctopusConfigurationManager.getInstance().getDirectoryIndexExtensions();
+            for (String dirExts : exts) {
+                file = new File(fileSystem + dirExts);
                 if (!file.exists()) {
-                    //in this case it is the directory
-                    handler = createDirectoryHandler(uri, new File(fileSystem));
+                    continue;
                 } else {
-                    handler = createFileHandler(true, uri, file);
+                    foundIndexFile = true;
+                    break;
                 }
-            } else {
+            }
+            if (foundIndexFile) {
                 handler = createFileHandler(true, uri, file);
+            } else {
+                handler = createDirectoryHandler(uri, new File(fileSystem));
             }
             
         } else {

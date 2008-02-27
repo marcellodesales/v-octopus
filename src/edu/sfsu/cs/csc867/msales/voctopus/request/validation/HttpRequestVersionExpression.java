@@ -1,7 +1,7 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request.validation;
 
 import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
-import static edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterContext.RequestVersion;
+import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterContext.RequestVersion;
 
 public class HttpRequestVersionExpression extends HttpRequestTerminalExpression {
     

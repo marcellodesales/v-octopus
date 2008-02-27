@@ -213,6 +213,13 @@ public final class VOctopusConfigurationManager {
                 configProperty = configProperty.replace("\"", "");
             }
             vals = configProperty.replace("$VOCTOPUS_SERVER_ROOT", serverRootPath).split(" ");
+            
+            if (vals[0].equals("DirectoryIndex")) {
+                WebServerProperties.HTTPD_CONF.getProperties().put(vals[0].trim(), 
+                        configProperty.replace("DirectoryIndex", "").trim());
+                continue;
+            } 
+            
             if (vals.length == 2) {
                 vals[1] = vals[1];
                 WebServerProperties.HTTPD_CONF.getProperties().put(vals[0].trim(), vals[1].trim());
@@ -268,15 +275,39 @@ public final class VOctopusConfigurationManager {
         mimeReader.close();
     }
 
+    /**
+     * @return returns the internal version number of the server.
+     */
     public String getServerVersion() {
         return VOCTOPUS_VERSION;
     }
     
+    /**
+     * @return the value of the variable 'ServerName' on the configuration file
+     */
     public String getServerName() {
         return WebServerProperties.HTTPD_CONF.getPropertyValue("ServerName");
     }
 
+    /**
+     * @return the value of the configuration variable 'Listen' on the httpd.conf
+     */
     public String getServerPort() {
         return WebServerProperties.HTTPD_CONF.getPropertyValue("Listen");
+    }
+    
+    /**
+     * @param fileExtension is the extention, like html, htm, etc.
+     * @return If a given fileExtention is one of the chosen to be the DirectoryIndex
+     */
+    public boolean isExtensionADirectoryIndex(String fileExtension) {
+        return WebServerProperties.HTTPD_CONF.getProperties().get("DirectoryIndex").contains(fileExtension);
+    }
+    
+    /**
+     * @return the list of extensions registered on the configuration file httpd.conf
+     */
+    public String[] getDirectoryIndexExtensions() {
+        return WebServerProperties.HTTPD_CONF.getProperties().get("DirectoryIndex").split(" ");
     }
 }

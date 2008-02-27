@@ -6,8 +6,8 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
 /**
  * The abstract Http request holds all the information from the request.
  * 
