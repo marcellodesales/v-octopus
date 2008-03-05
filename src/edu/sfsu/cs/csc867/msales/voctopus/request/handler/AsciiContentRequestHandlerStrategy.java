@@ -12,6 +12,8 @@ import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+
 
 public class AsciiContentRequestHandlerStrategy extends AbstractRequestHandler {
     
@@ -33,7 +35,14 @@ public class AsciiContentRequestHandlerStrategy extends AbstractRequestHandler {
             List<String> lines = new ArrayList<String>();
     
             StringBuilder builder = new StringBuilder();
-            for(int i=0, n=charBuffer.length (  ) ; i < n; i++ ) {
+            
+            //in case there's no response, the reason phase is 204
+            if (charBuffer.length() == 0) {
+                this.setStatus(ReasonPhrase.STATUS_204);
+                return new String[]{""};
+            } 
+            
+            for(int i = 0, n = charBuffer.length(); i < n; i++ ) {
     
                 char charValue = charBuffer.get(); 
                 if (charValue != '\n') {

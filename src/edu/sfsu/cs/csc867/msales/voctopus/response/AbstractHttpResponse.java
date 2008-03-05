@@ -113,10 +113,12 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         this.sendDefaultHeaders(writer);
         this.sendHeader(writer);
 
-        writer.print("\r\n");
-        writer.flush();
+        if (this.request.getStatus().equals(ReasonPhrase.STATUS_204)) {
+            writer.print("\r\n");
+            writer.flush();
 
-        this.sendBody(clientOutput, writer);
+            this.sendBody(clientOutput, writer);
+        }
 
         // The buffer needs to be closed.
         if (out != null) {
@@ -147,7 +149,12 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         StringBuilder header = new StringBuilder();
         header.append(this.request.getRequestVersion());
         header.append(" ");
-        header.append(this.request.getStatus());
+        long requestSize = this.getRequestSize();
+        if (requestSize == 0) {
+            header.append(ReasonPhrase.STATUS_204);
+        } else {
+            header.append(this.request.getStatus());
+        }
         this.responseHeader.add(header.toString());
         header.delete(0, header.length());
 
@@ -163,7 +170,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
 
         // header.append("Expires: ");
         // header.append(new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(new Date(2038,1,1)));
-        // this.responseHeader.add(header.toString());
+        // this.responseHeader.add(header.toString());ReasonPhrase.STATUS_204
         // header.delete(0, header.length());
 
         header.append("Server: ");
@@ -172,7 +179,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         header.delete(0, header.length());
 
         header.append("Content-Length: ");
-        header.append(this.getRequestSize());
+        header.append(requestSize);
         this.responseHeader.add(header.toString());
         header.delete(0, header.length());
     }
