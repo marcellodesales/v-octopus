@@ -16,63 +16,65 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpScriptRequest;
 
 /**
- * It has to conform to the following grammar
- *        Response   = Status-Line               ; Section 6.1
-                       *(( general-header        ; Section 4.5
-                        | response-header        ; Section 6.2
-                        | entity-header ) CRLF)  ; Section 7.1
-                       CRLF
-                       [ message-body ]          ; Section 7.2
- * @author marcello
- * Feb 18, 2008 7:21:12 PM
+ * It has to conform to the following grammar Response = Status-Line ; Section 6.1 (( general-header ; Section 4.5 |
+ * response-header ; Section 6.2 | entity-header ) CRLF) ; Section 7.1 CRLF [ message-body ] ; Section 7.2
+ * 
+ * @author marcello Feb 18, 2008 7:21:12 PM
  */
 public abstract class AbstractHttpResponse implements HttpResponse {
-    
+
     private HttpRequest request;
-    
+
     private String[] responseBody;
-    
+
     private List<String> responseHeader;
-    
+
     public AbstractHttpResponse(HttpRequest originatingRequest) {
         this.request = originatingRequest;
         this.responseHeader = new ArrayList<String>();
-        this.setDefaultHeaderValues();
         if (!this.request.getStatus().equals(ReasonPhrase.STATUS_404) && this.request instanceof HttpScriptRequest) {
             String[] responseBody = this.getResponseBody();
-            String contentType = responseBody[0];
-            if (!contentType.contains("Content-Type: ")) {
-                contentType = "Content-Type: text/plain";
-            } else {
-                //this time we remove the header from the response.
-                //also remove the blank line
-                this.responseBody = new String[responseBody.length - 2];
-                if (contentType.contains("text/")) {
-                    for (int i = 2; i < responseBody.length; i++) {
-                        this.responseBody[i-2] = responseBody[i];
+            if (!this.request.getStatus().equals(ReasonPhrase.STATUS_500)) {
+                String contentType = responseBody[0];
+                if (!contentType.contains("Content-Type: ")) {
+                    contentType = "Content-Type: text/plain";
+                } else {
+                    // this time we remove the header from the response.
+                    // also remove the blank line
+                    this.responseBody = new String[responseBody.length - 2];
+                    if (contentType.contains("text/")) {
+                        for (int i = 2; i < responseBody.length; i++) {
+                            this.responseBody[i - 2] = responseBody[i];
+                        }
                     }
                 }
-            }
-            this.responseHeader.add(contentType);
+                this.setDefaultHeaderValues();
+                this.responseHeader.add(contentType);
+            } // if it were 500 or 404, the body will be automatically be handled before by the handler.
+        } else {
+            this.setDefaultHeaderValues();
         }
     }
-    
+
     /**
      * @return the request associated with this response.
      */
     public HttpRequest getRequest() {
         return this.request;
     }
-    
+
     /**
      * Adds a new header line to the response header
+     * 
      * @param headerLine is the new response variable and value
      */
     public void addResponseHeaderVar(String headerLine) {
         this.responseHeader.add(headerLine);
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.response.HttpResponse#getResponseBody()
      */
     public String[] getResponseBody() {
@@ -81,22 +83,26 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         }
         return this.responseBody;
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.response.HttpResponse#getStatusCode()
      */
     public ReasonPhrase getStatusCode() {
         return this.request.getStatus();
     }
-    
-    /** 
+
+    /**
      * Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
      */
     public String[] getResponseHeader() {
         return this.responseHeader.toArray(new String[this.responseHeader.size()]);
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.response.HttpResponse#sendResponse(java.io.OutputStream)
      */
     public void sendResponse(OutputStream clientOutput) throws IOException {
@@ -106,25 +112,26 @@ public abstract class AbstractHttpResponse implements HttpResponse {
 
         this.sendDefaultHeaders(writer);
         this.sendHeader(writer);
-        
+
         writer.print("\r\n");
         writer.flush();
-        
+
         this.sendBody(clientOutput, writer);
-        
-            //The buffer needs to be closed.
+
+        // The buffer needs to be closed.
         if (out != null) {
-          //if the connection sends the acknowledgment to close it, then close it
-          //usually with a file
+            // if the connection sends the acknowledgment to close it, then close it
+            // usually with a file
             out.flush();
             if (!this.request.keepAlive()) {
                 out.close();
             }
         }
     }
-    
+
     /**
-     * Sends the default header values that are general to all the 
+     * Sends the default header values that are general to all the
+     * 
      * @param writer is the default writer from the output.
      */
     private void sendDefaultHeaders(PrintWriter writer) {
@@ -134,7 +141,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
     }
 
     /**
-     *Sets the default values for the header list 
+     * Sets the default values for the header list
      */
     private void setDefaultHeaderValues() {
         StringBuilder header = new StringBuilder();
@@ -143,40 +150,41 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         header.append(this.request.getStatus());
         this.responseHeader.add(header.toString());
         header.delete(0, header.length());
-        
+
         header.append("Date: ");
         header.append(LogFormats.HEADER_RESPONSE.format(new Date()));
         this.responseHeader.add(header.toString());
         header.delete(0, header.length());
-        
+
         header.append("Last-Modified: ");
         header.append(LogFormats.HEADER_RESPONSE.format(this.getLastModified()));
         this.responseHeader.add(header.toString());
         header.delete(0, header.length());
 
-        //header.append("Expires: ");
-        //header.append(new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(new Date(2038,1,1)));
-        //this.responseHeader.add(header.toString());
-        //header.delete(0, header.length());
+        // header.append("Expires: ");
+        // header.append(new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(new Date(2038,1,1)));
+        // this.responseHeader.add(header.toString());
+        // header.delete(0, header.length());
 
         header.append("Server: ");
         header.append(VOctopusConfigurationManager.getInstance().getServerVersion());
         this.responseHeader.add(header.toString());
         header.delete(0, header.length());
 
-        
         header.append("Content-Length: ");
         header.append(this.getRequestSize());
         this.responseHeader.add(header.toString());
         header.delete(0, header.length());
     }
-    
+
     /**
      * @return the size of the request
      */
     public long getRequestSize() {
-        if (this.request.getStatus().equals(ReasonPhrase.STATUS_200) && !this.request.getRequestedResource().isFile()) {
-            //TODO: Decide if this was a request to a directory, Script or something else and create more holders
+        if (this.request.getStatus().equals(ReasonPhrase.STATUS_200)
+                || this.request.getStatus().equals(ReasonPhrase.STATUS_500)
+                && !this.request.getRequestedResource().isFile()) {
+            // TODO: Decide if this was a request to a directory, Script or something else and create more holders
             long nsize = 0;
             for (String lines : this.getResponseBody()) {
                 nsize += lines.length();
@@ -186,12 +194,13 @@ public abstract class AbstractHttpResponse implements HttpResponse {
             return this.request.getRequestedResource().length();
         }
     }
-    
+
     /**
      * @return The modified status for the response.
      */
     public Date getLastModified() {
-        if (this.request.getStatus().equals(ReasonPhrase.STATUS_200) 
+        if (this.request.getStatus().equals(ReasonPhrase.STATUS_200)
+                || this.request.getStatus().equals(ReasonPhrase.STATUS_500)
                 && !this.request.getRequestedResource().isFile()) {
             return new Date();
         } else {

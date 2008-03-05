@@ -6,6 +6,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.sfsu.cs.csc867.msales.voctopus.VOctopusConfigurationManager;
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
 /**
@@ -88,6 +89,9 @@ public abstract class AbstractHttpRequest implements HttpRequest {
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getRequestedResource()
      */
     public File getRequestedResource() {
+        if (this.getStatus().equals(ReasonPhrase.STATUS_500)) {
+            return VOctopusConfigurationManager.get500ErrorFile();
+        }
         return this.requestHandler.getRequestedFile();
     }
 
@@ -124,6 +128,9 @@ public abstract class AbstractHttpRequest implements HttpRequest {
         return this.methodType.toString();
     }
 
+    /* (non-Javadoc)
+     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getUri()
+     */
     public URI getUri() {
         return uri;
     }

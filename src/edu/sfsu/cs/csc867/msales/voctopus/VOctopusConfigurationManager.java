@@ -60,7 +60,7 @@ public final class VOctopusConfigurationManager {
     /**
      * The root directory for the server.
      */
-    private String serverRootPath;
+    private static String serverRootPath;
     
     /**
      * It is the alias reserved for the execution of cgi-bin scripts (python, perl, ruby...)
@@ -161,7 +161,7 @@ public final class VOctopusConfigurationManager {
          * @return the complete file path for the configuration file.
          */
         public String getFilePath() {
-            return VOctopusConfigurationManager.getInstance().serverRootPath + this.fileName;
+            return VOctopusConfigurationManager.serverRootPath + this.fileName;
         }
     }
 
@@ -232,11 +232,11 @@ public final class VOctopusConfigurationManager {
      * @param serverRootPath is the complete path to the webserver root folder.
      * @throws IOException in case an error occurs or if the configuration file does not exist.
      */
-    public void setServerRootPath(String serverRootPath) throws IOException {
+    public void setServerRootPath(String serverRootPathFromEnv) throws IOException {
 
-        File configFile = new File(serverRootPath + "/conf/httpd.conf");
+        File configFile = new File(serverRootPathFromEnv + "/conf/httpd.conf");
         BufferedReader configReader = new BufferedReader(new FileReader(configFile));
-        this.serverRootPath = serverRootPath;
+        serverRootPath = serverRootPathFromEnv;
         String configProperty = null;
         String[] vals;
         while ((configProperty = configReader.readLine()) != null) {
@@ -271,7 +271,6 @@ public final class VOctopusConfigurationManager {
         }
         configReader.close();
         this.setMimeTypes(serverRootPath);
-        this.serverRootPath = serverRootPath;
     }
 
     /**
@@ -349,5 +348,19 @@ public final class VOctopusConfigurationManager {
      */
     public String[] getDirectoryIndexExtensions() {
         return WebServerProperties.HTTPD_CONF.getProperties().get("DirectoryIndex").split(" ");
+    }
+
+    /**
+     * @return The file representation for the 404 file
+     */
+    public static File get404ErrorFile() {
+        return new File(serverRootPath + WebServerProperties.ALIAS.getPropertyValue("404"));
+    }
+    
+    /**
+     * @return The file representation for the 500 file
+     */
+    public static File get500ErrorFile() {
+        return new File(serverRootPath + WebServerProperties.ALIAS.getPropertyValue("500"));
     }
 }

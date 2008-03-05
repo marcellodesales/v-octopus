@@ -173,7 +173,7 @@ public class HttpRequestHandlerAbstractFactory {
     }
 
     public HttpRequestHandler getFileNotFoundHander(URI uri) {
-        File file = new File(VOctopusConfigurationManager.getInstance().getServerRootPath() + "/errors/404.html");
+        File file = VOctopusConfigurationManager.get404ErrorFile();
         return this.requestedFileExistsWithStatus(ReasonPhrase.STATUS_404, new ScriptRequestHandlerStrategy(null, uri,
                 file, TEXT_HTML));
     }

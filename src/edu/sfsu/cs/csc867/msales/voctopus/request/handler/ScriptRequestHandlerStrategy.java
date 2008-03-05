@@ -51,7 +51,7 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
      * @return the list of the lines from the process response.
      * @throws IOException if any problem reading from the process occurs.
      */
-    private String[] getCgiExecutionResponse(String[] cgiArguments) throws IOException {
+    private String[] getCgiExecutionResponse(String[] cgiArguments) throws CgiExecutionException, IOException {
         
         List<String> processArgs = new ArrayList<String>();
         String path = this.getRequestedResource().getPath();
@@ -77,73 +77,73 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
             e.printStackTrace();
         }
         
-        if (scriptResult == 0) {
-            reader = new InputStreamReader(process.getInputStream());
-            this.setStatus(ReasonPhrase.STATUS_200);
-        } else {
+        this.setStatus(ReasonPhrase.STATUS_200);
+        if (scriptResult == 1) {
             reader = new InputStreamReader(process.getErrorStream());
             //this.setStatus(ReasonPhrase.STATUS_501);
             //Treat is as if it was success, and get the response from the execution.
             if (Boolean.valueOf(VOctopusConfigurationManager.WebServerProperties.
                     HTTPD_CONF.getPropertyValue("FAIL_SCRIPT_ON_ERROR"))) {
                 this.setStatus(ReasonPhrase.STATUS_500);
-            } else {
-                this.setStatus(ReasonPhrase.STATUS_200);
+                
+                BufferedReader buffer = new BufferedReader(reader);
+                String line;
+                StringBuilder builder = new StringBuilder();
+                while ((line = buffer.readLine()) != null) {
+                    builder.append(line + "\n\r");
+                }
+                throw new CgiExecutionException(builder.toString());
             }
+        } else {
+            reader = new InputStreamReader(process.getInputStream());
         }
-        BufferedReader buffer = new BufferedReader(reader);
-        String line;
-        while ((line = buffer.readLine()) != null) {
-            lines.add(line);
+        if (this.getStatus().equals(ReasonPhrase.STATUS_200)) {
+            BufferedReader buffer = new BufferedReader(reader);
+            String line;
+            while ((line = buffer.readLine()) != null) {
+                lines.add(line);
+            }
+            
+            return lines.toArray(new String[lines.size()]);
+        } else {
+            //never returned... just to make it compile...
+            return null;
         }
-        
-        return lines.toArray(new String[lines.size()]);
     }
     
     public String[] getResourceLines() throws IOException {
         
         System.out.println("handling the requested resource " + this.getRequestedResource().getPath());
+
+        FileChannel channel = new FileInputStream(this.getRequestedFile()).getChannel();
+        MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, this.getRequestedFile().length());
+        
+        Charset charset = Charset.forName("ISO-8859-1"); 
+        CharsetDecoder decoder = charset.newDecoder();
+        List<String> lines = new ArrayList<String>();
+
+        StringBuilder builder = new StringBuilder();
+
         if (this.wasA404Rquest()) {
             System.out.println("Request Not Found: handler chose " + this.getRequestedFile().getPath());
-            FileChannel channel = new FileInputStream(this.getRequestedFile()).getChannel();
-            MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, this.getRequestedFile().length());
-            
-            Charset charset = Charset.forName("ISO-8859-1"); 
-            CharsetDecoder decoder = charset.newDecoder();
-            CharBuffer charBuffer = decoder.decode(buffer); 
-            List<String> lines = new ArrayList<String>();
-    
-            StringBuilder builder = new StringBuilder();
-            
-            if (this.getStatus().equals(ReasonPhrase.STATUS_404)) {
-
-                //FILE NOT FOUND EXECUTION
-                for(int i = 0, n=charBuffer.length () ; i < n; i++ ) {
-                    
-                    char charValue = charBuffer.get(); 
-                    if (charValue != '\n') {
-                        builder.append(charValue);
-                    } else {
-                        lines.add(builder.toString().replace("$REQUESTED_RESOURCE", 
-                                this.getRequestedResource().getPath()));
-                        builder.delete(0, builder.capacity());
-                    }
-                }
+            channel = new FileInputStream(this.getRequestedFile()).getChannel();
+            buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, this.getRequestedFile().length());
+            CharBuffer charBuffer = decoder.decode(buffer);
+            //FILE NOT FOUND EXECUTION
+            for(int i = 0, n=charBuffer.length () ; i < n; i++ ) {
                 
-            } else {
-
-                for(int i = 0, n = charBuffer.length() ; i < n; i++ ) {
-                    
-                    char charValue = charBuffer.get(); 
-                    if (charValue != '\n') {
-                        builder.append(charValue);
-                    } else {
-                        lines.add(builder.toString());
-                        builder.delete(0, builder.capacity());
-                    }
+                char charValue = charBuffer.get(); 
+                if (charValue != '\n') {
+                    builder.append(charValue);
+                } else {
+                    lines.add(builder.toString().replace("$REQUESTED_RESOURCE", 
+                            this.getRequestedResource().getPath()));
+                    builder.delete(0, builder.capacity());
                 }
             }
+                
             return lines.toArray(new String[lines.size()]);
+
         } else
         if (this.getRequestedResource().getPath().contains("cgi-bin")) {
             
@@ -155,7 +155,32 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
                     args[++i] = arg + "=" + this.requestParameters.get(arg); 
                 }
             } 
-            return this.getCgiExecutionResponse(args);
+            try {
+                return this.getCgiExecutionResponse(args);
+            } catch (CgiExecutionException e) {
+                
+                File error500 = VOctopusConfigurationManager.get500ErrorFile();
+                
+                System.out.println("Request generated a 500: handler chose " + error500.getPath());
+                channel = new FileInputStream(error500).getChannel();
+                buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, error500.length());
+                CharBuffer charBuffer = decoder.decode(buffer);
+                //FILE NOT FOUND EXECUTION
+                for(int i = 0, n=charBuffer.length () ; i < n; i++ ) {
+                    
+                    char charValue = charBuffer.get(); 
+                    if (charValue != '\n') {
+                        builder.append(charValue);
+                    } else {
+                        String complete = builder.toString();
+                        complete = complete.replace("$REQUESTED_RESOURCE", this.getRequestedResource().getPath());
+                        complete = complete.replace("$REASON", e.getMessage());
+                        lines.add(complete);
+                        builder.delete(0, builder.capacity());
+                    }
+                }
+                return lines.toArray(new String[lines.size()]);
+            }
             
         } else {
             return new String[]{""};
