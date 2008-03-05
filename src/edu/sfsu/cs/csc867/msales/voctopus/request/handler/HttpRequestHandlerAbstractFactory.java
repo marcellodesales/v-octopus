@@ -75,12 +75,16 @@ public class HttpRequestHandlerAbstractFactory {
 
         if (path.contains(cgiPath)) {
             //remove the ? question mark
-            String params = uri.getQuery().substring(1);
-            String[] paramVals = params.split("&");
-            Map<String, String> cgiParams = new HashMap<String, String>(paramVals.length);
-            for (String cgiP : paramVals) {
-                String[] varValue = cgiP.split("=");
-                cgiParams.put(varValue[0], varValue[1]);
+            String params = null;
+            Map<String, String> cgiParams = null;
+            if (uri.getQuery() != null) {
+                params = uri.getQuery();
+                String[] paramVals = params.split("&");
+                cgiParams = new HashMap<String, String>(paramVals.length);
+                for (String cgiP : paramVals) {
+                    String[] varValue = cgiP.split("=");
+                    cgiParams.put(varValue[0], varValue[1]);
+                }
             }
             return this.requestedFileExistsWithStatus(ReasonPhrase.STATUS_200, 
                     new ScriptRequestHandlerStrategy(cgiParams, uri, file, requestedExtension));
@@ -149,8 +153,14 @@ public class HttpRequestHandlerAbstractFactory {
             
         } else {
             //File Not Found, then return an ascii handler.
+            if (uri.getPath().contains("/cgi-bin/")) {
+                String scriptPath = uri.getPath().substring(uri.getPath().indexOf("/cgi-bin/") + "/cgi-bin/".length());
+                scriptPath = VOctopusConfigurationManager.WebServerProperties.ALIAS.getProperties().get("/" + scriptPath + "/");
+                file = new File(scriptPath);
+            }
+            
             if (!file.exists()) {
-                file = new File(VOctopusConfigurationManager.getInstance().getDocumentRoot() + "/404.html");
+                file = new File(VOctopusConfigurationManager.getInstance().getDocumentRoot() + "/errors/404.html");
                 handler = createFileHandler(false, uri, file);
             } else {
                 handler = createFileHandler(true, uri, file);

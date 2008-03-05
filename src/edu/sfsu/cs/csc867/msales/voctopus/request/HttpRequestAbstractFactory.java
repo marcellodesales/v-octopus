@@ -46,7 +46,7 @@ public class HttpRequestAbstractFactory {
         HttpRequestInterpreterContext context = firstLineExpr.getContext();
         switch (firstLineExpr.getContext().getRequestType()) {
         case STATIC_CONTENT:
-            req = new HttpContentRequest(context.getRequestMethod().toString(), context.getUri(), 
+            req = new HttpStaticRequest(context.getRequestMethod().toString(), context.getUri(), 
                     context.getRequestVersion().toString(), context.getRequestHeaderVars());
             break;
         case SCRIPT_EXECUTION:

@@ -16,17 +16,18 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
 public abstract class AbstractHttpRequest implements HttpRequest {
 
     /**
+     * This is the request method tokens constants accepted by the server
      * @author marcello
-     * Feb 20, 2008 2:58:12 PM
+     * Feb 8, 2008 6:57:32 PM
      */
-    private enum RequestType {
-        GET, PUT, DELETE;
+    public static enum RequestMethodType {
+        GET, HEAD, POST, PUT, NOT_SUPPORTED
     }
 
     /**
      * The method type of the request.
      */
-    private RequestType methodType;
+    private RequestMethodType methodType;
     /**
      * This is the version used on the request.
      */
@@ -59,7 +60,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
      */
     public AbstractHttpRequest(String methodType, URI uri, String version, Map<String, String> headerVars, 
             HttpRequestHandler requestHandler) {
-        this.methodType = RequestType.valueOf(methodType.toUpperCase());
+        this.methodType = RequestMethodType.valueOf(methodType.toUpperCase());
         this.uri = uri;
         this.version = version;
         this.headerVars = headerVars;

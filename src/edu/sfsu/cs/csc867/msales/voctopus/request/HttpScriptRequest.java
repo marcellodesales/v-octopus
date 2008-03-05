@@ -16,9 +16,4 @@ public class HttpScriptRequest extends AbstractHttpRequest {
         super(methodType, uri, version, headerVars, 
                 HttpRequestHandlerAbstractFactory.getInstance().createRequestHandler(uri, headerVars));
     }
-
-    public String[] getResourceLines() {
-        // TODO Auto-generated method stub
-        return null;
-    }
 }

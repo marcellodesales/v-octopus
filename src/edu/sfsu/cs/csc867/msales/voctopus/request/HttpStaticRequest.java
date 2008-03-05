@@ -9,7 +9,7 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandlerAbst
  * @author marcello
  * Feb 16, 2008 11:02:44 AM
  */
-public class HttpContentRequest extends AbstractHttpRequest {
+public class HttpStaticRequest extends AbstractHttpRequest {
 
     /**
      * Creates a new HttpContent handler
@@ -18,7 +18,7 @@ public class HttpContentRequest extends AbstractHttpRequest {
      * @param version
      * @param headerVars
      */
-    public HttpContentRequest(String methodType, URI uri, String version, Map<String, String> headerVars) {
+    public HttpStaticRequest(String methodType, URI uri, String version, Map<String, String> headerVars) {
         super(methodType, uri, version, headerVars, 
          HttpRequestHandlerAbstractFactory.getInstance().createRequestHandler(uri, headerVars));
     }

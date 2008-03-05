@@ -24,7 +24,7 @@ public class AsciiContentRequestHandlerStrategy extends AbstractRequestHandler {
         
         if (this.requestedResourceExists()) {
             System.out.println("serving the file " + this.getRequestedFile());
-            FileChannel channel=new FileInputStream(this.getRequestedFile()).getChannel();
+            FileChannel channel = new FileInputStream(this.getRequestedFile()).getChannel();
             MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, this.getRequestedFile().length());
             
             Charset charset = Charset.forName ( "ISO-8859-1" ) ; 

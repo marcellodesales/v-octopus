@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -17,7 +19,19 @@ import java.util.Map;
  */
 public final class VOctopusConfigurationManager {
 
-    private static final String VOCTOPUS_VERSION = "vOctopus 0.2";
+    private static final String VOCTOPUS_VERSION = "vOctopus/0.2.2";
+    
+    public static enum LogFormats {
+        HEADER_RESPONSE {
+            public String toString() {
+                return "EEE, MMM d yyyy HH:mm:ss z";
+            };
+        };
+        
+        public String format(Date date) {
+            return (new SimpleDateFormat(this.toString()).format(date)).toString();
+        }
+    }
 
     /**
      * TheradLocal instance for this singleton.
@@ -173,6 +187,25 @@ public final class VOctopusConfigurationManager {
     }
     
     /**
+     * Finds the executor command for a given fileExtension
+     * @param fileExtension is the extension requested
+     * @return the executor command on the file system for the execution of a given Scripting language.
+     */
+    public static String getExecutor(String fileExtension) {
+        // TODO Get value from configuration file
+        if (fileExtension.equals(".py")) {
+            return "python";
+        } else
+        if (fileExtension.equals(".pl")) {
+            return "perl";
+        } else
+        if (fileExtension.equals(".rb")) {
+            return "ruby";
+        }
+        return null;
+    }
+    
+    /**
      * @return The directory file where CGI scripts must be located based on the script alias configuration.
      */
     public static File getCGIServerPath() {
@@ -207,7 +240,7 @@ public final class VOctopusConfigurationManager {
         String configProperty = null;
         String[] vals;
         while ((configProperty = configReader.readLine()) != null) {
-            if (configProperty.charAt(0) == '#' || configProperty.equals("")) {
+            if (configProperty.equals("") || configProperty.charAt(0) == '#') {
                 continue;
             } else if (configProperty.contains("\"")) {
                 configProperty = configProperty.replace("\"", "");
@@ -233,7 +266,7 @@ public final class VOctopusConfigurationManager {
                     wsAlias[0] = vals[1];
                     wsAlias[1] = vals[2];
                 } 
-                WebServerProperties.ALIAS.getProperties().put(vals[0].trim(), vals[1].trim());
+                WebServerProperties.ALIAS.getProperties().put(vals[1].trim(), vals[2].trim());
             }
         }
         configReader.close();
@@ -295,7 +328,14 @@ public final class VOctopusConfigurationManager {
     public String getServerPort() {
         return WebServerProperties.HTTPD_CONF.getPropertyValue("Listen");
     }
-    
+
+    /**
+     * @return the value of the configuration variable 'Listen' on the httpd.conf
+     */
+    public File getAccessLogFile() {
+        return new File(WebServerProperties.HTTPD_CONF.getPropertyValue("CustomLog"));
+    }
+
     /**
      * @param fileExtension is the extention, like html, htm, etc.
      * @return If a given fileExtention is one of the chosen to be the DirectoryIndex

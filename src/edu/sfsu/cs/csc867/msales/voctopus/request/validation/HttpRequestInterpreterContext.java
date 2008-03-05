@@ -8,6 +8,7 @@ import java.util.Map;
 import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequestAbstractFactory;
+import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
 
 /**
  * The context of the Interpretation of the HttpRequest is the list of lines sent by the client during an HTTP request
@@ -38,19 +39,11 @@ public class HttpRequestInterpreterContext {
      * The content type of the execution. It defines the type of Content Handler to be used.
      */
     public RequestType requestType;
-    
-    /**
-     * This is the request method tokens constants accepted by the server
-     * @author marcello
-     * Feb 8, 2008 6:57:32 PM
-     */
-    public static enum RequestMethod {
-        GET, HEAD, POST, PUT
-    }    
+        
     /**
      * The request method used on the request method.
      */
-    private RequestMethod requestMethod;
+    private RequestMethodType requestMethod;
 
     /**
      * The versions of the HTTP protocol that are accepted
@@ -157,7 +150,7 @@ public class HttpRequestInterpreterContext {
      * Sets the Method type of the request. 
      * @param methodType
      */
-    public void setMethodType(RequestMethod methodType) {
+    public void setMethodType(RequestMethodType methodType) {
         this.requestMethod = methodType;
     }
 
@@ -191,7 +184,7 @@ public class HttpRequestInterpreterContext {
         }
     }
 
-    public RequestMethod getRequestMethod() {
+    public RequestMethodType getRequestMethod() {
         return requestMethod;
     }
 

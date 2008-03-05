@@ -111,7 +111,7 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
             line = line.replace("$LISTING_LINES", listingsBuilder.toString());
             line = line.replace("$SERVERNAME_DOMAIN_PORT_INFO", nameDomainPort);
             
-            return line.split("\n");
+            return line.split("\n\r");
         } else {
             return new String[]{""};
         }

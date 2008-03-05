@@ -1,8 +1,10 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request.handler;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
@@ -13,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import edu.sfsu.cs.csc867.msales.voctopus.VOctopusConfigurationManager;
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
 
 public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
@@ -29,16 +32,98 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
         //to get the type from the execution from the script.
     }
     
+    /**
+     * Builds a ProcessBuilder with the based on the arguments
+     * @param arguments is the O.S. arguments (program plus arguments) 
+     * @return a new ProcessBuilder with the correct information with updated environment variables
+     */
+    private ProcessBuilder buildProcess(String ... arguments) {
+        ProcessBuilder pb = new ProcessBuilder(arguments);
+//        if (this.requestParameters != null) {
+//            pb.environment().putAll(this.requestParameters);
+//        }
+        //TODO: Set the correct values of the environment based on the server. Check the correct ones...
+        return pb;
+    }
+
+    /**
+     * @param cgiArguments the arguments sent on the URI, that is, the query string
+     * @return the list of the lines from the process response.
+     * @throws IOException if any problem reading from the process occurs.
+     */
+    private String[] getCgiExecutionResponse(String[] cgiArguments) throws IOException {
+        
+        List<String> processArgs = new ArrayList<String>();
+        String path = this.getRequestedResource().getPath();
+        String fileExtention = path.substring(path.lastIndexOf("."));
+        
+        processArgs.add(VOctopusConfigurationManager.getExecutor(fileExtention));
+        processArgs.add(this.getRequestedFile().getAbsolutePath());
+
+        if (cgiArguments != null) {
+            for(String arg : cgiArguments) {
+                processArgs.add(arg);
+            }
+        }
+        Process process = this.buildProcess((String[])processArgs.toArray(new String[processArgs.size()])).start();
+        
+        List<String> lines = new ArrayList<String>();
+        InputStreamReader reader;
+        
+        int scriptResult = -1;
+        try {
+            scriptResult = process.waitFor();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+        if (scriptResult == 0) {
+            reader = new InputStreamReader(process.getInputStream());
+            this.setStatus(ReasonPhrase.STATUS_200);
+        } else {
+            reader = new InputStreamReader(process.getErrorStream());
+            //this.setStatus(ReasonPhrase.STATUS_501);
+            //Treat is as if it was success, and get the response from the execution.
+            if (Boolean.valueOf(VOctopusConfigurationManager.WebServerProperties.
+                    HTTPD_CONF.getPropertyValue("FAIL_SCRIPT_ON_ERROR"))) {
+                this.setStatus(ReasonPhrase.STATUS_500);
+            } else {
+                this.setStatus(ReasonPhrase.STATUS_200);
+            }
+        }
+        BufferedReader buffer = new BufferedReader(reader);
+        String line;
+        while ((line = buffer.readLine()) != null) {
+            lines.add(line);
+        }
+        
+        return lines.toArray(new String[lines.size()]);
+    }
+    
     public String[] getResourceLines() throws IOException {
         
-        if (this.requestedResourceExists()) {
+        if (this.getRequestedResource().getPath().contains("cgi-bin")) {
+            
+            String[] args = null;
+            if (this.requestParameters != null) {
+                args = new String[this.requestParameters.size()];
+                int i = -1;
+                for(String arg : this.requestParameters.keySet()) {
+                    args[++i] = arg + "=" + this.requestParameters.get(arg); 
+                }
+            } 
+            return this.getCgiExecutionResponse(args);
+            
+        } else
+        
+        if (this.wasA404Rquest() && this.requestedResourceExists()) {
             System.out.println("serving the file " + this.getRequestedFile());
-            FileChannel channel=new FileInputStream(this.getRequestedFile()).getChannel();
+            FileChannel channel = new FileInputStream(this.getRequestedFile()).getChannel();
             MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, this.getRequestedFile().length());
             
-            Charset charset = Charset.forName ( "ISO-8859-1" ) ; 
-            CharsetDecoder decoder = charset.newDecoder (  ) ; 
-            CharBuffer charBuffer = decoder.decode ( buffer ) ; 
+            Charset charset = Charset.forName("ISO-8859-1"); 
+            CharsetDecoder decoder = charset.newDecoder();
+            CharBuffer charBuffer = decoder.decode(buffer); 
             List<String> lines = new ArrayList<String>();
     
             StringBuilder builder = new StringBuilder();
@@ -46,7 +131,7 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
             if (this.getStatus().equals(ReasonPhrase.STATUS_404)) {
 
                 //IMPLEMENT STRATEGIES ON HOW TO ITERATE OVER THE FILES
-                for(int i=0, n=charBuffer.length (  ) ; i < n; i++ ) {
+                for(int i = 0, n=charBuffer.length () ; i < n; i++ ) {
                     
                     char charValue = charBuffer.get(); 
                     if (charValue != '\n') {
@@ -60,7 +145,7 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
                 
             } else {
 
-                for(int i=0, n=charBuffer.length (  ) ; i < n; i++ ) {
+                for(int i = 0, n = charBuffer.length() ; i < n; i++ ) {
                     
                     char charValue = charBuffer.get(); 
                     if (charValue != '\n') {
@@ -70,12 +155,15 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
                         builder.delete(0, builder.capacity());
                     }
                 }
-
             }
-                        
             return lines.toArray(new String[lines.size()]);
         } else {
             return new String[]{""};
         }
+    }
+
+    private boolean wasA404Rquest() {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

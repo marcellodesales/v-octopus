@@ -34,6 +34,16 @@ public final class RequestResponseMediator {
     /**
      * This represents the phases of the request/response. 
      * More information about it at http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
+     * 
+     *  The first digit of the Status-Code defines the class of response. The last two digits do not 
+     *  have any categorization role. There are 5 values for the first digit:
+     *  <BR>
+     * <li>1xx: Informational - Request received, continuing process
+     * <li>2xx: Success - The action was successfully received, understood, and accepted
+     * <li>3xx: Redirection - Further action must be taken in order to complete the request
+     * <li>4xx: Client Error - The request contains bad syntax or cannot be fulfilled
+     * <li>5xx: Server Error - The server failed to fulfill an apparently valid request
+     * 
      * @author marcello
      * Feb 26, 2008 12:05:05 PM
      */
@@ -60,7 +70,22 @@ public final class RequestResponseMediator {
         STATUS_403("Forbidden"),
         STATUS_404("Not Found"),
         STATUS_405("Method Not Allowed"),
-        STATUS_406("Not Acceptable");
+        STATUS_406("Not Acceptable"),
+        STATUS_407("Proxy Authentication Required"),
+        STATUS_408("Request Time-out"),
+        STATUS_409("Conflict"),
+        STATUS_410("Gone"),
+        STATUS_411("Length Required"),
+        STATUS_412("Precondition Failed"),
+        STATUS_413("Request Entity Too Large"),
+        STATUS_414("Request-URI Too Large"),
+        STATUS_415("Unsupported Media Type"),
+        STATUS_500("Internal Server Error"),
+        STATUS_501("Not Implemented"),
+        STATUS_502("Bad Gateway"),
+        STATUS_503("Service Unavailable"),
+        STATUS_504("Gateway Time-out"),
+        STATUS_505("HTTP Version not supported");
 
         /**
          * The title of each error message
@@ -106,7 +131,7 @@ public final class RequestResponseMediator {
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
-
+        System.out.println("Processing request for " + this.request.getUri());
         this.response = HttpResponseAbstractFactory.getInstance().createNewHttpResponse(this.request);
     }
 
@@ -128,7 +153,11 @@ public final class RequestResponseMediator {
      * Signals the response to be sent to the client.
      */
     public void sendResponse() {
-        this.response.sendResponse(this.clientConnection.getOutputStream());
+        try {
+            this.response.sendResponse(this.clientConnection.getOutputStream());
+        } catch (IOException e) {
+            // TODO LOG THIS INFORMATION.
+            e.printStackTrace();
+        }
     }
-
 }

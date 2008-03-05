@@ -51,20 +51,14 @@ public class HttpClientConnection {
             }
             requestLines.add(requestLine);
         }
-        //inMsg.close();
         return requestLines.toArray(new String[lines.size()]);
     }
     
     /**
-     * @return the output stream from the connection.
+     * @return the output stream from the connection. 
      * @throws IOException if any problem occurs getting the output stream.
      */
-    public OutputStream getOutputStream() {
-        try {
-            return this.clientConnection.getOutputStream();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
+    public OutputStream getOutputStream() throws IOException {
+        return this.clientConnection.getOutputStream();
     }
 }

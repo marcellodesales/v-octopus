@@ -1,6 +1,8 @@
 package edu.sfsu.cs.csc867.msales.voctopus.response;
 
+import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
 
@@ -11,7 +13,10 @@ import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
 public interface HttpResponse {
 
     public String[] getResponseBody();
-    public String getResponseHeader();
+    public String[] getResponseHeader();
     public ReasonPhrase getStatusCode();
-    public void sendResponse(OutputStream outputStream);
+    public void sendResponse(OutputStream outputStream) throws IOException;
+    
+    public void sendBody(OutputStream outputStream, PrintWriter writer) throws IOException;
+    public void sendHeader(PrintWriter writer) throws IOException;
 }

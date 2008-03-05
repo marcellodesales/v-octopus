@@ -17,7 +17,6 @@ public class BinaryContentRequestHandlerStrategy extends AbstractRequestHandler 
     }
 
     public String[] getResourceLines() throws IOException {
-        // TODO Auto-generated method stub
         return null;
     }
 
