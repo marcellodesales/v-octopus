@@ -102,22 +102,9 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
     
     public String[] getResourceLines() throws IOException {
         
-        if (this.getRequestedResource().getPath().contains("cgi-bin")) {
-            
-            String[] args = null;
-            if (this.requestParameters != null) {
-                args = new String[this.requestParameters.size()];
-                int i = -1;
-                for(String arg : this.requestParameters.keySet()) {
-                    args[++i] = arg + "=" + this.requestParameters.get(arg); 
-                }
-            } 
-            return this.getCgiExecutionResponse(args);
-            
-        } else
-        
-        if (this.wasA404Rquest() && this.requestedResourceExists()) {
-            System.out.println("serving the file " + this.getRequestedFile());
+        System.out.println("handling the requested resource " + this.getRequestedResource().getPath());
+        if (this.wasA404Rquest()) {
+            System.out.println("Request Not Found: handler chose " + this.getRequestedFile().getPath());
             FileChannel channel = new FileInputStream(this.getRequestedFile()).getChannel();
             MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, this.getRequestedFile().length());
             
@@ -130,7 +117,7 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
             
             if (this.getStatus().equals(ReasonPhrase.STATUS_404)) {
 
-                //IMPLEMENT STRATEGIES ON HOW TO ITERATE OVER THE FILES
+                //FILE NOT FOUND EXECUTION
                 for(int i = 0, n=charBuffer.length () ; i < n; i++ ) {
                     
                     char charValue = charBuffer.get(); 
@@ -157,13 +144,28 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
                 }
             }
             return lines.toArray(new String[lines.size()]);
+        } else
+        if (this.getRequestedResource().getPath().contains("cgi-bin")) {
+            
+            String[] args = null;
+            if (this.requestParameters != null) {
+                args = new String[this.requestParameters.size()];
+                int i = -1;
+                for(String arg : this.requestParameters.keySet()) {
+                    args[++i] = arg + "=" + this.requestParameters.get(arg); 
+                }
+            } 
+            return this.getCgiExecutionResponse(args);
+            
         } else {
             return new String[]{""};
         }
     }
 
+    /**
+     * @return Verifies if the request status has a value of {@link ReasonPhrase#STATUS_404}
+     */
     private boolean wasA404Rquest() {
-        // TODO Auto-generated method stub
-        return false;
+        return this.getStatus().equals(ReasonPhrase.STATUS_404);
     }
 }

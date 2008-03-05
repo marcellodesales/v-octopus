@@ -38,7 +38,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         this.request = originatingRequest;
         this.responseHeader = new ArrayList<String>();
         this.setDefaultHeaderValues();
-        if (this.request instanceof HttpScriptRequest) {
+        if (!this.request.getStatus().equals(ReasonPhrase.STATUS_404) && this.request instanceof HttpScriptRequest) {
             String[] responseBody = this.getResponseBody();
             String contentType = responseBody[0];
             if (!contentType.contains("Content-Type: ")) {
