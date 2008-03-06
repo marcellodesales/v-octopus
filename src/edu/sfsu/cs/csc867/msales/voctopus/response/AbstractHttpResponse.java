@@ -14,6 +14,7 @@ import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
 import edu.sfsu.cs.csc867.msales.voctopus.VOctopusConfigurationManager.LogFormats;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpScriptRequest;
+import edu.sfsu.cs.csc867.msales.voctopus.request.HttpStaticRequest;
 
 /**
  * It has to conform to the following grammar Response = Status-Line ; Section 6.1 (( general-header ; Section 4.5 |
@@ -50,9 +51,18 @@ public abstract class AbstractHttpResponse implements HttpResponse {
                 }
                 this.setDefaultHeaderValues();
                 this.responseHeader.add(contentType);
-            } // if it were 500 or 404, the body will be automatically be handled before by the handler.
-        } else {
+            } else {
+                //500 content type
+                // if it were 500 or 404, the body will be automatically be handled before by the handler.
+                this.setDefaultHeaderValues();
+                this.responseHeader.add("Content-Type: text/html");
+            }
+            
+        } else { //anything else
             this.setDefaultHeaderValues();
+            if (!this.request.getStatus().equals(ReasonPhrase.STATUS_204)) {
+                this.responseHeader.add("Content-Type: " + this.getRequest().getContentType());
+            }
         }
     }
 
@@ -113,7 +123,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         this.sendDefaultHeaders(writer);
         this.sendHeader(writer);
 
-        if (this.request.getStatus().equals(ReasonPhrase.STATUS_204)) {
+        if (!this.request.getStatus().equals(ReasonPhrase.STATUS_204)) {
             writer.print("\r\n");
             writer.flush();
 

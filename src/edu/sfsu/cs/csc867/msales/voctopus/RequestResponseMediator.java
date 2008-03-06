@@ -34,6 +34,7 @@ public final class RequestResponseMediator {
     /**
      * This represents the phases of the request/response. 
      * More information about it at http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
+     * Compact infor about each of them http://256.com/gray/docs/http_codes.html
      * 
      *  The first digit of the Status-Code defines the class of response. The last two digits do not 
      *  have any categorization role. There are 5 values for the first digit:
@@ -50,10 +51,21 @@ public final class RequestResponseMediator {
     public static enum ReasonPhrase {
         STATUS_100("Continue"),
         STATUS_101("Switching Protocols"),
+        /**
+         * The request has been fulfilled and an entity corresponding to the requested resource is being sent 
+         * in the response. If the HEAD method was used, the response should only contain the Entity-Header 
+         * information and no Entity-Body.
+         */
         STATUS_200("OK"),
         STATUS_201("Created"),
         STATUS_202("Accepted"),
         STATUS_203("Non-Authoritative Information"),
+        /**
+         * The server has fulfilled the request but there is no new information to send back. If the client is a 
+         * user agent, it should not change its document view. This response is primarily intended to allow input 
+         * for scripts or other actions to take place without causing a change to the user agent's current document 
+         * view.
+         */
         STATUS_204("No Content"),
         STATUS_205("Reset Content"),
         STATUS_206("Partial Content"),
