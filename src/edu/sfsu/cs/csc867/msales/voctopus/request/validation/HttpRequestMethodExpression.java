@@ -21,7 +21,7 @@ public class HttpRequestMethodExpression extends HttpRequestNonTerminalExpressio
 
     @Override
     protected void validate() throws HttpRequestInterpreterException {
-        RequestMethodType method = RequestMethodType.valueOf(this.getEvaluatedToken());
+        RequestMethodType method = RequestMethodType.valueOf(this.getEvaluatedToken().toUpperCase());
         if (method == null) {
             this.getContext().setMethodType(RequestMethodType.NOT_SUPPORTED);
         } else {

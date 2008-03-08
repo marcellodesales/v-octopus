@@ -4,6 +4,7 @@ import java.io.File;
 import java.net.URI;
 
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
 
 /**
  * @author marcello
@@ -21,4 +22,6 @@ public interface HttpRequest {
     public boolean isResourceBinary();
     public boolean isRequestSuccessful();
     public boolean keepAlive();
+    public String[] getRequestHeaders();
+    public HttpRequestHandler getRequestHandler();
 }

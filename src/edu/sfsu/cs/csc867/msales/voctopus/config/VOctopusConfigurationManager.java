@@ -1,13 +1,15 @@
-package edu.sfsu.cs.csc867.msales.voctopus;
+package edu.sfsu.cs.csc867.msales.voctopus.config;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,7 +24,7 @@ public final class VOctopusConfigurationManager {
     private static final String VOCTOPUS_VERSION = "vOctopus/0.2.2";
     
     public static enum LogFormats {
-        HEADER_RESPONSE {
+        HEADER_DATE_TIME {
             public String toString() {
                 return "EEE, MMM d yyyy HH:mm:ss z";
             };
@@ -69,6 +71,8 @@ public final class VOctopusConfigurationManager {
 
     private static String[] wsAlias = new String[2];
 
+    private static List<DirectoryConfigHandler> protectedDirs = new ArrayList<DirectoryConfigHandler>();
+    
     /**
      * All the Properties from the server.
      * 
@@ -187,22 +191,14 @@ public final class VOctopusConfigurationManager {
     }
     
     /**
-     * Finds the executor command for a given fileExtension
+     * Finds the executor command for a given fileExtension. 
+     * <li>Used for all the Alias and Script Alias
+     * <li>Used for CgiHander, inverting the extension as the key for script name.
      * @param fileExtension is the extension requested
      * @return the executor command on the file system for the execution of a given Scripting language.
      */
     public static String getExecutor(String fileExtension) {
-        // TODO Get value from configuration file
-        if (fileExtension.equals(".py")) {
-            return "python";
-        } else
-        if (fileExtension.equals(".pl")) {
-            return "perl";
-        } else
-        if (fileExtension.equals(".rb")) {
-            return "ruby";
-        }
-        return null;
+        return WebServerProperties.ALIAS.getPropertyValue(fileExtension);
     }
     
     /**
@@ -239,13 +235,52 @@ public final class VOctopusConfigurationManager {
         serverRootPath = serverRootPathFromEnv;
         String configProperty = null;
         String[] vals;
+        boolean readingDirectoryBlock = false;
+        List<String> directoryVars = new ArrayList<String>();
         while ((configProperty = configReader.readLine()) != null) {
-            if (configProperty.equals("") || configProperty.charAt(0) == '#') {
+            if (configProperty.equals("") || configProperty.trim().equals("") || configProperty.charAt(0) == '#') {
                 continue;
-            } else if (configProperty.contains("\"")) {
-                configProperty = configProperty.replace("\"", "");
             }
-            vals = configProperty.replace("$VOCTOPUS_SERVER_ROOT", serverRootPath).split(" ");
+            
+            configProperty = configProperty.replace("$VOCTOPUS_SERVER_ROOT", serverRootPath).replace("\"", "").trim();
+            if (configProperty.contains("</Directory>")) {
+                
+                if (readingDirectoryBlock) {
+                    readingDirectoryBlock = false;
+                    
+                    protectedDirs.add(new DirectoryConfigHandler(directoryVars.toArray(new String[directoryVars.size()])));
+                    directoryVars.clear();
+                } 
+                continue;
+                
+            } else 
+            if (readingDirectoryBlock) {
+                directoryVars.add(configProperty);
+                continue;
+            } else 
+            if (configProperty.startsWith("<Directory ") && !readingDirectoryBlock) {
+                
+                if (configProperty.trim().toLowerCase().equals("<directory ")) {
+                    String path = configProperty.toLowerCase().substring("<Directory ".length(), 
+                            configProperty.length() - 1).trim();
+                    
+                    if (!path.contains(VOctopusConfigurationManager.getInstance().getDocumentRoot())) {
+                        path = VOctopusConfigurationManager.getInstance().getDocumentRoot() + path;
+                    }
+                    File theFile = new File(path);
+                    
+                    for (DirectoryConfigHandler dir : protectedDirs) {
+                        if (theFile.exists() && !theFile.equals(dir.getProtectedDirectory())) {
+                            readingDirectoryBlock = true;
+                            directoryVars.add(configProperty);
+                        }
+                    }
+                }
+                
+                continue;
+            }
+            
+            vals = configProperty.split(" ");
             
             if (vals[0].equals("DirectoryIndex")) {
                 WebServerProperties.HTTPD_CONF.getProperties().put(vals[0].trim(), 
@@ -265,7 +300,12 @@ public final class VOctopusConfigurationManager {
                 if (vals[0].equals("WebServices")) {
                     wsAlias[0] = vals[1];
                     wsAlias[1] = vals[2];
-                } 
+                } else 
+                if (vals[0].equals("CgiHandler")) {
+                    vals[0] = vals[2];
+                    vals[2] = vals[1];
+                    vals[1] = vals[0];
+                }
                 WebServerProperties.ALIAS.getProperties().put(vals[1].trim(), vals[2].trim());
             }
         }

@@ -1,6 +1,10 @@
 package edu.sfsu.cs.csc867.msales.voctopus.response;
 
+import java.io.IOException;
+
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.ScriptRequestHandlerStrategy;
 
 /**
  * @author marcello

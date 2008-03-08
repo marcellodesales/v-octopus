@@ -73,6 +73,13 @@ public final class RequestResponseMediator {
         STATUS_301("Moved Permanently"),
         STATUS_302("Found"),
         STATUS_303("See Other"),
+        /**
+         * If the client has performed a conditional GET request and access is allowed, but the document has not been 
+         * modified since the date and time specified in the If-Modified-Since field, the server shall respond with 
+         * this status code and not send an Entity-Body to the client. Header fields contained in the response should 
+         * only include information which is relevant to cache managers and which may have changed independently of 
+         * the entity's Last-Modified date. Examples of relevant header fields include: Date, Server, and Expires. 
+         */
         STATUS_304("Not Modified"),
         STATUS_305("Use Proxy"),
         STATUS_307("Temporary Redirect"),
@@ -80,7 +87,18 @@ public final class RequestResponseMediator {
         STATUS_401("Unauthorized"),
         STATUS_402("Payment Required"),
         STATUS_403("Forbidden"),
+        /**
+         * The server has not found anything matching the Request-URI. No indication is given of whether the 
+         * condition is temporary or permanent. If the server does not wish to make this information available to the 
+         * client, the status code "403 Forbidden" can be used instead. The "410 Gone" status code should be used 
+         * if the server knows (through some internally configurable method) that an old resource is permanently 
+         * unavailable and has no forwarding address.
+         */
         STATUS_404("Not Found"),
+        /**
+         * The method specified in the Request-Line is not allowed for the resource identified by the Request-URI. 
+         * The response must include an Allow header containing a list of valid method's for the requested resource.
+         */
         STATUS_405("Method Not Allowed"),
         STATUS_406("Not Acceptable"),
         STATUS_407("Proxy Authentication Required"),
@@ -92,11 +110,17 @@ public final class RequestResponseMediator {
         STATUS_413("Request Entity Too Large"),
         STATUS_414("Request-URI Too Large"),
         STATUS_415("Unsupported Media Type"),
+        /**
+         * The server encountered an unexpected condition which prevented it from fulfilling the request.
+         */
         STATUS_500("Internal Server Error"),
         STATUS_501("Not Implemented"),
         STATUS_502("Bad Gateway"),
         STATUS_503("Service Unavailable"),
         STATUS_504("Gateway Time-out"),
+        /**
+         * 
+         */
         STATUS_505("HTTP Version not supported");
 
         /**

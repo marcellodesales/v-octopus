@@ -1,5 +1,6 @@
 package edu.sfsu.cs.csc867.msales.voctopus.response;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 
@@ -25,12 +26,7 @@ public class AsciiContentResponseDecorator extends AbstractHttpResponse {
         } 
     }
 
-    /* (non-Javadoc)
-     * @see edu.sfsu.cs.csc867.msales.voctopus.response.HttpResponse#sendHeader(java.io.PrintWriter)
-     */
-    public void sendHeader(PrintWriter writer) {
-        for (String headerVar : this.getResponseHeader()) {
-            writer.println(headerVar);
-        }
+    public void sendHeader(PrintWriter writer) throws IOException {
+        //All the default are on the abstract
     }
 }

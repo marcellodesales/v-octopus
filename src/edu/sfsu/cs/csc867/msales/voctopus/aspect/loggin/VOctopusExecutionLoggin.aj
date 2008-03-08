@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.File;
 import java.io.FileWriter;
 
-import edu.sfsu.cs.csc867.msales.voctopus.VOctopusConfigurationManager;
 
 import java.net.Socket;
 import java.util.logging.Logger;
@@ -13,6 +12,7 @@ import java.util.logging.Level;
 import org.aspectj.lang.Signature;
 
 import edu.sfsu.cs.csc867.msales.voctopus.HttpClientConnection;
+import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
 
 /**
  * Aspect responsible for the loggin of the entire application.

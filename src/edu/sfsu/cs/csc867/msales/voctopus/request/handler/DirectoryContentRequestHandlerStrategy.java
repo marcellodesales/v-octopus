@@ -7,7 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.sfsu.cs.csc867.msales.voctopus.VOctopusConfigurationManager;
+import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
 
 /**
  * Lists a given directory's files in the system.
@@ -101,7 +101,7 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
         }
         
         if (this.requestedResourceExists()) {
-            System.out.println("serving the directory " + this.getRequestedFile().getParent());
+            System.out.println("serving the directory " + this.getRequestedFile());
 
             String nameDomainPort = VOctopusConfigurationManager.getInstance().getServerVersion() +" Server at "
                         + VOctopusConfigurationManager.getInstance().getServerName() + " Port " + 

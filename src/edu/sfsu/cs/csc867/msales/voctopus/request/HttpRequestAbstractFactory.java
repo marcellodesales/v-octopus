@@ -1,5 +1,6 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request;
 
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestHeaderFieldVarExpression;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterContext;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestMethodExpression;
@@ -44,6 +45,7 @@ public class HttpRequestAbstractFactory {
 
         HttpRequest req = null;
         HttpRequestInterpreterContext context = firstLineExpr.getContext();
+
         switch (firstLineExpr.getContext().getRequestType()) {
         case STATIC_CONTENT:
             req = new HttpStaticRequest(context.getRequestMethod().toString(), context.getUri(), 

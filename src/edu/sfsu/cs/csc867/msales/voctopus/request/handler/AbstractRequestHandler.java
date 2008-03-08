@@ -16,7 +16,7 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
     /**
      * The content type identified from the mime-types.
      */
-    private String contentType;
+    protected String contentType;
 
     /**
      * Defines if the requested resource if binary or a text file.
@@ -24,18 +24,18 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
      * Feb 24, 2008 2:28:24 PM
      */
     public enum RequestType {
-        ASCII, BINARY;
+        ASCII, BINARY, CACHED;
     }
     
     /**
      * The type of the request, depending on the mime types
      */
-    private RequestType requestType;
+    protected RequestType requestType;
 
     /**
      * The status as the result of the request processing
      */
-    private ReasonPhrase status;
+    protected ReasonPhrase status;
 
     /**
      * Original requested URI by the client.
@@ -49,11 +49,14 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
      * @param requestType the request type that was bound to the handler 
      * @param handlerFound the handler found on the configuration file.
      */
-    public AbstractRequestHandler(URI uri, File requestedFile, RequestType requestType, String handlerFound) {
+    public AbstractRequestHandler(URI uri, File requestedFile, RequestType requestType, String contentType) {
         this.physicalFile = requestedFile;
         this.requestType = requestType;
-        this.contentType = handlerFound;
+        this.contentType = contentType;
         this.uri = uri;
+        if (requestedFile == null) {
+            this.status = ReasonPhrase.STATUS_204;
+        }
 //        System.out.println("Selected handler: " + this);
 //        System.out.println("File to be handled: " + requestedFile);
 //        System.out.println("REquest type: " + requestType);

@@ -1,14 +1,13 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.sfsu.cs.csc867.msales.voctopus.VOctopusConfigurationManager;
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandlerAbstractFactory;
 /**
  * The abstract Http request holds all the information from the request.
  * 
@@ -24,7 +23,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     public static enum RequestMethodType {
         GET, HEAD, POST, PUT, NOT_SUPPORTED
     }
-
+    
     /**
      * The method type of the request.
      */
@@ -49,7 +48,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     /**
      * The handler is based on the type of handler.
      */
-    private HttpRequestHandler requestHandler;
+    protected HttpRequestHandler requestHandler;
 
     /**
      * Constructs the abstract request based on the method type, uri, version, header variables and the handler
@@ -57,16 +56,13 @@ public abstract class AbstractHttpRequest implements HttpRequest {
      * @param uri
      * @param version
      * @param headerVars
-     * @param requestHandler
      */
-    public AbstractHttpRequest(String methodType, URI uri, String version, Map<String, String> headerVars, 
-            HttpRequestHandler requestHandler) {
+    public AbstractHttpRequest(String methodType, URI uri, String version, Map<String, String> headerVars) {
         this.methodType = RequestMethodType.valueOf(methodType.toUpperCase());
         this.uri = uri;
         this.version = version;
         this.headerVars = headerVars;
-        this.requestHandler = requestHandler;
-
+        
         if (this.uri.getQuery() != null && !this.uri.getQuery().equals("")) {
             String[] varsAndValues = this.uri.getQuery().split("&");
             this.requestParameters = new HashMap<String, String>(varsAndValues.length);
@@ -76,6 +72,8 @@ public abstract class AbstractHttpRequest implements HttpRequest {
                 requestParameters.put(vV[0], vV[1]);
             };
         }
+        
+        this.requestHandler = HttpRequestHandlerAbstractFactory.getInstance().createRequestHandler(this);
     }
     
     /* (non-Javadoc)
@@ -83,16 +81,6 @@ public abstract class AbstractHttpRequest implements HttpRequest {
      */
     public boolean isResourceBinary() {
         return this.requestHandler.isRequestedResourceBinary();
-    }
-
-    /* (non-Javadoc)
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getRequestedResource()
-     */
-    public File getRequestedResource() {
-        if (this.getStatus().equals(ReasonPhrase.STATUS_500)) {
-            return VOctopusConfigurationManager.get500ErrorFile();
-        }
-        return this.requestHandler.getRequestedFile();
     }
 
     /* (non-Javadoc)
@@ -141,13 +129,13 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     public String getRequestVersion() {
         return version;
     }
-
+    
     /**
-     * The header vars from the http request.
-     * @return
+     * @param headerVar is one of the variables that come on the header from a request
+     * @return the value of a given header variable
      */
-    public Map<String, String> getHeaderVars() {
-        return headerVars;
+    public String getHeaderValue(String headerVar) {
+        return this.headerVars.get(headerVar);
     }
 
     /**
@@ -169,5 +157,21 @@ public abstract class AbstractHttpRequest implements HttpRequest {
      */
     public boolean keepAlive() {
         return false;
+    }
+    
+    /* (non-Javadoc)
+     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getRequestHeaders()
+     */
+    public String[] getRequestHeaders() {
+        String[] headers = new String[this.headerVars.size()];
+        int i = -1;
+        for (String key : this.headerVars.keySet()) {
+            headers[++i] = key + ": " + this.headerVars.get(key);
+        }
+        return headers;
+    }
+
+    public HttpRequestHandler getRequestHandler() {
+        return requestHandler;
     }
 }

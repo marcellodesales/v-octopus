@@ -1,5 +1,6 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request;
 
+import java.io.File;
 import java.net.URI;
 import java.util.Map;
 
@@ -11,14 +12,15 @@ import java.util.Map;
 public class HttpWebServiceRequest extends AbstractHttpRequest {
 
     public HttpWebServiceRequest(String methodType, URI uri, String version, Map<String, String> headerVars) {
-        super(methodType, uri, version, headerVars, null);
+        super(methodType, uri, version, headerVars);
         // TODO Auto-generated constructor stub
     }
-
-    public String[] getResourceLines() {
-        // TODO Auto-generated method stub
+    
+    /* (non-Javadoc)
+     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getRequestedResource()
+     */
+    public File getRequestedResource() {
         return null;
     }
-
 
 }

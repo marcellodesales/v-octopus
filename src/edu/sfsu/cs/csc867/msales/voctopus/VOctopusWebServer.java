@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import edu.sfsu.cs.csc867.msales.httpd.HttpErrorException;
 import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
+import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
 
 /**
  * The VoctopusWebServer is the main class from the server. It spawns the threads of the clients on the pool and keeps
@@ -42,10 +43,11 @@ public class VOctopusWebServer {
             System.out.println("############### ERROR INITIALIZING VOCTOPUS WEB SERVER ####################");
             System.out.println("# CAUSE: Your environment var 'VOCTOPUS_SERVER_ROOT' is set to: '" + 
                     VOCTOPUS_SERVER_ROOT + "' However, I coundn't find the needed configuration files there...");
-            e.printStackTrace();
+            System.out.println("# MESSAGE: " + e.getMessage());
             System.out.println("# SOLUTION: ");
             System.out.println("#   * Add the complete deployment of the server on this directory;");
-            System.out.println("#   * Change the environment variable the place where I can find the configuration files");
+            System.out.println("#   * Change the environment variable the place where I can find the configuration files;");
+            System.out.println("#   * A directory block may contain the path for a non-existing file.");
             System.out.println("###########################################################################");
             System.exit(0);
             // TODO: LOGGIN NEEDED

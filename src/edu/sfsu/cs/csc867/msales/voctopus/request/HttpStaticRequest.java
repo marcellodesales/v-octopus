@@ -1,9 +1,8 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request;
 
+import java.io.File;
 import java.net.URI;
 import java.util.Map;
-
-import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandlerAbstractFactory;
 
 /**
  * @author marcello
@@ -19,7 +18,14 @@ public class HttpStaticRequest extends AbstractHttpRequest {
      * @param headerVars
      */
     public HttpStaticRequest(String methodType, URI uri, String version, Map<String, String> headerVars) {
-        super(methodType, uri, version, headerVars, 
-         HttpRequestHandlerAbstractFactory.getInstance().createRequestHandler(uri, headerVars));
+        super(methodType, uri, version, headerVars);
     }
+    
+    /* (non-Javadoc)
+     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getRequestedResource()
+     */
+    public File getRequestedResource() {
+        return this.requestHandler.getRequestedFile();
+    }
+
 }

@@ -6,8 +6,8 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Date;
 
-import edu.sfsu.cs.csc867.msales.voctopus.VOctopusConfigurationManager;
-import edu.sfsu.cs.csc867.msales.voctopus.VOctopusConfigurationManager.LogFormats;
+import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
+import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager.LogFormats;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 
 
@@ -24,19 +24,19 @@ public class BinaryContentResponseDecorator extends AbstractHttpResponse {
     }
 
     public void sendHeader(PrintWriter writer) {
-        writer.println(this.getResponseHeader());
-        
-        String[] more = new String[] {
-                "Content-Type: " + this.getRequest().getContentType(),
-                "Last-Modified: " + LogFormats.HEADER_RESPONSE.format(this.getLastModified()),
-               // "Expires: " + new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(new Date(2038,1,1)),
-                "Server: " + VOctopusConfigurationManager.getInstance().getServerVersion(),
-                "Content-Length: " + this.getRequestSize(),
-                "Date: " + LogFormats.HEADER_RESPONSE.format(new Date())
-        };
-        for (String headerVar : more) {
-            writer.println(headerVar);
-        }
+//        writer.println(this.getResponseHeader());
+//        
+//        String[] more = new String[] {
+//           "Content-Type: " + this.getRequest().getContentType(),
+//           "Last-Modified: " + LogFormats.HEADER_DATE_TIME.format(this.getLastModified(this.getRequest().getStatus())),
+//           "Expires: " + new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(new Date(2038,1,1)),
+//                "Server: " + VOctopusConfigurationManager.getInstance().getServerVersion(),
+//                "Content-Length: " + this.getRequestSize(),
+//                "Date: " + LogFormats.HEADER_DATE_TIME.format(new Date())
+//        };
+//        for (String headerVar : more) {
+//            writer.println(headerVar);
+//        }
     }
     
     public void sendBody(OutputStream outputStream, PrintWriter writer) throws IOException {

@@ -6,15 +6,20 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
-import edu.sfsu.cs.csc867.msales.voctopus.VOctopusConfigurationManager;
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
-import edu.sfsu.cs.csc867.msales.voctopus.VOctopusConfigurationManager.LogFormats;
+import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
+import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager.LogFormats;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpScriptRequest;
-import edu.sfsu.cs.csc867.msales.voctopus.request.HttpStaticRequest;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.DirectoryContentRequestHandlerStrategy;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.ScriptRequestHandlerStrategy;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.WebServiceRequestHandlerStrategy;
 
 /**
  * It has to conform to the following grammar Response = Status-Line ; Section 6.1 (( general-header ; Section 4.5 |
@@ -33,9 +38,10 @@ public abstract class AbstractHttpResponse implements HttpResponse {
     public AbstractHttpResponse(HttpRequest originatingRequest) {
         this.request = originatingRequest;
         this.responseHeader = new ArrayList<String>();
-        if (!this.request.getStatus().equals(ReasonPhrase.STATUS_404) && this.request instanceof HttpScriptRequest) {
+        ReasonPhrase status = this.request.getStatus();
+        if (!status.equals(ReasonPhrase.STATUS_404) && this.request instanceof HttpScriptRequest) {
             String[] responseBody = this.getResponseBody();
-            if (!this.request.getStatus().equals(ReasonPhrase.STATUS_500)) {
+            if (!status.equals(ReasonPhrase.STATUS_500)) {
                 String contentType = responseBody[0];
                 if (!contentType.contains("Content-Type: ")) {
                     contentType = "Content-Type: text/plain";
@@ -60,7 +66,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
             
         } else { //anything else
             this.setDefaultHeaderValues();
-            if (!this.request.getStatus().equals(ReasonPhrase.STATUS_204)) {
+            if (requestMustIncludeBody(status)) {
                 this.responseHeader.add("Content-Type: " + this.getRequest().getContentType());
             }
         }
@@ -123,22 +129,28 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         this.sendDefaultHeaders(writer);
         this.sendHeader(writer);
 
-        if (!this.request.getStatus().equals(ReasonPhrase.STATUS_204)) {
+        if (requestMustIncludeBody(this.request.getStatus())) {
             writer.print("\r\n");
             writer.flush();
 
             this.sendBody(clientOutput, writer);
         }
 
-        // The buffer needs to be closed.
-        if (out != null) {
+        out.flush();
+        writer.close();
             // if the connection sends the acknowledgment to close it, then close it
             // usually with a file
-            out.flush();
-            if (!this.request.keepAlive()) {
-                out.close();
-            }
+        if (!this.request.keepAlive()) {
+            out.close();
         }
+    }
+
+    /**
+     * @param status is the status from the request.
+     * @return if the result must include a body.
+     */
+    private boolean requestMustIncludeBody(ReasonPhrase status) {
+        return !(status.equals(ReasonPhrase.STATUS_204) || (status.equals(ReasonPhrase.STATUS_304))); 
     }
 
     /**
@@ -159,66 +171,74 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         StringBuilder header = new StringBuilder();
         header.append(this.request.getRequestVersion());
         header.append(" ");
-        long requestSize = this.getRequestSize();
-        if (requestSize == 0) {
-            header.append(ReasonPhrase.STATUS_204);
-        } else {
-            header.append(this.request.getStatus());
+        ReasonPhrase status = this.request.getStatus();
+        header.append(status);
+        this.responseHeader.add(header.toString());
+        
+        if (!status.equals(ReasonPhrase.STATUS_304)) {
+            header.delete(0, header.length());
+            header.append("Date: ");
+            Calendar cal = GregorianCalendar.getInstance();
+            Date today = cal.getTime();
+            header.append(LogFormats.HEADER_DATE_TIME.format(today));
+            this.responseHeader.add(header.toString());
+            header.delete(0, header.length());
+
+            header.append("Last-Modified: ");
+            header.append(LogFormats.HEADER_DATE_TIME.format(this.getLastModified(status)));
+            this.responseHeader.add(header.toString());
+            header.delete(0, header.length());
+
+            if (!(this.request.getRequestHandler() instanceof DirectoryContentRequestHandlerStrategy 
+                     || this.request.getRequestHandler() instanceof ScriptRequestHandlerStrategy)) {
+                cal.add(Calendar.YEAR, 1);
+                Date expires = cal.getTime();
+                header.append("Expires: ");
+                header.append(LogFormats.HEADER_DATE_TIME.format(expires));
+                this.responseHeader.add(header.toString());
+                header.delete(0, header.length());
+            }
+            
+            header.append("Server: ");
+            header.append(VOctopusConfigurationManager.getInstance().getServerVersion());
+            this.responseHeader.add(header.toString());
+            header.delete(0, header.length());
+
+            header.append("Content-Length: ");
+            header.append(this.getRequestSize());
+            this.responseHeader.add(header.toString());
+            header.delete(0, header.length());
         }
-        this.responseHeader.add(header.toString());
-        header.delete(0, header.length());
-
-        header.append("Date: ");
-        header.append(LogFormats.HEADER_RESPONSE.format(new Date()));
-        this.responseHeader.add(header.toString());
-        header.delete(0, header.length());
-
-        header.append("Last-Modified: ");
-        header.append(LogFormats.HEADER_RESPONSE.format(this.getLastModified()));
-        this.responseHeader.add(header.toString());
-        header.delete(0, header.length());
-
-        // header.append("Expires: ");
-        // header.append(new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(new Date(2038,1,1)));
-        // this.responseHeader.add(header.toString());ReasonPhrase.STATUS_204
-        // header.delete(0, header.length());
-
-        header.append("Server: ");
-        header.append(VOctopusConfigurationManager.getInstance().getServerVersion());
-        this.responseHeader.add(header.toString());
-        header.delete(0, header.length());
-
-        header.append("Content-Length: ");
-        header.append(requestSize);
-        this.responseHeader.add(header.toString());
-        header.delete(0, header.length());
     }
 
     /**
      * @return the size of the request
      */
     public long getRequestSize() {
-        if (this.request.getStatus().equals(ReasonPhrase.STATUS_200)
-                || this.request.getStatus().equals(ReasonPhrase.STATUS_500)
-                && !this.request.getRequestedResource().isFile()) {
+        HttpRequestHandler handler = this.request.getRequestHandler();
+        if ((handler instanceof ScriptRequestHandlerStrategy && !handler.isRequestedResourceBinary())
+                || handler instanceof DirectoryContentRequestHandlerStrategy 
+                || handler instanceof WebServiceRequestHandlerStrategy) {
             // TODO: Decide if this was a request to a directory, Script or something else and create more holders
             long nsize = 0;
             for (String lines : this.getResponseBody()) {
                 nsize += lines.length();
             }
             return nsize;
+            
         } else {
+            
             return this.request.getRequestedResource().length();
         }
     }
 
     /**
+     * @param status 
      * @return The modified status for the response.
      */
-    public Date getLastModified() {
-        if (this.request.getStatus().equals(ReasonPhrase.STATUS_200)
-                || this.request.getStatus().equals(ReasonPhrase.STATUS_500)
-                && !this.request.getRequestedResource().isFile()) {
+    public Date getLastModified(ReasonPhrase status) {
+        if (this.request.getRequestHandler() instanceof ScriptRequestHandlerStrategy
+                || this.request.getRequestHandler() instanceof WebServiceRequestHandlerStrategy) {
             return new Date();
         } else {
             return new Date(this.request.getRequestedResource().lastModified());
