@@ -90,19 +90,26 @@ public final class DirectoryConfigHandler {
     private String[] allowedUsers;
     private String[] allowedGroups;
     
+    @Override
+    public String toString() {
+        return this.protectedDirectory.getAbsolutePath();
+    }
+    
+    @Override
+    public int hashCode() {
+        return this.protectedDirectory.getAbsolutePath().hashCode();
+    }
+    
     public DirectoryConfigHandler(String[] directoryLines) throws IOException {
         
         for(String line : directoryLines) {
             line = line.replace("\"", "");
             if (line.contains("<Directory ")) {
-                String path = line.substring("<Directory ".length(), line.length() - 1).trim();
+                line = line.substring("<Directory ".length(), line.length()).trim();
                 
-                if (!path.contains(VOctopusConfigurationManager.getInstance().getDocumentRoot())) {
-                    path = VOctopusConfigurationManager.getInstance().getDocumentRoot() + path;
-                }
-                File theFile = new File(path);
+                File theFile = new File(line);
                 if (!theFile.exists()) {
-                    throw new FileNotFoundException("Directory not found on configuration: " + path);
+                    throw new FileNotFoundException("Directory not found on configuration: " + line);
                 }
                 this.protectedDirectory = theFile;
             } else
@@ -160,12 +167,18 @@ public final class DirectoryConfigHandler {
             if (usrPwd.equals("") || usrPwd.charAt(0) == '#') {
                 continue;
             } else {
-                Pattern p = Pattern.compile("[^:]:.");
-                if (p.matcher(usrPwd).matches()){
+                String[] values = usrPwd.split(":");
+                if (values.length > 2) {
+                    throw new IllegalArgumentException("Wrong format of username/password on the .htpasswd: Must be  " +
+                    		"username:password. Username nor password can't contain collon");
+                }
+                
+                Pattern pp = Pattern.compile("[^:]*");
+                if (pp.matcher(values[0]).matches()){
                     lines.add(usrPwd);
                 } else {
-                    //throw new IllegalArgumentException("The username and password must match the format username:password
-                    //and username can't contain collon ":");
+                    throw new IllegalArgumentException("Wrong format of username/password on the .htpasswd: Must be  " +
+                    "username:password. Username nor password can't contain collon");
                 }
             }
         }

@@ -94,7 +94,7 @@ public class HttpRequestHandlerAbstractFactory {
 
         } else {
             String scriptPath = "";
-            if (uri.getPath().contains("/cgi-bin/")) {
+            if (uri.getPath().startsWith("/cgi-bin/")) {
                 scriptPath = uri.getPath().substring(uri.getPath().indexOf("/cgi-bin/") + "/cgi-bin/".length());
                 scriptPath = VOctopusConfigurationManager.WebServerProperties.ALIAS.getProperties().get(
                         "/" + scriptPath + "/");
@@ -107,9 +107,19 @@ public class HttpRequestHandlerAbstractFactory {
                     file = new File(scriptPath);
                 }
             }
-
-            if (scriptPath == null || !file.exists()) {
-                return this.getFileNotFoundHander(uri);
+            
+            if ((scriptPath == null) || !file.exists()) {
+                
+                //maybe icons
+                String otherOnAliasPath = VOctopusConfigurationManager.getInstance().getServerRootPath() + uri.getPath();
+                file = new File(otherOnAliasPath);
+                
+                if (!file.exists()) {
+                    return this.getFileNotFoundHander(uri);
+                } else {
+                    handler = createFileHandler(uri, file);
+                }
+                
             } else {
                 handler = createFileHandler(uri, file);
             }

@@ -46,8 +46,12 @@ public final class HttpRequestHeaderFieldsInterpreter {
          * This token refers to an HTTP/1.0 version var to make servers support persistent connections
          * @see http://www.oreilly.com/openbook/webclient/appa.html
          */
-        KEEP_ALIVE_TOKEN("Keep-Alive"); 
-        
+        KEEP_ALIVE_TOKEN("Keep-Alive"), 
+        /**
+         * Cache-control was sent by repeated requests using the Eclipse Internet Browser
+         * @SEE http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9
+         */
+        CACHE_CONTROL("Cache-Control");
 
         private String tokenString;
         

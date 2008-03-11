@@ -1,6 +1,8 @@
 package edu.sfsu.cs.csc867.msales.httpd;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -8,12 +10,21 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.CharBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import edu.sfsu.cs.csc867.msales.httpd.config.HttpdConf;
 import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestFirstLineInterpreter;
 import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestHeaderFieldsInterpreter;
+import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
 
 /**
  * This is the request the implementation of the HTTP request method. 
@@ -39,15 +50,17 @@ public class Request {
      */
     private URI URI;
     /**
-     * This is the query string used on the URI
-     */
-    private String query;
-    /**
      * This is the HTTP version that is used on the first line of the request method.
      */
     private String version;
-
-    private InetAddress inetAddress;
+    /**
+     * This is the client's address
+     */
+    private InetAddress clientInetAddress;
+    /**
+     * The parameters used on the query string.
+     */
+    private Map<String, String> requrestParameters;
 
     public String getRequestFirstLine() {
         return requestFirstLine;
@@ -66,36 +79,52 @@ public class Request {
     }
 
     public String getQuery() {
-        return query;
+        
+        if (this.requrestParameters != null) {
+            StringBuilder query = new StringBuilder("?");
+            for (String var : this.requrestParameters.keySet()) {
+                query.append(var);
+                query.append("=");
+                query.append(this.requrestParameters.get(var));
+                query.append("&");
+            }
+            return query.toString().substring(0,query.toString().length()-1);
+        } else {
+            return "";
+        }
     }
 
     public String getVersion() {
         return version;
     }
     
+    /**
+     * @return the calculated value of the body based on the lines of the header fields.
+     */
     public String getBody() {
-        String body = "";
+        StringBuilder bodyBuilder = new StringBuilder("");
         for(String headerKey : this.requestHeaderFields.keySet()) {
-            body =  body + headerKey + ": " + this.requestHeaderFields.get(headerKey) 
-                                + System.getProperty("line.separator"); 
+            bodyBuilder.append(headerKey);
+            bodyBuilder.append(": ");
+            bodyBuilder.append(this.requestHeaderFields.get(headerKey));
+            bodyBuilder.append(System.getProperty("line.separator"));
         }
-        return body;
+        return bodyBuilder.toString();
     }
 
-    public InetAddress getInetAddress() {
-        return inetAddress;
+    public InetAddress getClientInetAddress() {
+        return clientInetAddress;
     }
 
-    public void setInetAddress(InetAddress inetAddress) {
-        this.inetAddress = inetAddress;
+    public void setClientInetAddress(InetAddress inetAddress) {
+        this.clientInetAddress = inetAddress;
     }
 
     /**
      * Default constructor used to reset your variables and data structures for each new incoming
      * request.
      * 
-     * @throws IOException
-     * @throws
+     * @throws HttpErrorException if any I/O error occurs with the input stream.
      */
     private Request(InputStream inputStream) throws HttpErrorException {
         try {
@@ -117,7 +146,6 @@ public class Request {
     private void parse(BufferedReader inMsg) throws HttpErrorException {
 
         try {
-
             Map<String, String> headerVars = new LinkedHashMap<String, String>();
             String requestLine;
             while ((requestLine = inMsg.readLine()) != null) {
@@ -136,14 +164,15 @@ public class Request {
                         String[] headerVarValue = requestLine.split(": ");
                         headerVars.put(headerVarValue[0].trim(), headerVarValue[1].trim());
                 }
-                
             }
 
             HttpRequestHeaderFieldsInterpreter.createNewInterpreter(headerVars.keySet()).interpret();
             this.requestHeaderFields = headerVars;
             
-        } catch (Exception e) {
-            throw HttpErrorException.buildNewException(e);
+        } catch (IOException ioe) {
+            throw HttpErrorException.buildNewException(ioe);
+        } catch (HttpRequestInterpreterException hrie) {
+            throw HttpErrorException.buildNewException(hrie);
         }
     }
 
@@ -169,15 +198,12 @@ public class Request {
      * request properly.
      */
     public void print() {
-        // System.out.println("Client connected from " + .getInetAddress());
+        System.out.println("Client connected from " + this.getClientInetAddress().getHostAddress());
         System.out.println("The method was " + methodType);
         System.out.println("The Request URL was " + URI);
-        System.out.println("The query string was " + query);
+        System.out.println("The query string was " + this.getQuery());
         System.out.println("The HTTP version is " + version);
         System.out.println("The following headers were included:");
-        // for (int i = 0; i < tags.size(); i++) {
-        // System.out.println(tags.get(i) + ": " + header.get(tags.get(i)));
-        // }
         System.out.println("The message body was: \n" + this.getBody());
     }
 
@@ -200,7 +226,14 @@ public class Request {
         }
         this.version = tokens[2];
         if (tokens[1].contains("?")) {
-            this.query = tokens[1].split("\\?")[1];
+            String requestParameters = tokens[1].split("\\?")[1];
+            String[] varsAndValues = requestParameters.split("&");
+            this.requrestParameters = new HashMap<String, String>(varsAndValues.length);
+            String[] vV;
+            for (String varValue : varsAndValues) {
+                vV = varValue.split("=");
+                this.requrestParameters.put(vV[0], vV[1]);
+            }
         }
     }
 
@@ -213,16 +246,76 @@ public class Request {
      *            properly before the data stored within it can be used.
      * @throws HttpErrorException in case anything wrong happens on the protocol level.
      */
-    public static Request buildRequest(Socket clientConnection) throws HttpErrorException {
+    public static Request buildNewRequest(Socket clientConnection) throws HttpErrorException {
         Request request;
         try {
             request = new Request(clientConnection.getInputStream());
-            request.setInetAddress(clientConnection.getInetAddress());
+            request.setClientInetAddress(clientConnection.getInetAddress());
             System.out.println("Connection originated from " + clientConnection.getInetAddress());
         
         } catch (IOException e) {
             throw HttpErrorException.buildNewException(e);
         }
         return request;
+    }
+    
+    private static int count(MappedByteBuffer buffer) {
+        int count=0;
+        while(buffer.hasRemaining()) {
+        if (buffer.get()=='\n') {
+        count++;
+        }
+        }
+        return count;
+        } 
+    
+    public List<String> getTextFileLines() throws IOException {
+
+        String fileSystem = VOctopusWebServer.serverProp.getProperty("DocumentRoot") + this.getURI().getPath();
+        File file = new File(fileSystem);
+        if (file.isDirectory()) {
+            file = new File(file.getAbsolutePath() + "/index.html");
+        }
+        FileChannel channel=new FileInputStream(file).getChannel();
+        MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY,0,file.length());
+        
+        Charset charset = Charset.forName ( "ISO-8859-1" ) ; 
+        CharsetDecoder decoder = charset.newDecoder (  ) ; 
+        CharBuffer charBuffer = decoder.decode ( buffer ) ; 
+        List<String> lines = new ArrayList<String>();
+
+        StringBuilder builder = new StringBuilder();
+        for  ( int i=0, n=charBuffer.length (  ) ; i < n; i++ ) {
+
+            char charValue = charBuffer.get(); 
+            if (charValue != '\n') {
+                builder.append(charValue);
+            } else {
+                lines.add(builder.toString());
+                builder.delete(0, builder.capacity());
+            }
+         }
+        return lines;
+    }
+    
+    public static void main(String[] args) throws IOException {
+        //long time=System.nanoTime();
+        long mil = System.currentTimeMillis();
+
+        File file = new File("/etc/mime.types");
+        FileChannel channel=new FileInputStream(file).getChannel();
+        MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY,0,file.length());
+        
+        Charset charset = Charset.forName ( "ISO-8859-1" ) ; 
+        CharsetDecoder decoder = charset.newDecoder (  ) ; 
+        CharBuffer charBuffer = decoder.decode ( buffer ) ; 
+        for  ( int i=0, n=charBuffer.length (  ) ; i < n; i++ ) {  
+          //System.out.print ( charBuffer.get (  )  ) ;
+         }  
+        
+        System.out.println(count(buffer));
+        //System.out.println("Time in nanoseconds: "+(System.nanoTime()-time)); 
+        System.out.println("Time in milli: "+(System.currentTimeMillis()-mil)); 
+
     }
 }

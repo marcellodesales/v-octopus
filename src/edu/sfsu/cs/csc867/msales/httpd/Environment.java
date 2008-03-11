@@ -1,8 +1,6 @@
 package edu.sfsu.cs.csc867.msales.httpd;
+
 import java.net.Socket;
-
-import edu.sfsu.cs.csc867.msales.httpd.config.HttpdConf;
-
 
 /**
  * <p>Title: Environment.java</p>
@@ -15,7 +13,7 @@ import edu.sfsu.cs.csc867.msales.httpd.config.HttpdConf;
  *
  * <p>Company: </p>
  *
- * @author Luping May and Tracie Hong
+ * @author Marcello de Sales
  * @version 1.0
  */
 public class Environment {
@@ -31,7 +29,7 @@ public class Environment {
    *   to execute cgi scripts
    * @param cl Socket used by the client to connect to the server
    */
-  public Environment(HttpdConf c, Request r, Socket cl) {
+  public Environment(Request r, Socket cl) {
 
   }
 

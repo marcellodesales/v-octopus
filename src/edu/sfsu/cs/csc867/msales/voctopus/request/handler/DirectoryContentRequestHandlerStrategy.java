@@ -71,24 +71,42 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
         
         List<String> files = new ArrayList<String>();
         
-        //files.add("<tr><th><img src=\"/icons/folder.gif\" alt=\"[ICO]\"></th>");
         files.add("<tr><th><a href=\"?C=N;O=D\">Name</a></th>\n");
         files.add("<th><a href=\"?C=M;O=A\">Last modified</a></th>\n");
         files.add("<th align=\"right\"><a href=\"?C=S;O=A\">Size</a></th>\n");
         files.add("<tr><th colspan=\"3\"><hr></th></tr>\n");
 
+        File currentFile = getRequestedFile();
+        URI uri = this.getRequestedResource();
+        String parent = this.getRequestedFile().getParent();
+        if (!parent.equals(VOctopusConfigurationManager.getInstance().getServerRootPath())) {
+            files.add("<tr>\n");
+            files.add("<td width=\"50%\"><img src=\"/icons/back.gif\" alt=\"Parent Directory\" border=\"0\">" +
+            		" <a href=\"..\">Parent Directory</a></td>\n");
+            files.add("<td width=\"40%\" align=\"right\">" + 
+                    new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(currentFile.lastModified()) + "</td>\n");
+            files.add("<td width=\"10%\" align=\"right\">=</td></tr>\n");
+        }
+        
+        String extension = "";  
         //this time, the file that comes is the dirs.html file, but this time we are going to get the list of the files.
-        for(File file : this.getRequestedFile().listFiles()) {
+        for(File file : currentFile.listFiles()) {
             
             files.add("<tr>\n");
             if (file.isDirectory()) {
-                //files.add("<td valign=\"top\"><img src=\"/icons/folder.gif\" alt=\"[DIR]\"></td>\n");
-                files.add("<td width=\"50%\"><a href=\"" + file.getName() + "/\">[" + file.getName() + "]</a></td>\n");
-
+                files.add("<td width=\"50%\"><img src=\"/icons/folder.gif\" alt=\"" + file.getName() + "\">");
             } else {
-                //files.add("<img src=\"/icons/file.gif\" alt=\"[DIR]\"></td>\n");
-                files.add("<td width=\"50%\"><a href=\"" + file.getName() + "\">" + file.getName() + "</a></td>\n");
+                int x = file.getName().lastIndexOf(".");
+                if (x != -1) {
+                    extension = file.getName().substring(x) ;
+                }
+                String contentType = this.contentType.substring(0, this.contentType.indexOf("/"));
+                URI icon = VOctopusConfigurationManager.getInstance().getIcon(extension, contentType);
+                    
+                files.add("<td width=\"50%\"><img src=\"" +  icon.getPath() + "\" alt=\""+file.getName() + "\">");
             }
+
+            files.add("<a href=\"" + uri.getPath() + file.getName() + "\">" + file.getName() + "</a></td>\n");
             files.add("<td width=\"40%\" align=\"right\">" + 
                     new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(file.lastModified()) + "</td>\n");
             files.add("<td width=\"10%\" align=\"right\">" + (file.isDirectory() ? "=" : file.length()) + 

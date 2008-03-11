@@ -23,6 +23,7 @@ import java.io.UnsupportedEncodingException;
  */
 
 public class Base64Decoder {
+    
 	private static final int BUFFER_SIZE = 1024;
 
 	InputStream in = null;
@@ -212,7 +213,8 @@ public class Base64Decoder {
 	 * will print out the decoded value.
 	 */
 
-	public static void main(String args[]) {
+	public static void main(String ... args ) {
+	    args = new String[] {"/home/marcello/development/workspace-sfsu/voctopusHttpd/webocean/maceio.jpg"};
 		if (args.length == 1) {
 			try {
 				Base64Decoder b = new Base64Decoder(args[0]);

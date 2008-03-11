@@ -1,13 +1,13 @@
 package edu.sfsu.cs.csc867.msales.httpd;
 
-import java.io.BufferedWriter;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -23,10 +23,48 @@ import java.util.concurrent.TimeUnit;
  */
 public class VOctopusWebServer {
 
-	private static final String SERVER_NAME_VERSION = "VOctopus/0.1";
+    public static final Properties serverProp = new Properties();
+    public static Properties aliasesProp = new Properties();
+    
+    static {
+        final String VOCTOPUS_SERVER_ROOT = "VOCTOPUS_SERVER_ROOT";
+        
+        //TODO: Change this property to the configuration file....
+        System.setProperty(VOCTOPUS_SERVER_ROOT, "/home/marcello/development/workspace-sfsu/voctopusHttpd");
 
-    private static final int PORT = 1025;
-
+        try {
+            
+            File configFile = new File(System.getProperty(VOCTOPUS_SERVER_ROOT) + "/conf/httpd.conf");
+            BufferedReader configReader = new BufferedReader(new FileReader(configFile));
+            String configProperty = null;
+            String[] vals;
+            while ((configProperty = configReader.readLine()) != null) {
+                if (configProperty.charAt(0) == '#') {
+                    continue;
+                } else
+                if (configProperty.contains("\"")) {
+                    configProperty = configProperty.replace("\"","");
+                }
+                vals = configProperty.split(" ");
+                if (vals.length == 2) {
+                    String serverRoot = System.getProperty(VOCTOPUS_SERVER_ROOT);
+                    vals[1] = vals[1].trim().replace("$VOCTOPUS_SERVER_ROOT", serverRoot);
+                    serverProp.setProperty(vals[0], vals[1]);
+                } else {
+                    aliasesProp.setProperty(vals[1].trim(), vals[2].trim());
+                }
+            }
+            
+        } catch (FileNotFoundException e) {
+            System.out.println("YOU HAVE TO SET THE FOLLOWING ROOT DIRECTORY");
+            System.out.println(VOCTOPUS_SERVER_ROOT);
+            //TODO: LOGGIN NEEDED
+        } catch (IOException e) {
+            System.out.println("Error occurred while starting the server... Check the logs");
+          //TODO: LOGGIN NEEDED
+        }
+    }
+    
 	/**
 	 * The pool of threads will be used to control the requests to the server. If has the following
 	 * attributes: 
@@ -38,7 +76,7 @@ public class VOctopusWebServer {
 	 * <BR><LI>workQueue is the queue that will hold the runnables before they execute;
 	 * <br><li>retentionPolicy is the policy used to remove the tasks.
 	 */
-	private static Executor threadsPool = new ThreadPoolExecutor(5, 5,
+	private static Executor threadsPool = new ThreadPoolExecutor(10, 10,
 			Long.MAX_VALUE, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(100),
 			new ThreadPoolExecutor.DiscardOldestPolicy());
@@ -51,12 +89,10 @@ public class VOctopusWebServer {
 		ThreadPoolExecutor pool = (ThreadPoolExecutor) threadsPool;
 		System.out.println("Aquarium Pool [ " + pool.getCorePoolSize() + " , "
 				+ pool.getMaximumPoolSize() + " ]");
-		System.out
-				.println("The maximun number of threads executing on the aquarium: "
+		System.out.println("The maximun number of threads executing on the aquarium: "
 						+ pool.getLargestPoolSize());
 		System.out.println("# of open Connection " + pool.getActiveCount());
 		System.out.println("# of open Connection " + pool.getMaximumPoolSize());
-
 	}
 
 	/**
@@ -66,33 +102,16 @@ public class VOctopusWebServer {
 	 */
 	private static void handleClientConnection(Socket clientSocket) throws HttpErrorException {
 		try {
-			BufferedWriter out = new BufferedWriter(new OutputStreamWriter(
-					clientSocket.getOutputStream()));
 
-			Request req = Request.buildRequest(clientSocket);
+			Request req = Request.buildNewRequest(clientSocket);
 			req.print();
-
-				PrintWriter writer = new PrintWriter(out, true);
-				writer.println("HTTP/1.1 200 OK");
-				writer.println("Date: " + new SimpleDateFormat("EEE,.MMM.d yyyy HH:mm:ss z").format(new Date()));
-				writer.println("Server: " + SERVER_NAME_VERSION); 
-				writer.println("Content-Type: text/html");
-				writer.println("");
-				writer.println("<html><title>VOctopus Web Server 0.1</title>");
-				writer.println("<body><B>Hello World from the Ocean!!! </b>");
-				writer.println("<BR><BR>VOctopus Web Server is running...</body></html>");
+			Response res = Response.buildNewResponse(req);
+			res.processRequest(clientSocket.getOutputStream());
 			
-			//The buffer needs to be closed.
-			if (out != null) {
-				out.close();
-			} 
-			System.out.println("Connection closed by server...");
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (IOException ioe) {
+			throw HttpErrorException.buildNewException(ioe);
 		}
-	}	
+	}
 	
 	/**
 	 * Here you will create your server, configure all the settings and listen
@@ -106,18 +125,21 @@ public class VOctopusWebServer {
 	 * @param args String[]
 	 */
 	public static void main(String[] args) {
-
 		try {
-			ServerSocket socketServer = new ServerSocket(PORT);
+			ServerSocket socketServer = new ServerSocket(Integer.parseInt(serverProp.getProperty("Listen")));
 			while (true) {
-				System.out.println("V-Octopus Web Serving running on port " + PORT);
-				
+			    System.out.println();
+			    System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+			    System.out.println("V-Octopus Web Serving running, waiting connections on port " + serverProp.getProperty("Listen"));
 				final Socket clientSocket = socketServer.accept();
-
 				Runnable connectionHandler = new Runnable() {
 					public void run() {
 						try {
+						    long initial = System.currentTimeMillis();
 							handleClientConnection(clientSocket);
+							long end = System.currentTimeMillis();
+							System.out.println("Served " + clientSocket.getInetAddress().getHostAddress() 
+							        + " in " + (end-initial) + "ms");
 						} catch (HttpErrorException e) {
 						    e.printStackTrace();
 						}
@@ -129,8 +151,11 @@ public class VOctopusWebServer {
 			}
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			// TODO generate output to the log files
 			e.printStackTrace();
+			System.out.println("An unexpected error occurred with the server... please check the " +
+					"the log file at " );
+			System.exit(0);
 		}
 	}
 }

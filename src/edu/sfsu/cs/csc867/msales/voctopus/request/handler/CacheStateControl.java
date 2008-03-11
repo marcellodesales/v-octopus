@@ -7,7 +7,6 @@ import java.util.Date;
 
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager.LogFormats;
-import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest;
 
 public enum CacheStateControl {
     
@@ -70,7 +69,8 @@ public enum CacheStateControl {
                                 break pars;
                             }
                         case IF_MODIFIED_SINCE:
-                            if (new Date(requestedFile.lastModified()).after(getDate(keyValue[1]))) {
+                            if (requestedFile.isDirectory() ||  
+                                    new Date(requestedFile.lastModified()).after(getDate(keyValue[1]))) {
                                 chosen = ReasonPhrase.STATUS_200;
                                 break pars;
                             } else {

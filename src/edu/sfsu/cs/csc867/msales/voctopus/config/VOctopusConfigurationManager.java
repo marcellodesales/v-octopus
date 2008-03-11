@@ -2,8 +2,11 @@ package edu.sfsu.cs.csc867.msales.voctopus.config;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -45,6 +48,14 @@ public final class VOctopusConfigurationManager {
             return new VOctopusConfigurationManager();
         }
     };
+
+    private static Map<String, String> iconTypes = new HashMap<String, String>();
+
+    private static Map<String, String> icons = new HashMap<String, String>();
+
+    private static String folderIcon;
+
+    private static String defaultIcon;
 
     /**
      * Private constructor for the singleton.
@@ -235,7 +246,7 @@ public final class VOctopusConfigurationManager {
         serverRootPath = serverRootPathFromEnv;
         String configProperty = null;
         String[] vals;
-        boolean readingDirectoryBlock = false;
+        boolean readingDirectoryBlock = false, jumpDir = false;
         List<String> directoryVars = new ArrayList<String>();
         while ((configProperty = configReader.readLine()) != null) {
             if (configProperty.equals("") || configProperty.trim().equals("") || configProperty.charAt(0) == '#') {
@@ -250,7 +261,8 @@ public final class VOctopusConfigurationManager {
                     
                     protectedDirs.add(new DirectoryConfigHandler(directoryVars.toArray(new String[directoryVars.size()])));
                     directoryVars.clear();
-                } 
+                }
+                jumpDir = false;
                 continue;
                 
             } else 
@@ -259,25 +271,45 @@ public final class VOctopusConfigurationManager {
                 continue;
             } else 
             if (configProperty.startsWith("<Directory ") && !readingDirectoryBlock) {
-                
-                if (configProperty.trim().toLowerCase().equals("<directory ")) {
-                    String path = configProperty.toLowerCase().substring("<Directory ".length(), 
-                            configProperty.length() - 1).trim();
-                    
-                    if (!path.contains(VOctopusConfigurationManager.getInstance().getDocumentRoot())) {
-                        path = VOctopusConfigurationManager.getInstance().getDocumentRoot() + path;
-                    }
-                    File theFile = new File(path);
-                    
-                    for (DirectoryConfigHandler dir : protectedDirs) {
-                        if (theFile.exists() && !theFile.equals(dir.getProtectedDirectory())) {
-                            readingDirectoryBlock = true;
-                            directoryVars.add(configProperty);
-                        }
-                    }
+                String path = configProperty.substring("<Directory ".length(), 
+                        configProperty.length() - 1).trim();
+                 
+                if (!path.contains(VOctopusConfigurationManager.getInstance().getDocumentRoot())) {
+                    path = VOctopusConfigurationManager.getInstance().getDocumentRoot() + path;
+                }
+
+                File theFile = null;
+                try {
+                    theFile = new File(path);
+                } catch (Exception e) {
+                    throw new FileNotFoundException("The directory directive on httpd.conf doesn't exist: " + path);
                 }
                 
-                continue;
+                
+                if (protectedDirs.size() == 0) {
+                    readingDirectoryBlock = true;
+                    directoryVars.add("<Directory " + theFile.getAbsolutePath());
+                    continue;
+                } else {
+                    boolean found = false; 
+                    for(DirectoryConfigHandler dirConf : protectedDirs) {
+                        if (dirConf.toString().equals(theFile.getAbsolutePath())) {
+                            found = true;
+                            break;
+                        } else continue;
+                    }
+                    if (!found) {
+                        readingDirectoryBlock = true;
+                        directoryVars.add("<Directory " + theFile.getAbsolutePath());
+                    } else {
+                        jumpDir = true;
+                        continue;
+                    }
+                }
+                if (!protectedDirs.contains(theFile.getAbsolutePath())) {
+                } else {
+                    throw new IllegalArgumentException("Verify the <Directory directive to see if there's no repetition.");
+                }
             }
             
             vals = configProperty.split(" ");
@@ -286,7 +318,15 @@ public final class VOctopusConfigurationManager {
                 WebServerProperties.HTTPD_CONF.getProperties().put(vals[0].trim(), 
                         configProperty.replace("DirectoryIndex", "").trim());
                 continue;
-            } 
+            }
+            if (vals[0].equals("DefaultIcon")) {
+                defaultIcon = configProperty.replace("DefaultIcon", "").trim();
+                continue;
+            }
+            if (vals[0].equals("AddIcon") && vals.length == 2) {
+                folderIcon = vals[1];
+                continue;
+            }
             
             if (vals.length == 2) {
                 vals[1] = vals[1];
@@ -305,14 +345,64 @@ public final class VOctopusConfigurationManager {
                     vals[0] = vals[2];
                     vals[2] = vals[1];
                     vals[1] = vals[0];
+                } else 
+                if (vals[0].equals("AddIconByType")) {
+                    iconTypes.put(vals[2], vals[1]);
+                    continue;
+                } else 
+                if (vals[0].equals("AddIcon")) {
+                    for (int i = 2; i <= vals.length - 1; i++) {
+                        icons.put(vals[i], vals[1]);
+                    }
+                    continue;
                 }
+                    
                 WebServerProperties.ALIAS.getProperties().put(vals[1].trim(), vals[2].trim());
             }
         }
         configReader.close();
         this.setMimeTypes(serverRootPath);
     }
+    
+    public String getDefaultIconPath() {
+        return  serverRootPath + defaultIcon;
+    }
 
+    public String getFolderIconPath() {
+        return  serverRootPath + folderIcon;
+    }
+
+    public String getIconByMineType(String type) {
+        String iconUri = iconTypes.get(type);
+        if (iconUri == null) {
+            iconUri = this.getDefaultIconPath();
+        }
+        return serverRootPath + iconUri;
+    }
+
+    public String getIconByFileExtension(String extension) {
+        String iconUri = icons.get(extension);
+        if (iconUri == null) {
+            return null;
+        } else 
+            return serverRootPath + iconUri;
+    }
+    
+    public URI getIcon(String extention, String contentType) {
+        String image = VOctopusConfigurationManager.getInstance().getIconByFileExtension(extention);
+        if (image == null) {
+            image = VOctopusConfigurationManager.getInstance().getIconByMineType(contentType);
+        }
+        
+        image = image.replace(serverRootPath, "");
+        try {
+            return new URI(image);
+        } catch (URISyntaxException e) {
+            return null;
+        }
+    }
+
+    
     /**
      * Reads the mime types configuration file.
      * 
@@ -376,7 +466,7 @@ public final class VOctopusConfigurationManager {
     }
 
     /**
-     * @param fileExtension is the extention, like html, htm, etc.
+     * @param fileExtension is the extension, like html, htm, etc.
      * @return If a given fileExtention is one of the chosen to be the DirectoryIndex
      */
     public boolean isExtensionADirectoryIndex(String fileExtension) {
