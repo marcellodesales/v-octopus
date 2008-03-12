@@ -1,6 +1,5 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestHeaderFieldVarExpression;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterContext;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestMethodExpression;

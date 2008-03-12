@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -54,40 +53,42 @@ public final class DirectoryConfigHandler {
     public boolean equals(Object obj) {
         return this.protectedDirectory.equals(((DirectoryConfigHandler)obj).protectedDirectory);
     }
-    
+    /**
+     * The protected directory
+     */
     private File protectedDirectory;
-    
     /**
      * AuthName is the message
      */
     private String authName;
-    
     /**
      * AuthType handler
      */
     private AuthType authType;
-
     /**
      * AuthUserFile handler where the passwords are stored
      */
     private File authUserFile;
-    
     /**
      * The list of users and respective passwords from each of them. Must match both using the contains
      * username:password marcello:80nM/1quPJi12
      */
     private String[] usersPasswords;
-    
     /**
      * A list of users "Require user csc667,yoon,wmac01" It can also be for groups Require Group newsGroup
      */
     private String require;
-
+    /**
+     * The authentication file for the group of users
+     */
     private File authGroupFile;
-    private List<String> userGroups;
-    private List<String> users;
-
+    /**
+     * The list of the allowed users
+     */
     private String[] allowedUsers;
+    /**
+     * The list with the allowed group of users
+     */
     private String[] allowedGroups;
     
     @Override
@@ -100,6 +101,11 @@ public final class DirectoryConfigHandler {
         return this.protectedDirectory.getAbsolutePath().hashCode();
     }
     
+    /**
+     * Creates a new DirectoryConfigHandler with the lines from the configuration file.
+     * @param directoryLines
+     * @throws IOException
+     */
     public DirectoryConfigHandler(String[] directoryLines) throws IOException {
         
         for(String line : directoryLines) {
@@ -116,8 +122,11 @@ public final class DirectoryConfigHandler {
             if (line.contains("AuthName ")) {
                 this.authName = line.replace("AuthName ", "").trim();
             } else 
+            if (line.contains("Require ")) {
+                this.require = line.replace("Require ", "").trim();
+            } else 
             if (line.contains("AuthType")) {
-                this.authType = AuthType.getAuthType(line.replace("AuthType ", "").trim());
+            this.authType = AuthType.getAuthType(line.replace("AuthType ", "").trim());
             } else
             if (line.contains("AuthUserFile ")) {
                 String path = line.replace("AuthUserFile ", "").trim();
@@ -155,7 +164,7 @@ public final class DirectoryConfigHandler {
     
     /**
      * Load the users and passwords from the file system
-     * @throws IOException
+     * @throws IOException problems with opening and close the file.
      */
     private void loadUSersFromFile() throws IOException {
         
@@ -184,79 +193,72 @@ public final class DirectoryConfigHandler {
         }
         this.usersPasswords = lines.toArray(new String[lines.size()]);
     }
-
-    /**
-     * Generates the MD5 hash from a given string.
-     * @param msg
-     * @return
-     */
-    private String getHash(String msg) {
-        byte buf[] = msg.getBytes();
-        StringBuffer hexString = new StringBuffer();
-        try {
-            MessageDigest algorithm = MessageDigest.getInstance("MD5");
-            algorithm.reset();
-            algorithm.update(buf);
-            byte[] digest = algorithm.digest();
-            for (int i = 0; i < digest.length; i++) {
-                hexString.append(this.pad(Integer.toHexString(0xFF & digest[i]), 2));
-        
-            } 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return hexString.toString();
-    }
     
     /**
-     * @param i
-     * @param l
-     * @return the modified version of the string based on l
+     * @return The real information to be displayed in the browser
      */
-    private String pad(String i, int l) {
-        while (i.length() < l) {
-            i = '0' + i;
-        }
-        return i;
-    }
-    
-    public static void main(String[] args) throws IOException {
-        System.out.println(new DirectoryConfigHandler(null).getHash(""));
-    }
-
-
     public String getAuthName() {
         return authName;
     }
 
-
+    /**
+     * @return The type of the authentication
+     */
     public AuthType getAuthType() {
         return authType;
     }
 
 
+    /**
+     * @return The authentication file with the list of the users
+     */
     public File getAuthUserFile() {
         return authUserFile;
     }
 
 
+    /**
+     * @return The authentication file for the group of users
+     */
     public File getAuthGroupFile() {
         return authGroupFile;
     }
 
 
+    /**
+     * @return The restricted group of users to be allowed for this protected directory.
+     */
     public String[] getAllowedUsers() {
         return allowedUsers;
     }
 
 
+    /**
+     * @return The list of allowed groups
+     */
     public String[] getAllowedGroups() {
         return allowedGroups;
     }
 
 
+    /**
+     * @return The directory file to be protected.
+     */
     public File getProtectedDirectory() {
         return protectedDirectory;
     }
-
+    
+    /**
+     * @return the list of users and passwords located on the .htpasswd file represented by this handler.
+     */
+    public String[] getHtpasswdUsersPasswords() {
+        return this.usersPasswords;
+    }
+    
+    /**
+     * @return The required users for this request.
+     */
+    public String getRequiredUsers() {
+        return this.require;
+    }
 }

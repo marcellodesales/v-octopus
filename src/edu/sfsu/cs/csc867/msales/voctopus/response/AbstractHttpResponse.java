@@ -18,6 +18,7 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpScriptRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.DirectoryContentRequestHandlerStrategy;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.ProtectedContentRequestHandlerStrategy;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.ScriptRequestHandlerStrategy;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.WebServiceRequestHandlerStrategy;
 
@@ -38,7 +39,19 @@ public abstract class AbstractHttpResponse implements HttpResponse {
     public AbstractHttpResponse(HttpRequest originatingRequest) {
         this.request = originatingRequest;
         this.responseHeader = new ArrayList<String>();
+
         ReasonPhrase status = this.request.getStatus();
+
+        if (status.equals(ReasonPhrase.STATUS_401)) {
+            ProtectedContentRequestHandlerStrategy handler = (ProtectedContentRequestHandlerStrategy) this.request
+                    .getRequestHandler();
+            if (handler.containsAuthorization()) {
+                if (handler.isAuthorizationValid()) {
+                    // request.changeStatus(ReasonPhrase.STATUS_200);
+                }
+            }
+        }
+
         if (!status.equals(ReasonPhrase.STATUS_404) && this.request instanceof HttpScriptRequest) {
             String[] responseBody = this.getResponseBody();
             if (!status.equals(ReasonPhrase.STATUS_500)) {
@@ -58,13 +71,13 @@ public abstract class AbstractHttpResponse implements HttpResponse {
                 this.setDefaultHeaderValues();
                 this.responseHeader.add(contentType);
             } else {
-                //500 content type
+                // 500 content type
                 // if it were 500 or 404, the body will be automatically be handled before by the handler.
                 this.setDefaultHeaderValues();
                 this.responseHeader.add("Content-Type: text/html");
             }
-            
-        } else { //anything else
+
+        } else { // anything else
             this.setDefaultHeaderValues();
             if (requestMustIncludeBody(status)) {
                 this.responseHeader.add("Content-Type: " + this.getRequest().getContentType());
@@ -138,8 +151,8 @@ public abstract class AbstractHttpResponse implements HttpResponse {
 
         out.flush();
         writer.close();
-            // if the connection sends the acknowledgment to close it, then close it
-            // usually with a file
+        // if the connection sends the acknowledgment to close it, then close it
+        // usually with a file
         if (!this.request.keepAlive()) {
             out.close();
         }
@@ -150,7 +163,8 @@ public abstract class AbstractHttpResponse implements HttpResponse {
      * @return if the result must include a body.
      */
     private boolean requestMustIncludeBody(ReasonPhrase status) {
-        return !(status.equals(ReasonPhrase.STATUS_204) || (status.equals(ReasonPhrase.STATUS_304))); 
+        return (!(status.equals(ReasonPhrase.STATUS_204) && !(status.equals(ReasonPhrase.STATUS_401) && (status
+                .equals(ReasonPhrase.STATUS_304)))));
     }
 
     /**
@@ -174,7 +188,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         ReasonPhrase status = this.request.getStatus();
         header.append(status);
         this.responseHeader.add(header.toString());
-        
+
         if (!status.equals(ReasonPhrase.STATUS_304)) {
             header.delete(0, header.length());
             header.append("Date: ");
@@ -189,8 +203,9 @@ public abstract class AbstractHttpResponse implements HttpResponse {
             this.responseHeader.add(header.toString());
             header.delete(0, header.length());
 
-            if (!(this.request.getRequestHandler() instanceof DirectoryContentRequestHandlerStrategy 
-                     || this.request.getRequestHandler() instanceof ScriptRequestHandlerStrategy)) {
+            if (!(this.request.getRequestHandler() instanceof ProtectedContentRequestHandlerStrategy)
+                    && !(this.request.getRequestHandler() instanceof DirectoryContentRequestHandlerStrategy)
+                    && !(this.request.getRequestHandler() instanceof ScriptRequestHandlerStrategy)) {
                 cal.add(Calendar.YEAR, 1);
                 Date expires = cal.getTime();
                 header.append("Expires: ");
@@ -198,16 +213,18 @@ public abstract class AbstractHttpResponse implements HttpResponse {
                 this.responseHeader.add(header.toString());
                 header.delete(0, header.length());
             }
-            
+
             header.append("Server: ");
             header.append(VOctopusConfigurationManager.getInstance().getServerVersion());
             this.responseHeader.add(header.toString());
             header.delete(0, header.length());
 
-            header.append("Content-Length: ");
-            header.append(this.getRequestSize());
-            this.responseHeader.add(header.toString());
-            header.delete(0, header.length());
+            if (!(this.request.getRequestHandler() instanceof ProtectedContentRequestHandlerStrategy)) {
+                header.append("Content-Length: ");
+                header.append(this.getRequestSize());
+                this.responseHeader.add(header.toString());
+                header.delete(0, header.length());
+            }
         }
     }
 
@@ -217,7 +234,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
     public long getRequestSize() {
         HttpRequestHandler handler = this.request.getRequestHandler();
         if ((handler instanceof ScriptRequestHandlerStrategy && !handler.isRequestedResourceBinary())
-                || handler instanceof DirectoryContentRequestHandlerStrategy 
+                || handler instanceof DirectoryContentRequestHandlerStrategy
                 || handler instanceof WebServiceRequestHandlerStrategy) {
             // TODO: Decide if this was a request to a directory, Script or something else and create more holders
             long nsize = 0;
@@ -225,15 +242,15 @@ public abstract class AbstractHttpResponse implements HttpResponse {
                 nsize += lines.length();
             }
             return nsize;
-            
+
         } else {
-            
+
             return this.request.getRequestedResource().length();
         }
     }
 
     /**
-     * @param status 
+     * @param status
      * @return The modified status for the response.
      */
     public Date getLastModified(ReasonPhrase status) {

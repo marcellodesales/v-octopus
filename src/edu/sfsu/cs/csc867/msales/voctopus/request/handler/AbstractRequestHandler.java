@@ -5,14 +5,13 @@ import java.net.URI;
 
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
 
-
 public abstract class AbstractRequestHandler implements HttpRequestHandler {
 
     /**
      * The physical requested file. It might exist or not and the handler is responsible for determining that.
      */
     private File physicalFile;
-    
+
     /**
      * The content type identified from the mime-types.
      */
@@ -20,13 +19,13 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
 
     /**
      * Defines if the requested resource if binary or a text file.
-     * @author marcello
-     * Feb 24, 2008 2:28:24 PM
+     * 
+     * @author marcello Feb 24, 2008 2:28:24 PM
      */
     public enum RequestType {
-        ASCII, BINARY, CACHED;
+        ASCII, BINARY, CACHED, PROTECTED;
     }
-    
+
     /**
      * The type of the request, depending on the mime types
      */
@@ -41,12 +40,13 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
      * Original requested URI by the client.
      */
     private URI uri;
-    
+
     /**
      * Constructs a new request handler.
+     * 
      * @param uri the uri requested by the client connection
      * @param requestedFile the file on the time of the request. It can be the 404 file.
-     * @param requestType the request type that was bound to the handler 
+     * @param requestType the request type that was bound to the handler
      * @param handlerFound the handler found on the configuration file.
      */
     public AbstractRequestHandler(URI uri, File requestedFile, RequestType requestType, String contentType) {
@@ -57,76 +57,82 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
         if (requestedFile == null) {
             this.status = ReasonPhrase.STATUS_204;
         }
-//        System.out.println("Selected handler: " + this);
-//        System.out.println("File to be handled: " + requestedFile);
-//        System.out.println("REquest type: " + requestType);
-//        System.out.println("Handler found: " + this.handlerFound);
+        // System.out.println("Selected handler: " + this);
+        // System.out.println("File to be handled: " + requestedFile);
+        // System.out.println("REquest type: " + requestType);
+        // System.out.println("Handler found: " + this.handlerFound);
     }
-    
+
     /**
      * @return if the requested resource exists.
-     *
      */
     public boolean requestedResourceExists() {
-        //TODO: It must handle CGI scripts, Web Services, Etc.
-        if (this instanceof DirectoryContentRequestHandlerStrategy 
-                || this instanceof ScriptRequestHandlerStrategy
+        // TODO: It must handle CGI scripts, Web Services, Etc.
+        if (this instanceof DirectoryContentRequestHandlerStrategy || this instanceof ScriptRequestHandlerStrategy
                 || this instanceof UnknownContentRequestHandlerStrategy
                 || this instanceof WebServiceRequestHandlerStrategy) {
             return true;
-        } else
-        if (this instanceof AsciiContentRequestHandlerStrategy
+        } else if (this instanceof AsciiContentRequestHandlerStrategy
                 || this instanceof BinaryContentRequestHandlerStrategy) {
             return this.physicalFile.exists();
-        } else return false;
-        
+        } else
+            return false;
+
     }
-    
+
     public URI getRequestedResource() {
         return this.uri;
     }
-    
+
     /**
      * @return The type of this request.
      */
     public RequestType getRequestType() {
         return this.requestType;
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getRequestedResource()
      */
     public File getRequestedFile() {
         return this.physicalFile;
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getStatus()
      */
     public ReasonPhrase getStatus() {
         return this.status;
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getContentType()
      */
     public String getContentType() {
         return this.contentType;
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#isRequestedResourceBinary()
      */
     public boolean isRequestedResourceBinary() {
         return this.requestType.equals(RequestType.BINARY);
     }
-    
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#setStatus(edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase)
      */
     public void setStatus(ReasonPhrase status) {
         this.status = status;
     }
 }
-

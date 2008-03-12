@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.config.DirectoryConfigHandler;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest;
 
@@ -23,7 +24,6 @@ public class HttpRequestHandlerAbstractFactory {
     private static ThreadLocal<HttpRequestHandlerAbstractFactory> singleton = new ThreadLocal<HttpRequestHandlerAbstractFactory>() {
         @Override
         protected HttpRequestHandlerAbstractFactory initialValue() {
-            // TODO Auto-generated method stub
             return new HttpRequestHandlerAbstractFactory();
         }
     };
@@ -40,22 +40,40 @@ public class HttpRequestHandlerAbstractFactory {
     public static HttpRequestHandlerAbstractFactory getInstance() {
         return singleton.get();
     }
-    
-    /**
-     * Creates a request handler for a given. It internally changes the status (Reason Phase) of the request
-     * based on the handling process, cache mechanisms, etc.
 
+    /**
+     * Creates a request handler for a given. It internally changes the status (Reason Phase) of the request based on
+     * the handling process, cache mechanisms, etc.
+     * 
      * @param abstractHttpRequest is the request used
      * @return an instance of an HttpRequestHandler, with the correct ReasonPhase changed
      */
     public HttpRequestHandler createRequestHandler(AbstractHttpRequest abstractHttpRequest) {
-        
+
         URI uri = abstractHttpRequest.getUri();
-        String fileSystem = VOctopusConfigurationManager.getInstance().getDocumentRoot() 
-                                + uri.getPath();
+        String fileSystem = VOctopusConfigurationManager.getInstance().getDocumentRoot() + uri.getPath();
         File file = new File(fileSystem);
         HttpRequestHandler handler = null;
-        
+
+        DirectoryConfigHandler dirHandler = VOctopusConfigurationManager.getInstance().isRequestedURIProtected(uri);
+        if (dirHandler != null) {
+            String authorization = null;
+            for (String headerVarValue : abstractHttpRequest.getRequestHeaders()) {
+                if (headerVarValue.startsWith("Authorization: Basic ")) {
+                    authorization = headerVarValue.replace("Authorization: Basic ", "").trim();
+                    break;
+                }
+            }
+            if (authorization != null) {
+                if (!new ProtectedContentRequestHandlerStrategy(uri, file, dirHandler, authorization)
+                        .isAuthorizationValid()) {
+                    return new ProtectedContentRequestHandlerStrategy(uri, file, dirHandler, null);
+                }
+            } else {
+                return new ProtectedContentRequestHandlerStrategy(uri, file, dirHandler, null);
+            }
+        }
+
         // Show the contents of the directory if there is no index file on the directory
         if (file.isDirectory()) {
 
@@ -70,26 +88,24 @@ public class HttpRequestHandlerAbstractFactory {
                     break;
                 }
             }
-            
+
             ReasonPhrase requestStatus = null;
             if (foundIndexFile) {
-                requestStatus = CacheStateControl.getRequestReasonPhase(file, 
-                    abstractHttpRequest.getRequestHeaders());
+                requestStatus = CacheStateControl.getRequestReasonPhase(file, abstractHttpRequest.getRequestHeaders());
             } else {
-                requestStatus = CacheStateControl.getRequestReasonPhase(file = new File(fileSystem), 
+                requestStatus = CacheStateControl.getRequestReasonPhase(file = new File(fileSystem),
                         abstractHttpRequest.getRequestHeaders());
             }
-            
-            if (requestStatus.equals(ReasonPhrase.STATUS_304) || requestStatus.equals(ReasonPhrase.STATUS_405) 
+
+            if (requestStatus.equals(ReasonPhrase.STATUS_304) || requestStatus.equals(ReasonPhrase.STATUS_405)
                     || requestStatus.equals(ReasonPhrase.STATUS_204)) {
-                return this.requestedFileExistsWithStatus(requestStatus, new EmptyBodyRequestHandler(
-                        abstractHttpRequest.getUri(), file));
+                return new CachedRequestHandler(abstractHttpRequest.getUri(), file);
             }
-            
+
             if (foundIndexFile) {
                 handler = this.createFileHandler(uri, file);
             } else {
-                handler = this.createDirectoryHandler(uri, new File(fileSystem));
+                handler = new DirectoryContentRequestHandlerStrategy(uri, new File(fileSystem), ReasonPhrase.STATUS_200);
             }
 
         } else {
@@ -107,19 +123,20 @@ public class HttpRequestHandlerAbstractFactory {
                     file = new File(scriptPath);
                 }
             }
-            
+
             if ((scriptPath == null) || !file.exists()) {
-                
-                //maybe icons
-                String otherOnAliasPath = VOctopusConfigurationManager.getInstance().getServerRootPath() + uri.getPath();
+
+                // maybe icons
+                String otherOnAliasPath = VOctopusConfigurationManager.getInstance().getServerRootPath()
+                        + uri.getPath();
                 file = new File(otherOnAliasPath);
-                
+
                 if (!file.exists()) {
                     return this.getFileNotFoundHander(uri);
                 } else {
                     handler = createFileHandler(uri, file);
                 }
-                
+
             } else {
                 handler = createFileHandler(uri, file);
             }
@@ -127,27 +144,6 @@ public class HttpRequestHandlerAbstractFactory {
         return handler;
     }
 
-    /**
-     * Creates a handler for the the directory listing.
-     * 
-     * @param dirFile is the directory file from the file system.
-     * @return an instance for the Directory content request.
-     */
-    private HttpRequestHandler createDirectoryHandler(URI uri, File dirFile) {
-        return requestedFileExistsWithStatus(ReasonPhrase.STATUS_200, new DirectoryContentRequestHandlerStrategy(uri,
-                dirFile, TEXT_HTML));
-    }
-
-    /**
-     * @param status
-     * @param handler
-     * @return The updates the request handler with the given status 
-     */
-    private HttpRequestHandler requestedFileExistsWithStatus(ReasonPhrase status, HttpRequestHandler handler) {
-        handler.setStatus(status);
-        return handler;
-    }
-    
     /**
      * @param uri
      * @return
@@ -170,7 +166,7 @@ public class HttpRequestHandlerAbstractFactory {
         String requestedExtension = path.substring(path.lastIndexOf(".") + 1);
         Map<String, String> mimes = VOctopusConfigurationManager.WebServerProperties.MIME_TYPES.getProperties();
         String cgiPath = VOctopusConfigurationManager.getDefaultCGIPath();
-        
+
         if (path.contains(cgiPath)) {
             // remove the ? question mark
             String params = null;
@@ -187,9 +183,8 @@ public class HttpRequestHandlerAbstractFactory {
             return new ScriptRequestHandlerStrategy(cgiParams, uri, file, requestedExtension, ReasonPhrase.STATUS_200);
 
         } else if (path.contains(VOctopusConfigurationManager.getDefaultWebservicesPath())) {
-            
-            return this.requestedFileExistsWithStatus(ReasonPhrase.STATUS_200, new WebServiceRequestHandlerStrategy(
-                    uri, file, requestedExtension));
+
+            return new WebServiceRequestHandlerStrategy(uri, file, requestedExtension, ReasonPhrase.STATUS_200);
         }
 
         String handlerFound = "";
@@ -205,14 +200,11 @@ public class HttpRequestHandlerAbstractFactory {
         }
 
         if (handlerFound.equals("")) {
-            return this.requestedFileExistsWithStatus(ReasonPhrase.STATUS_200,
-                    new UnknownContentRequestHandlerStrategy(uri, file));
+            return new UnknownContentRequestHandlerStrategy(uri, file, ReasonPhrase.STATUS_200);
         } else if (handlerFound.contains("text/")) {
-            return this.requestedFileExistsWithStatus(ReasonPhrase.STATUS_200, new AsciiContentRequestHandlerStrategy(
-                    uri, file, handlerFound));
+            return new AsciiContentRequestHandlerStrategy(uri, file, handlerFound, ReasonPhrase.STATUS_200);
         } else {
-            return this.requestedFileExistsWithStatus(ReasonPhrase.STATUS_200, new BinaryContentRequestHandlerStrategy(
-                    uri, file, handlerFound));
+            return new BinaryContentRequestHandlerStrategy(uri, file, handlerFound, ReasonPhrase.STATUS_200);
         }
     }
 }
