@@ -1,5 +1,6 @@
 package edu.sfsu.cs.csc867.msales.voctopus.aspect.loggin;
 
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.HttpClientConnection;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
@@ -35,14 +36,14 @@ public aspect VOctopusExecutionLoggin {
     pointcut excludedObjectCalls() : execution(* Logger.*(..));
     pointcut aspects() : within(VOctopusExecutionLoggin);
 
-    pointcut openingConnection(HttpClientConnection clientConnection, Socket socket): 
-        target(clientConnection) && args(socket) &&  execution(*.new(Socket));
-    
-    after (HttpClientConnection clientConnection, Socket socket): openingConnection(clientConnection, socket) {
-        String ip = socket.getInetAddress().getHostAddress();
-        String dateTime = VOctopusConfigurationManager.LogFormats.ACCESS_LOG_FILE.format(new Date());
-        this.buffer.append(ip + " - - " + dateTime + " ");
-    }
+//    pointcut openingConnection(HttpClientConnection clientConnection, Socket socket): 
+//        target(clientConnection) && args(socket) &&  execution(*.new(Socket));
+//    
+//    after (HttpClientConnection clientConnection, Socket socket): openingConnection(clientConnection, socket) {
+//        String ip = socket.getInetAddress().getHostAddress();
+//        String dateTime = VOctopusConfigurationManager.LogFormats.ACCESS_LOG_FILE.format(new Date());
+//        this.buffer.append(ip + " - - " + dateTime + " ");
+//    }
     
 //    pointcut constructingRequest(AbstractHttpRequest abstrRequest, String methodType, URI uri, String version, 
 //            Map<String, String> headerVars) : target(abstrRequest) && args(methodType, uri, version, headerVars) 
@@ -54,16 +55,32 @@ public aspect VOctopusExecutionLoggin {
 //        this.buffer.append(abstrRequest.getStatus().getCode() + " ");
 //    }
     
-    pointcut loggingAccess(AbstractHttpResponse abstractResp, OutputStream clientOutput) :
-        target(abstractResp) && args(clientOutput) && execution(* AbstractHttpResponse.sendResponse(OutputStream));
-    
-    after (AbstractHttpResponse abstractResp, OutputStream clientOutput) : loggingAccess(abstractResp, clientOutput) {
-        AbstractHttpRequest request = (AbstractHttpRequest)abstractResp.getRequest();
-        this.buffer.append("\"" + request.getMethodType() + " " + request.getUri().getRawPath() + " "); 
-        this.buffer.append(request.getVersion() + "\" ");
-        this.buffer.append(request.getStatus().getCode() + " " + abstractResp.getRequestSize() + "\n");
-        this.logAccess();
+    pointcut sendingResponse(RequestResponseMediator mediator) :
+        target(mediator) && execution(* RequestResponseMediator.sendResponse());
+
+    after (RequestResponseMediator mediator) : sendingResponse(mediator) {
+        
+        synchronized (thisJoinPoint) {
+            String ip = mediator.getClientConnection().getClientConnection().getInetAddress().getHostAddress();
+            String dateTime = VOctopusConfigurationManager.LogFormats.ACCESS_LOG_FILE.format(new Date());
+            this.buffer.append(ip + " - - " + dateTime + " ");
+            
+            AbstractHttpRequest request = (AbstractHttpRequest)mediator.getRequest();
+            AbstractHttpResponse response = (AbstractHttpResponse)mediator.getResponse();
+            
+            this.buffer.append("\"" + request.getMethodType() + " " + request.getUri().getRawPath() + " "); 
+            this.buffer.append(request.getVersion() + "\" ");
+            this.buffer.append(request.getStatus().getCode() + " " + response.getRequestSize() + "\n");
+            this.logAccess();
+        }
     }
+    
+//    pointcut loggingAccess(AbstractHttpResponse abstractResp, OutputStream clientOutput) :
+//        target(abstractResp) && args(clientOutput) && execution(* AbstractHttpResponse.sendResponse(OutputStream));
+//    
+//    after (AbstractHttpResponse abstractResp, OutputStream clientOutput) : loggingAccess(abstractResp, clientOutput) {
+//        
+//    }
     
     private void logAccess() {
         File accessLogFile = VOctopusConfigurationManager.getInstance().getAccessLogFile();
