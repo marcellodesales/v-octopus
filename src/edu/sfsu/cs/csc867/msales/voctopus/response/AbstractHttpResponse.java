@@ -14,8 +14,10 @@ import java.util.List;
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager.LogFormats;
+import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpScriptRequest;
+import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.DirectoryContentRequestHandlerStrategy;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.ProtectedContentRequestHandlerStrategy;
@@ -160,7 +162,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
      * @return if the result must include a body.
      */
     private boolean requestMustIncludeBody(ReasonPhase status) {
-        switch (status) {
+        switch (request.getStatus()) {
             case STATUS_204:
             case STATUS_304:
                 return false;
@@ -168,7 +170,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
                 //Extreme case where the user did not give the correct username and password.
                 return (this.request.getResourceLines() != null) && this.request.getResourceLines().length > 0;
             default:
-                return true;
+                return !request.getMethodType().equals(RequestMethodType.HEAD);
         }
     }
 

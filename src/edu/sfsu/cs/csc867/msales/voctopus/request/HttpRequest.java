@@ -4,6 +4,7 @@ import java.io.File;
 import java.net.URI;
 
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
+import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
 
 /**
@@ -12,7 +13,7 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
  */
 public interface HttpRequest {
 
-    public String getMethodType();
+    public RequestMethodType getMethodType();
     public File getRequestedResource();
     public ReasonPhase getStatus();
     public URI getUri();

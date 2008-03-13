@@ -112,8 +112,8 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     /**
      * @return The method type used on the request.
      */
-    public String getMethodType() {
-        return this.methodType.toString();
+    public RequestMethodType getMethodType() {
+        return this.methodType;
     }
 
     /* (non-Javadoc)
