@@ -2,15 +2,12 @@ package edu.sfsu.cs.csc867.msales.voctopus.aspect.loggin;
 
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest;
-import edu.sfsu.cs.csc867.msales.voctopus.HttpClientConnection;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
 import edu.sfsu.cs.csc867.msales.voctopus.response.AbstractHttpResponse;
 
 import java.io.IOException;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.OutputStream;
-import java.net.Socket;
 import java.util.Date;
 import java.util.logging.Logger;
 import java.util.logging.Level;
