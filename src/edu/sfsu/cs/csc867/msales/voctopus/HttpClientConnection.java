@@ -61,4 +61,8 @@ public class HttpClientConnection {
     public OutputStream getOutputStream() throws IOException {
         return this.clientConnection.getOutputStream();
     }
+
+    public Socket getClientConnection() {
+        return clientConnection;
+    }
 }

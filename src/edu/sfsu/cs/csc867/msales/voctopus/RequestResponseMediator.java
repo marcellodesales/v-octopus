@@ -196,4 +196,8 @@ public final class RequestResponseMediator {
             }
         }
     }
+
+    public HttpClientConnection getClientConnection() {
+        return clientConnection;
+    }
 }
