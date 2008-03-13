@@ -6,19 +6,16 @@
 	<!-- set global properties for this build -->
 	<property name="src" location="src" />
 	<property name="build" location="classes" />
-    <property name="build-temp" location="tmp/classes" />
+    <property name="document-root" location="webocean" />
+	<property name="build-temp" location="tmp/classes" />
 	<property name="dist" location="dist" />
 	<property name="lib.dir" location="lib" />
 	<property name="app.name" value="v-octopus-webserver" />
 	<property name="user" value="Marcello de Sales (msales@sfsu.edu)" />
-	<property name="main-class" value="edu.sfsu.cs.csc867.msales.httpd.VOctopusWebServer" />
-    <property name="version.num" value="0.1"/>
+	<property name="main-class" value="edu.sfsu.cs.csc867.msales.voctopus.VOctopusWebServer" />
+    <property name="version.num" value="0.7"/>
     <buildnumber file="build.num"/>
 
-    <property name="gc.username" value="marcello.sales"/>
-    <property name="gc.password" value="k6c4m9a5"/>
-	<property name="gc.summary" value="This is the 0.1 version uploaded via Apache ANT, using the Google Code ANT Task"/>
-	
 	<target name="init">
 	    <tstamp />
 		<tstamp>
@@ -84,28 +81,53 @@
 		<property name="exec-dir" value="${dist}/exec" />
 		<delete dir="${exec-dir}"/>
 		
-		<mkdir dir="${exec-dir}"/>
-		<mkdir dir="${exec-dir}/bin"/>
-		<mkdir dir="${exec-dir}/config"/>
-		<mkdir dir="${exec-dir}/scripts"/>
-		<mkdir dir="${exec-dir}/webocean"/>
+		<mkdir dir="${exec-dir}" description="The executable directory "/>
+		<mkdir dir="${exec-dir}/bin" description="The binary file holds the JAR from the server"/>
+		<mkdir dir="${exec-dir}/conf" description="The configuration hosts the httpd.conf, mime.types, etc"/>
+        <mkdir dir="${exec-dir}/errors" description="Error files 401, 404, 500"/>
+		<mkdir dir="${exec-dir}/icons" description="Default icons from the server"/>
+		<mkdir dir="${exec-dir}/logs" description="The output from the execution from the server"/>
+		<mkdir dir="${exec-dir}/cgi-bin" description="The old-school cgi-bin is now called scripts"/>
+		<mkdir dir="${exec-dir}/webocean" description="The webroot now is the webocean"/>
+		<mkdir dir="${exec-dir}/src" description="The source code from voctopus"/>
+		
+        <copy todir="${exec-dir}/src">
+            <fileset dir="${src}">
+                <include name="**/*.java" />
+                <include name="**/**.aj" />
+            	<exclude name="**/httpd/**"/>
+            </fileset>
+        </copy>
+		
+        <copy todir="${exec-dir}/errors">
+            <fileset dir="errors">
+                <include name="**/*.html" />
+            </fileset>
+        </copy>
+
+		<copy todir="${exec-dir}/icons">
+            <fileset dir="icons">
+                <include name="**/*.*" />
+            </fileset>
+        </copy>
+		
+        <copy todir="${exec-dir}/cgi-bin">
+            <fileset dir="cgi-bin">
+                <include name="**/*.*" />
+            </fileset>
+        </copy>
+		
+        <copy file="${document-root}/index.html" todir="${exec-dir}/webocean"/>
 		
 		<copy file="${dist}/${app.name}-${version.num}.jar" todir="${exec-dir}/bin"/>
 		<delete file="${dist}/${app.name}-${version.num}.jar"/>
-		<copy file="/etc/mime.types" todir="${exec-dir}/config" />
-		<copy file="/etc/apache2/httpd.conf" todir="${exec-dir}/config" />
+		<copy file="/etc/mime.types" todir="${exec-dir}/conf" />
+		<copy file="conf/httpd.conf" todir="${exec-dir}/conf" />
 		
 		<echo file="${exec-dir}/vocotpus-start.sh">#!/bin/bash
+export VOCTOPUS_SERVER_ROOT=${exec-dir}
 java -jar bin/${app.name}-${version.num}.jar
 		</echo>
-
-        <echo file="${exec-dir}/webocean/index.html">&lt;html>&lt;title>V-Octopus Web Server - It Workds!!!&lt;/title>
-   &lt;body>
-      &lt;h3>It's works! V-Octopus Server is running!&lt;/h3>&lt;BR/>&lt;BR/>
-      &lt;li>Check the configuration file at {V-OCTOPUS}/config/v-octopus.httpd.conf for general settings&lt;/li>
-   &lt;/body>
-&lt;/html>
-        </echo>
 
 		<chmod perm="755" file="${exec-dir}/vocotpus-start.sh" />
 
@@ -117,7 +139,11 @@ java -jar bin/${app.name}-${version.num}.jar
 	</target>
 	
 	<target name="release" depends="package" description="Upload the distribution to google code">
-        <taskdef classname="net.bluecow.googlecode.ant.GoogleCodeUploadTask" 
+	    <property name="gc.username" value="marcello.sales"/>
+	    <property name="gc.password" value="k6c4m9a5"/>
+	    <property name="gc.summary" value="vOctopus Web Server supporting ASCII, Directory Listing, and Unknown Files"/>
+
+		<taskdef classname="net.bluecow.googlecode.ant.GoogleCodeUploadTask" 
         	     classpath="${lib.dir}/ant-googlecode.jar" 
                  name="gcupload"/>
         <gcupload username="${gc.username}" password="${gc.password}" projectname="v-octopus"
