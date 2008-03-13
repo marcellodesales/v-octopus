@@ -36,6 +36,8 @@ public abstract class AbstractHttpResponse implements HttpResponse {
 
     private List<String> responseHeader;
 
+    private Long requestSize;
+
     public AbstractHttpResponse(HttpRequest originatingRequest) {
         this.request = originatingRequest;
         this.responseHeader = new ArrayList<String>();
@@ -79,7 +81,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
 
         } else { // anything else
             this.setDefaultHeaderValues();
-            if (requestMustIncludeBody(status)) {
+            if (this.requestMustIncludeBody(status)) {
                 this.responseHeader.add("Content-Type: " + this.getRequest().getContentType());
             }
         }
@@ -235,21 +237,24 @@ public abstract class AbstractHttpResponse implements HttpResponse {
      * @return the size of the request
      */
     public long getRequestSize() {
-        HttpRequestHandler handler = this.request.getRequestHandler();
-        if ((handler instanceof ScriptRequestHandlerStrategy && !handler.isRequestedResourceBinary())
-                || handler instanceof DirectoryContentRequestHandlerStrategy
-                || handler instanceof WebServiceRequestHandlerStrategy) {
-            // TODO: Decide if this was a request to a directory, Script or something else and create more holders
-            long nsize = 0;
-            for (String lines : this.getResponseBody()) {
-                nsize += lines.length();
+        if (this.requestSize == null) {
+            HttpRequestHandler handler = this.request.getRequestHandler();
+            if ((handler instanceof ScriptRequestHandlerStrategy && !handler.isRequestedResourceBinary())
+                    || handler instanceof DirectoryContentRequestHandlerStrategy
+                    || handler instanceof WebServiceRequestHandlerStrategy) {
+                // TODO: Decide if this was a request to a directory, Script or something else and create more holders
+                long nsize = 0;
+                for (String lines : this.getResponseBody()) {
+                    nsize += lines.length();
+                }
+                this.requestSize = new Long(nsize);
+                
+            } else {
+                
+                this.requestSize = this.request.getRequestedResource().length();
             }
-            return nsize;
-
-        } else {
-
-            return this.request.getRequestedResource().length();
         }
+        return this.requestSize;
     }
 
     /**

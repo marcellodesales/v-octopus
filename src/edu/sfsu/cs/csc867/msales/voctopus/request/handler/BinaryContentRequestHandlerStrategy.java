@@ -22,9 +22,9 @@ public class BinaryContentRequestHandlerStrategy extends AbstractRequestHandler 
      * @param handlerFound
      * @param reasonPhrase
      */
-    public BinaryContentRequestHandlerStrategy(URI uri, File requestedFile, String handlerFound,
+    public BinaryContentRequestHandlerStrategy(URI uri, File requestedFile, String mimeType,
             ReasonPhase reasonPhrase) {
-        super(uri, requestedFile, RequestType.BINARY, handlerFound);
+        super(uri, requestedFile, RequestType.BINARY, mimeType);
         this.status = reasonPhrase;
     }
 

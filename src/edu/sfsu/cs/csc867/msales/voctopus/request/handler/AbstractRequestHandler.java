@@ -47,7 +47,7 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
      * @param uri the uri requested by the client connection
      * @param requestedFile the file on the time of the request. It can be the 404 file.
      * @param requestType the request type that was bound to the handler
-     * @param handlerFound the handler found on the configuration file.
+     * @param contentType is the handler found on the configuration file.
      */
     public AbstractRequestHandler(URI uri, File requestedFile, RequestType requestType, String contentType) {
         this.physicalFile = requestedFile;

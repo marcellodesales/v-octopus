@@ -82,17 +82,18 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
 
         File currentFile = getRequestedFile();
         URI uri = this.getRequestedResource();
-        String parent = this.getRequestedFile().getParent();
-        if (!parent.equals(VOctopusConfigurationManager.getInstance().getServerRootPath())) {
+        String parentPath = this.getRequestedFile().getParentFile().getAbsolutePath();
+        String documentRootPath = VOctopusConfigurationManager.getInstance().getDocumentRoot();
+        if (!parentPath.equals(documentRootPath)) {
             files.add("<tr>\n");
             files.add("<td width=\"50%\"><img src=\"/icons/back.gif\" alt=\"Parent Directory\" border=\"0\">"
-                    + " <a href=\"..\">Parent Directory</a></td>\n");
+                    + " <a href=\"" + parentPath.replace(documentRootPath, "") + "\">Parent Directory</a></td>\n");
             files.add("<td width=\"40%\" align=\"right\">"
                     + new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(currentFile.lastModified()) + "</td>\n");
             files.add("<td width=\"10%\" align=\"right\">=</td></tr>\n");
         }
 
-        String extension = "";
+        String extension = "", link = "";
         // this time, the file that comes is the dirs.html file, but this time we are going to get the list of the
         // files.
         for (File file : currentFile.listFiles()) {
@@ -114,7 +115,9 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
                 files.add("<td width=\"50%\"><img src=\"" + icon.getPath() + "\" alt=\"" + file.getName() + "\">");
             }
 
-            files.add("<a href=\"" + uri.getPath() + file.getName() + "\">" + file.getName() + "</a></td>\n");
+            link = uri.getPath() + (uri.getPath().endsWith("/") ? "" : "/");
+            
+            files.add("<a href=\"" + link + file.getName() + "\">" + file.getName() + "</a></td>\n");
             files.add("<td width=\"40%\" align=\"right\">"
                     + new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(file.lastModified()) + "</td>\n");
             files.add("<td width=\"10%\" align=\"right\">" + (file.isDirectory() ? "=" : file.length())

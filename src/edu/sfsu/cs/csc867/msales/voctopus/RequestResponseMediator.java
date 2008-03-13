@@ -184,7 +184,7 @@ public final class RequestResponseMediator {
     }
     
     /**
-     * Closes the connection from the client. It has to maintain a persisten connection.
+     * Closes the connection from the client. It has to maintain a persistent connection.
      */
     public void closeConnection() {
         if (this.request.keepAlive())  {

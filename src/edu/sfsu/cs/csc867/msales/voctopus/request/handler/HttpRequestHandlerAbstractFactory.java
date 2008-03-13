@@ -2,6 +2,7 @@ package edu.sfsu.cs.csc867.msales.voctopus.request.handler;
 
 import java.io.File;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -105,7 +106,7 @@ public class HttpRequestHandlerAbstractFactory {
             }
 
             if (foundIndexFile) {
-                handler = this.createFileHandler(uri, file);
+                handler = new AsciiContentRequestHandlerStrategy(uri, file, "text/html", ReasonPhase.STATUS_200);
             } else {
                 handler = new DirectoryContentRequestHandlerStrategy(uri, new File(fileSystem), ReasonPhase.STATUS_200);
             }
@@ -132,9 +133,24 @@ public class HttpRequestHandlerAbstractFactory {
                 String otherOnAliasPath = VOctopusConfigurationManager.getInstance().getServerRootPath()
                         + uri.getPath();
                 file = new File(otherOnAliasPath);
-
                 if (!file.exists()) {
-                    return this.getFileNotFoundHander(uri);
+                    if (uri.getPath().startsWith("/icons/")) {
+                        otherOnAliasPath = VOctopusConfigurationManager.getInstance().getServerRootPath() 
+                        + "/icons/broken.gif";
+                        file = new File(otherOnAliasPath);
+                        if (!file.exists()) {
+                            try {
+                                return this.getFileNotFoundHander(new URI("/icons/broken.gif"));
+                            } catch (URISyntaxException e) {
+                                //return this.getFileNotFoundHander(uri);
+                                //This will never happen!
+                            }
+                        } else {
+                            handler = createFileHandler(uri, file);
+                        }
+                    } else {
+                        return this.getFileNotFoundHander(uri);
+                    }
                 } else {
                     handler = createFileHandler(uri, file);
                 }
@@ -165,7 +181,7 @@ public class HttpRequestHandlerAbstractFactory {
      */
     private HttpRequestHandler createFileHandler(URI uri, File file) {
         String path = file.getPath();
-        String requestedExtension = path.substring(path.lastIndexOf(".") + 1);
+        String requestedExtension = path.substring(path.lastIndexOf("."));
         Map<String, String> mimes = VOctopusConfigurationManager.WebServerProperties.MIME_TYPES.getProperties();
         String cgiPath = VOctopusConfigurationManager.getDefaultCGIPath();
 
