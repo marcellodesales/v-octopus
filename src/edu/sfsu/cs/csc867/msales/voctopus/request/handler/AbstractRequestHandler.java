@@ -3,7 +3,7 @@ package edu.sfsu.cs.csc867.msales.voctopus.request.handler;
 import java.io.File;
 import java.net.URI;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 
 public abstract class AbstractRequestHandler implements HttpRequestHandler {
 
@@ -34,7 +34,7 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
     /**
      * The status as the result of the request processing
      */
-    protected ReasonPhrase status;
+    protected ReasonPhase status;
 
     /**
      * Original requested URI by the client.
@@ -55,7 +55,7 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
         this.contentType = contentType;
         this.uri = uri;
         if (requestedFile == null) {
-            this.status = ReasonPhrase.STATUS_204;
+            this.status = ReasonPhase.STATUS_204;
         }
         // System.out.println("Selected handler: " + this);
         // System.out.println("File to be handled: " + requestedFile);
@@ -105,7 +105,7 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
      * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getStatus()
      */
-    public ReasonPhrase getStatus() {
+    public ReasonPhase getStatus() {
         return this.status;
     }
 
@@ -132,7 +132,7 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
      * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#setStatus(edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase)
      */
-    public void setStatus(ReasonPhrase status) {
+    public void setStatus(ReasonPhase status) {
         this.status = status;
     }
 }

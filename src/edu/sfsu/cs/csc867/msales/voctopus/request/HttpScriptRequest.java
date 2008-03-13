@@ -4,7 +4,7 @@ import java.io.File;
 import java.net.URI;
 import java.util.Map;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
 
 
@@ -22,8 +22,8 @@ public class HttpScriptRequest extends AbstractHttpRequest {
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getRequestedResource()
      */
     public File getRequestedResource() {
-        ReasonPhrase status = this.getStatus();
-        if (status != null && status.equals(ReasonPhrase.STATUS_500)) {
+        ReasonPhase status = this.getStatus();
+        if (status != null && status.equals(ReasonPhase.STATUS_500)) {
             return VOctopusConfigurationManager.get500ErrorFile();
         }
         //TODO REVIEW THIS SSSS...

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 
 /**
  * @author marcello
@@ -14,7 +14,7 @@ public interface HttpResponse {
 
     public String[] getResponseBody();
     public String[] getResponseHeader();
-    public ReasonPhrase getStatusCode();
+    public ReasonPhase getStatusCode();
     public void sendResponse(OutputStream outputStream) throws IOException;
     
     public void sendBody(OutputStream outputStream, PrintWriter writer) throws IOException;

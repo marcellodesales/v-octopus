@@ -44,7 +44,7 @@ public final class RequestResponseMediator {
      * 
      * @author marcello Feb 26, 2008 12:05:05 PM
      */
-    public static enum ReasonPhrase {
+    public static enum ReasonPhase {
         STATUS_100("Continue"), STATUS_101("Switching Protocols"),
         /**
          * The request has been fulfilled and an entity corresponding to the requested resource is being sent in the
@@ -113,7 +113,7 @@ public final class RequestResponseMediator {
          */
         private String humanValue;
 
-        private ReasonPhrase(String humanValue) {
+        private ReasonPhase(String humanValue) {
             this.humanValue = humanValue;
         }
 
@@ -126,8 +126,8 @@ public final class RequestResponseMediator {
          * @param code the code to be generated.
          * @return a new instance of ReasonPhase based on the code
          */
-        public static ReasonPhrase getReasonPhrase(int code) {
-            for (ReasonPhrase key : ReasonPhrase.values()) {
+        public static ReasonPhase getReasonPhrase(int code) {
+            for (ReasonPhase key : ReasonPhase.values()) {
                 if (key.toString().contains(String.valueOf(code))) {
                     return key;
                 }
@@ -180,6 +180,20 @@ public final class RequestResponseMediator {
         } catch (IOException e) {
             // TODO LOG THIS INFORMATION.
             e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Closes the connection from the client. It has to maintain a persisten connection.
+     */
+    public void closeConnection() {
+        if (this.request.keepAlive())  {
+            try {
+                this.clientConnection.getOutputStream().close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
 }

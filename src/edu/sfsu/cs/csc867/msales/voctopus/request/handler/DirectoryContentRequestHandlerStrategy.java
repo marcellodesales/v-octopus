@@ -7,7 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
 
 /**
@@ -19,7 +19,7 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
 
     private static final String RESPONSE_DATE_FORMAT = "MMM-dd-yyyy kk:mm";
 
-    public DirectoryContentRequestHandlerStrategy(URI uri, File requestedFile, ReasonPhrase status) {
+    public DirectoryContentRequestHandlerStrategy(URI uri, File requestedFile, ReasonPhase status) {
         super(uri, requestedFile, RequestType.ASCII, "directory");
         this.status = status;
     }

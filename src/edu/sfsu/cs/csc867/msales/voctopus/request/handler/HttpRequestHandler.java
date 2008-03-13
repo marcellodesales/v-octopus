@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 
 /**
  * @author marcello Feb 24, 2008 7:55:58 AM
@@ -22,7 +22,7 @@ public interface HttpRequestHandler {
      * @return The status code about the file. Just maps the 200, 404. Other status must be handled on other Interfaces
      *         for the request.
      */
-    public ReasonPhrase getStatus();
+    public ReasonPhase getStatus();
 
     /**
      * @return The contetn type matched with the configuration file.
@@ -53,7 +53,7 @@ public interface HttpRequestHandler {
      * 
      * @param reason
      */
-    public void setStatus(ReasonPhrase reason);
+    public void setStatus(ReasonPhase reason);
 
     /**
      * @return The particular header for a given handling operation.

@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 
 /**
  * The request handler for binary content. It doesn't have the resource lines, since the connection will be piped
@@ -23,7 +23,7 @@ public class BinaryContentRequestHandlerStrategy extends AbstractRequestHandler 
      * @param reasonPhrase
      */
     public BinaryContentRequestHandlerStrategy(URI uri, File requestedFile, String handlerFound,
-            ReasonPhrase reasonPhrase) {
+            ReasonPhase reasonPhrase) {
         super(uri, requestedFile, RequestType.BINARY, handlerFound);
         this.status = reasonPhrase;
     }

@@ -5,7 +5,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.config.DirectoryConfigHandler;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest;
@@ -67,7 +67,9 @@ public class HttpRequestHandlerAbstractFactory {
             if (authorization != null) {
                 if (!new ProtectedContentRequestHandlerStrategy(uri, file, dirHandler, authorization)
                         .isAuthorizationValid()) {
-                    return new ProtectedContentRequestHandlerStrategy(uri, file, dirHandler, null);
+                    
+                    File unAuthFile = VOctopusConfigurationManager.get401ErrorFile();
+                    return new ScriptRequestHandlerStrategy(null, uri, unAuthFile, TEXT_HTML, ReasonPhase.STATUS_401);
                 }
             } else {
                 return new ProtectedContentRequestHandlerStrategy(uri, file, dirHandler, null);
@@ -89,7 +91,7 @@ public class HttpRequestHandlerAbstractFactory {
                 }
             }
 
-            ReasonPhrase requestStatus = null;
+            ReasonPhase requestStatus = null;
             if (foundIndexFile) {
                 requestStatus = CacheStateControl.getRequestReasonPhase(file, abstractHttpRequest.getRequestHeaders());
             } else {
@@ -97,15 +99,15 @@ public class HttpRequestHandlerAbstractFactory {
                         abstractHttpRequest.getRequestHeaders());
             }
 
-            if (requestStatus.equals(ReasonPhrase.STATUS_304) || requestStatus.equals(ReasonPhrase.STATUS_405)
-                    || requestStatus.equals(ReasonPhrase.STATUS_204)) {
+            if (requestStatus.equals(ReasonPhase.STATUS_304) || requestStatus.equals(ReasonPhase.STATUS_405)
+                    || requestStatus.equals(ReasonPhase.STATUS_204)) {
                 return new CachedRequestHandler(abstractHttpRequest.getUri(), file);
             }
 
             if (foundIndexFile) {
                 handler = this.createFileHandler(uri, file);
             } else {
-                handler = new DirectoryContentRequestHandlerStrategy(uri, new File(fileSystem), ReasonPhrase.STATUS_200);
+                handler = new DirectoryContentRequestHandlerStrategy(uri, new File(fileSystem), ReasonPhase.STATUS_200);
             }
 
         } else {
@@ -150,7 +152,7 @@ public class HttpRequestHandlerAbstractFactory {
      */
     public HttpRequestHandler getFileNotFoundHander(URI uri) {
         File file = VOctopusConfigurationManager.get404ErrorFile();
-        return new ScriptRequestHandlerStrategy(null, uri, file, TEXT_HTML, ReasonPhrase.STATUS_404);
+        return new ScriptRequestHandlerStrategy(null, uri, file, TEXT_HTML, ReasonPhase.STATUS_404);
     }
 
     /**
@@ -180,11 +182,11 @@ public class HttpRequestHandlerAbstractFactory {
                     cgiParams.put(varValue[0], varValue[1]);
                 }
             }
-            return new ScriptRequestHandlerStrategy(cgiParams, uri, file, requestedExtension, ReasonPhrase.STATUS_200);
+            return new ScriptRequestHandlerStrategy(cgiParams, uri, file, requestedExtension, ReasonPhase.STATUS_200);
 
         } else if (path.contains(VOctopusConfigurationManager.getDefaultWebservicesPath())) {
 
-            return new WebServiceRequestHandlerStrategy(uri, file, requestedExtension, ReasonPhrase.STATUS_200);
+            return new WebServiceRequestHandlerStrategy(uri, file, requestedExtension, ReasonPhase.STATUS_200);
         }
 
         String handlerFound = "";
@@ -200,11 +202,11 @@ public class HttpRequestHandlerAbstractFactory {
         }
 
         if (handlerFound.equals("")) {
-            return new UnknownContentRequestHandlerStrategy(uri, file, ReasonPhrase.STATUS_200);
+            return new UnknownContentRequestHandlerStrategy(uri, file, ReasonPhase.STATUS_200);
         } else if (handlerFound.contains("text/")) {
-            return new AsciiContentRequestHandlerStrategy(uri, file, handlerFound, ReasonPhrase.STATUS_200);
+            return new AsciiContentRequestHandlerStrategy(uri, file, handlerFound, ReasonPhase.STATUS_200);
         } else {
-            return new BinaryContentRequestHandlerStrategy(uri, file, handlerFound, ReasonPhrase.STATUS_200);
+            return new BinaryContentRequestHandlerStrategy(uri, file, handlerFound, ReasonPhase.STATUS_200);
         }
     }
 }

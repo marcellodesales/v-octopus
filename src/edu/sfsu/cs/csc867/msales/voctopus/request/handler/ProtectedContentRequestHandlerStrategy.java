@@ -3,7 +3,7 @@ package edu.sfsu.cs.csc867.msales.voctopus.request.handler;
 import java.io.File;
 import java.net.URI;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.config.Base64Decoder;
 import edu.sfsu.cs.csc867.msales.voctopus.config.Base64FormatException;
 import edu.sfsu.cs.csc867.msales.voctopus.config.CryptPassword;
@@ -32,7 +32,7 @@ public class ProtectedContentRequestHandlerStrategy extends EmptyBodyRequestHand
      */
     public ProtectedContentRequestHandlerStrategy(URI uri, File requestedFile, DirectoryConfigHandler dirHandler,
             String authorization) {
-        super(uri, requestedFile, RequestType.PROTECTED, ReasonPhrase.STATUS_401);
+        super(uri, requestedFile, RequestType.PROTECTED, ReasonPhase.STATUS_401);
         this.protectedDirHandler = dirHandler;
         this.contentType = "Content-Type: text/html; charset=iso-8859-1";
         this.authorization = authorization;
@@ -51,8 +51,8 @@ public class ProtectedContentRequestHandlerStrategy extends EmptyBodyRequestHand
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getParticularResponseHeaders()
      */
     public String[] getParticularResponseHeaders() {
-        return new String[] { "WWW-Authenticate: Basic realm=" + this.getProtectedDirectoryHandler().getAuthName(),
-                "Connection: close", "Transfer-Encoding: chunked" };
+        return new String[] { "WWW-Authenticate: Basic realm=\"" + this.getProtectedDirectoryHandler().getAuthName() 
+                +"\"", "Connection: close", "Transfer-Encoding: chunked" };
     }
 
     /**

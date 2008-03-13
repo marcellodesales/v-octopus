@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager.LogFormats;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
@@ -40,21 +40,21 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         this.request = originatingRequest;
         this.responseHeader = new ArrayList<String>();
 
-        ReasonPhrase status = this.request.getStatus();
+        ReasonPhase status = this.request.getStatus();
 
-        if (status.equals(ReasonPhrase.STATUS_401)) {
-            ProtectedContentRequestHandlerStrategy handler = (ProtectedContentRequestHandlerStrategy) this.request
-                    .getRequestHandler();
-            if (handler.containsAuthorization()) {
-                if (handler.isAuthorizationValid()) {
-                    // request.changeStatus(ReasonPhrase.STATUS_200);
-                }
-            }
-        }
+//        if (status.equals(ReasonPhase.STATUS_401)) {
+//            ProtectedContentRequestHandlerStrategy handler = (ProtectedContentRequestHandlerStrategy) this.request
+//                    .getRequestHandler();
+//            if (handler.containsAuthorization()) {
+//                if (handler.isAuthorizationValid()) {
+//                    // request.changeStatus(ReasonPhrase.STATUS_200);
+//                }
+//            }
+//        }
 
-        if (!status.equals(ReasonPhrase.STATUS_404) && this.request instanceof HttpScriptRequest) {
+        if (!status.equals(ReasonPhase.STATUS_404) && this.request instanceof HttpScriptRequest) {
             String[] responseBody = this.getResponseBody();
-            if (!status.equals(ReasonPhrase.STATUS_500)) {
+            if (!status.equals(ReasonPhase.STATUS_500)) {
                 String contentType = responseBody[0];
                 if (!contentType.contains("Content-Type: ")) {
                     contentType = "Content-Type: text/plain";
@@ -118,7 +118,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
      * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.response.HttpResponse#getStatusCode()
      */
-    public ReasonPhrase getStatusCode() {
+    public ReasonPhase getStatusCode() {
         return this.request.getStatus();
     }
 
@@ -151,20 +151,23 @@ public abstract class AbstractHttpResponse implements HttpResponse {
 
         out.flush();
         writer.close();
-        // if the connection sends the acknowledgment to close it, then close it
-        // usually with a file
-        if (!this.request.keepAlive()) {
-            out.close();
-        }
     }
 
     /**
      * @param status is the status from the request.
      * @return if the result must include a body.
      */
-    private boolean requestMustIncludeBody(ReasonPhrase status) {
-        return (!(status.equals(ReasonPhrase.STATUS_204) && !(status.equals(ReasonPhrase.STATUS_401) && (status
-                .equals(ReasonPhrase.STATUS_304)))));
+    private boolean requestMustIncludeBody(ReasonPhase status) {
+        switch (status) {
+            case STATUS_204:
+            case STATUS_304:
+                return false;
+            case STATUS_401:
+                //Extreme case where the user did not give the correct username and password.
+                return (this.request.getResourceLines() != null) && this.request.getResourceLines().length > 0;
+            default:
+                return true;
+        }
     }
 
     /**
@@ -185,11 +188,11 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         StringBuilder header = new StringBuilder();
         header.append(this.request.getRequestVersion());
         header.append(" ");
-        ReasonPhrase status = this.request.getStatus();
+        ReasonPhase status = this.request.getStatus();
         header.append(status);
         this.responseHeader.add(header.toString());
 
-        if (!status.equals(ReasonPhrase.STATUS_304)) {
+        if (!status.equals(ReasonPhase.STATUS_304)) {
             header.delete(0, header.length());
             header.append("Date: ");
             Calendar cal = GregorianCalendar.getInstance();
@@ -253,7 +256,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
      * @param status
      * @return The modified status for the response.
      */
-    public Date getLastModified(ReasonPhrase status) {
+    public Date getLastModified(ReasonPhase status) {
         if (this.request.getRequestHandler() instanceof ScriptRequestHandlerStrategy
                 || this.request.getRequestHandler() instanceof WebServiceRequestHandlerStrategy) {
             return new Date();

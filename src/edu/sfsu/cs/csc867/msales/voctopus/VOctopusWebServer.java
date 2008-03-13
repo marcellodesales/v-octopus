@@ -83,6 +83,8 @@ public class VOctopusWebServer {
         try {
             mediator = new RequestResponseMediator(new HttpClientConnection(clientSocket));
             mediator.sendResponse();
+            
+            
         } catch (HttpRequestInterpreterException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

@@ -5,7 +5,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager.LogFormats;
 
 public enum CacheStateControl {
@@ -48,9 +48,9 @@ public enum CacheStateControl {
      * execution of scripts, web services, etc. It will also be used for other method
      * requests such as HEAD, PUT, etc...
      */
-    public static ReasonPhrase getRequestReasonPhase(File requestedFile, String[] requestHeaders) {
+    public static ReasonPhase getRequestReasonPhase(File requestedFile, String[] requestHeaders) {
         String[] keyValue = null;
-        ReasonPhrase chosen = null;
+        ReasonPhase chosen = null;
         pars:
         for (String pair : requestHeaders) {
             keyValue = pair.split(": ");
@@ -62,19 +62,19 @@ public enum CacheStateControl {
                     switch (control) {
                         case PRAGMA:
                             if (requestedFile.exists()) {
-                                chosen = ReasonPhrase.STATUS_200;
+                                chosen = ReasonPhase.STATUS_200;
                                 break pars;
                             } else {
-                                chosen = ReasonPhrase.STATUS_404;
+                                chosen = ReasonPhase.STATUS_404;
                                 break pars;
                             }
                         case IF_MODIFIED_SINCE:
                             if (requestedFile.isDirectory() ||  
                                     new Date(requestedFile.lastModified()).after(getDate(keyValue[1]))) {
-                                chosen = ReasonPhrase.STATUS_200;
+                                chosen = ReasonPhase.STATUS_200;
                                 break pars;
                             } else {
-                                chosen = ReasonPhrase.STATUS_304;
+                                chosen = ReasonPhase.STATUS_304;
                                 break pars;
                             }
                         case IF_NONE_MATCH:
@@ -84,7 +84,7 @@ public enum CacheStateControl {
                 }
             }
         }
-        return chosen != null ? chosen : (requestedFile.exists() ? ReasonPhrase.STATUS_200 : ReasonPhrase.STATUS_404);
+        return chosen != null ? chosen : (requestedFile.exists() ? ReasonPhase.STATUS_200 : ReasonPhase.STATUS_404);
     }
     
     private static Date getDate(String headerValue) {

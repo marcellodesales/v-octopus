@@ -3,7 +3,7 @@ package edu.sfsu.cs.csc867.msales.voctopus.request.handler;
 import java.io.File;
 import java.net.URI;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 
 /**
  * Represents the conditional request that doesn't include a body.
@@ -19,7 +19,7 @@ public class CachedRequestHandler extends EmptyBodyRequestHandler {
      * @param requestedFile is the physical file requested.
      */
     public CachedRequestHandler(URI uri, File requestedFile) {
-        super(uri, requestedFile, RequestType.CACHED, ReasonPhrase.STATUS_304);
+        super(uri, requestedFile, RequestType.CACHED, ReasonPhase.STATUS_304);
     }
 
     public String[] getParticularResponseHeaders() {

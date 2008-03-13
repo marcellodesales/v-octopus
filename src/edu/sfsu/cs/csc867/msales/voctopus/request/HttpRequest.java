@@ -3,7 +3,7 @@ package edu.sfsu.cs.csc867.msales.voctopus.request;
 import java.io.File;
 import java.net.URI;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
 
 /**
@@ -14,7 +14,7 @@ public interface HttpRequest {
 
     public String getMethodType();
     public File getRequestedResource();
-    public ReasonPhrase getStatus();
+    public ReasonPhase getStatus();
     public URI getUri();
     public String getRequestVersion();
     public String[] getResourceLines();

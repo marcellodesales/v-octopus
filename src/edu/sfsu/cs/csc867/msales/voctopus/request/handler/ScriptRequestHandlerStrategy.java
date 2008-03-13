@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
 
 public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
@@ -31,7 +31,7 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
     private String[] scriptsLines;
 
     public ScriptRequestHandlerStrategy(Map<String, String> requestParameters, URI uri, File requestedFile,
-            String handlerFound, ReasonPhrase status) {
+            String handlerFound, ReasonPhase status) {
         super(uri, requestedFile, RequestType.ASCII, handlerFound);
         this.status = status;// consider that the script ok...
         this.requestParameters = requestParameters;
@@ -55,8 +55,8 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
 
         StringBuilder builder = new StringBuilder();
 
-        if (this.wasA404Rquest()) {
-            System.out.println("Request Not Found: handler chose " + this.getRequestedFile().getPath());
+        if (this.wasErrorRquest()) {
+            System.out.println("Error handler: handler chose " + this.getRequestedFile().getPath());
             channel = new FileInputStream(this.getRequestedFile()).getChannel();
             buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, this.getRequestedFile().length());
             CharBuffer charBuffer = decoder.decode(buffer);
@@ -94,11 +94,11 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
                 }
                 // this.requestType = RequestType.BINARY; //TODO: THE REQUEST MUST BE DONE...
 
-                this.status = ReasonPhrase.STATUS_200;
+                this.status = ReasonPhase.STATUS_200;
 
             } catch (CgiExecutionException e) {
 
-                this.status = ReasonPhrase.STATUS_500;
+                this.status = ReasonPhase.STATUS_500;
                 this.contentType = "text/html";
                 this.requestType = RequestType.ASCII;
 
@@ -174,14 +174,14 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
             e.printStackTrace();
         }
 
-        this.setStatus(ReasonPhrase.STATUS_200);
+        this.setStatus(ReasonPhase.STATUS_200);
         if (scriptResult == 1) {
             reader = new InputStreamReader(process.getErrorStream());
             // this.setStatus(ReasonPhrase.STATUS_501);
             // Treat is as if it was success, and get the response from the execution.
             if (Boolean.valueOf(VOctopusConfigurationManager.WebServerProperties.HTTPD_CONF
                     .getPropertyValue("FAIL_SCRIPT_ON_ERROR"))) {
-                this.setStatus(ReasonPhrase.STATUS_500);
+                this.setStatus(ReasonPhase.STATUS_500);
 
                 BufferedReader buffer = new BufferedReader(reader);
                 String line;
@@ -194,7 +194,7 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
         } else {
             reader = new InputStreamReader(process.getInputStream());
         }
-        if (this.getStatus().equals(ReasonPhrase.STATUS_200)) {
+        if (this.getStatus().equals(ReasonPhase.STATUS_200)) {
             BufferedReader buffer = new BufferedReader(reader);
             String line;
             while ((line = buffer.readLine()) != null) {
@@ -218,10 +218,11 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
     }
 
     /**
-     * @return Verifies if the request status has a value of {@link ReasonPhrase#STATUS_404}
+     * @return Verifies if the request status has a value of {@link ReasonPhase#STATUS_404} or 
+     * {@link ReasonPhase#STATUS_401}
      */
-    private boolean wasA404Rquest() {
-        return this.status.equals(ReasonPhrase.STATUS_404);
+    private boolean wasErrorRquest() {
+        return this.status.equals(ReasonPhase.STATUS_404) || this.status.equals(ReasonPhase.STATUS_401);
     }
 
     public String[] getParticularResponseHeaders() {

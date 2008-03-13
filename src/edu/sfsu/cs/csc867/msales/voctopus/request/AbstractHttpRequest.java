@@ -5,7 +5,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandlerAbstractFactory;
 /**
@@ -86,7 +86,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     /* (non-Javadoc)
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getStatus()
      */
-    public ReasonPhrase getStatus() {
+    public ReasonPhase getStatus() {
         return this.requestHandler.getStatus();
     }
     
@@ -173,5 +173,9 @@ public abstract class AbstractHttpRequest implements HttpRequest {
 
     public HttpRequestHandler getRequestHandler() {
         return requestHandler;
+    }
+
+    public String getVersion() {
+        return version;
     }
 }

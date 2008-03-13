@@ -1,21 +1,22 @@
 package edu.sfsu.cs.csc867.msales.voctopus.aspect.loggin;
 
-import java.io.IOException;
+import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest;
+import edu.sfsu.cs.csc867.msales.voctopus.HttpClientConnection;
+import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
+import edu.sfsu.cs.csc867.msales.voctopus.response.AbstractHttpResponse;
 
+import java.io.IOException;
 import java.io.File;
 import java.io.FileWriter;
-
-
+import java.io.OutputStream;
 import java.net.Socket;
+import java.util.Date;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 import org.aspectj.lang.Signature;
 
-import edu.sfsu.cs.csc867.msales.voctopus.HttpClientConnection;
-import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
-
 /**
- * Aspect responsible for the loggin of the entire application.
+ * Aspect responsible for the loggin cross-cut concern of the entire application.
  * @author marcello
  * Feb 16, 2008 8:26:02 AM
  */
@@ -38,12 +39,29 @@ public aspect VOctopusExecutionLoggin {
         target(clientConnection) && args(socket) &&  execution(*.new(Socket));
     
     after (HttpClientConnection clientConnection, Socket socket): openingConnection(clientConnection, socket) {
-        
-        //"127.0.0.1 - - [27/Feb/2008:08:56:41 -0800] "GET /?C=N;O=A HTTP/1.1" 200 1590 
-        //"-" "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.12) Gecko/20080207 
-        //Ubuntu/7.10 (gutsy) Firefox/2.0.0.12"
-
-        this.buffer.append(socket.getInetAddress().getHostAddress() + "\n\r");
+        String ip = socket.getInetAddress().getHostAddress();
+        String dateTime = VOctopusConfigurationManager.LogFormats.ACCESS_LOG_FILE.format(new Date());
+        this.buffer.append(ip + " - - " + dateTime + " ");
+    }
+    
+//    pointcut constructingRequest(AbstractHttpRequest abstrRequest, String methodType, URI uri, String version, 
+//            Map<String, String> headerVars) : target(abstrRequest) && args(methodType, uri, version, headerVars) 
+//              && execution(*.new(String, URI, String, Map<String, String> ));
+//    
+//    after (AbstractHttpRequest abstrRequest, String methodType, URI uri, String version, 
+//            Map<String, String> headerVars) : constructingRequest(abstrRequest, methodType, uri, version, headerVars) {
+//        this.buffer.append("\"" + abstrRequest.getMethodType() + " " + uri.getRawPath() + " " + version + "\" ");
+//        this.buffer.append(abstrRequest.getStatus().getCode() + " ");
+//    }
+    
+    pointcut loggingAccess(AbstractHttpResponse abstractResp, OutputStream clientOutput) :
+        target(abstractResp) && args(clientOutput) && execution(* AbstractHttpResponse.sendResponse(OutputStream));
+    
+    after (AbstractHttpResponse abstractResp, OutputStream clientOutput) : loggingAccess(abstractResp, clientOutput) {
+        AbstractHttpRequest request = (AbstractHttpRequest)abstractResp.getRequest();
+        this.buffer.append("\"" + request.getMethodType() + " " + request.getUri().getRawPath() + " "); 
+        this.buffer.append(request.getVersion() + "\" ");
+        this.buffer.append(request.getStatus().getCode() + " " + abstractResp.getRequestSize() + "\n");
         this.logAccess();
     }
     

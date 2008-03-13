@@ -3,7 +3,7 @@ package edu.sfsu.cs.csc867.msales.voctopus.request.handler;
 import java.io.File;
 import java.net.URI;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 
 /**
  * Class responsible for the handling of files with an unknown mime type. It must be handled as an Ascii type.
@@ -19,7 +19,7 @@ public class UnknownContentRequestHandlerStrategy extends AsciiContentRequestHan
      * @param requestedFile
      * @param reasonPhrase
      */
-    public UnknownContentRequestHandlerStrategy(URI uri, File requestedFile, ReasonPhrase reasonPhrase) {
+    public UnknownContentRequestHandlerStrategy(URI uri, File requestedFile, ReasonPhase reasonPhrase) {
         super(uri, requestedFile, "", reasonPhrase);
     }
 }

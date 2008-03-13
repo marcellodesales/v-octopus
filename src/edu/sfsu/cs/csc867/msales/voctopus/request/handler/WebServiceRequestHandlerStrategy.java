@@ -4,14 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 
 /**
  * @author marcello Feb 24, 2008 8:36:39 AM
  */
 public class WebServiceRequestHandlerStrategy extends AbstractRequestHandler {
 
-    public WebServiceRequestHandlerStrategy(URI uri, File requestedFile, String handlerFound, ReasonPhrase reasonPhrase) {
+    public WebServiceRequestHandlerStrategy(URI uri, File requestedFile, String handlerFound, ReasonPhase reasonPhrase) {
         super(uri, requestedFile, RequestType.ASCII, handlerFound);
         // TODO Auto-generated constructor stub
     }

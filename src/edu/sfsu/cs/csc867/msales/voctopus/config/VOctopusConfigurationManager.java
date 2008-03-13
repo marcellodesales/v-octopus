@@ -27,14 +27,46 @@ public final class VOctopusConfigurationManager {
     private static final String VOCTOPUS_VERSION = "vOctopus/0.2.2";
 
     public static enum LogFormats {
-        HEADER_DATE_TIME {
-            public String toString() {
-                return "EEE, MMM d yyyy HH:mm:ss z";
-            };
-        };
+        /**
+         * Used for the header variables for the responses
+         */
+        HEADER_DATE_TIME("EEE, MMM dd yyyy HH:mm:ss z"),
+        /**
+         * Used to format the access file
+         */
+        ACCESS_LOG_FILE(WebServerProperties.ALIAS.getPropertyValue("LogFormat"));
+        
+        /**
+         * Log format used
+         */
+        private String format;
+        
+        /**
+         * Creates a new LogFormats
+         * @param format
+         */
+        private LogFormats(String format) {
+            this.format = format;
+        }
+        
+        /* (non-Javadoc)
+         * @see java.lang.Enum#toString()
+         */
+        public String toString() {
+            return this.format;
+        }
 
+        /**
+         * Formats the given date using one of the formats
+         * @param date is the given date to be formated
+         * @return the formated signature of the given date using the SimpleDateFormat instance and patterns.
+         */
         public String format(Date date) {
-            return (new SimpleDateFormat(this.toString()).format(date)).toString();
+            switch (this) {
+                case HEADER_DATE_TIME: return (new SimpleDateFormat(toString()).format(date)).toString();
+                case ACCESS_LOG_FILE: return (new SimpleDateFormat(toString()).format(date).toString());
+                default: return new SimpleDateFormat(toString()).format(new Date()).toString();
+            }
         }
     }
 
@@ -49,12 +81,24 @@ public final class VOctopusConfigurationManager {
         }
     };
 
+    /**
+     * Map with the general types of icons registered on the configuration file.
+     */
     private static Map<String, String> iconTypes = new HashMap<String, String>();
 
+    /**
+     * Map wit the regular icons classified by the the extentions
+     */
     private static Map<String, String> icons = new HashMap<String, String>();
 
+    /**
+     * The folder icon used 
+     */
     private static String folderIcon;
 
+    /**
+     * The default icon
+     */
     private static String defaultIcon;
 
     /**
@@ -331,6 +375,10 @@ public final class VOctopusConfigurationManager {
                     vals[0] = vals[2];
                     vals[2] = vals[1];
                     vals[1] = vals[0];
+                } else if (vals[0].equals("LogFormat")) {
+                    vals[1] = vals[1] + " " + vals[2];
+                    vals[2] = vals[1];
+                    vals[1] = vals[0];
                 } else if (vals[0].equals("AddIconByType")) {
                     iconTypes.put(vals[2], vals[1]);
                     continue;
@@ -469,6 +517,14 @@ public final class VOctopusConfigurationManager {
     public static File get404ErrorFile() {
         return new File(serverRootPath + WebServerProperties.ALIAS.getPropertyValue("404"));
     }
+    
+
+    /**
+     * @return The file representation for the 404 file
+     */
+    public static File get401ErrorFile() {
+        return new File(serverRootPath + WebServerProperties.ALIAS.getPropertyValue("401"));
+    }
 
     /**
      * @return The file representation for the 500 file
@@ -482,6 +538,6 @@ public final class VOctopusConfigurationManager {
      * @return if the given URI is protected by username and password stored on a htpasswd file.
      */
     public DirectoryConfigHandler isRequestedURIProtected(URI uri) {
-        return protectedDirsTree.isDirectoryProtected(uri);
+        return protectedDirsTree.isDirectoryProtected(uri, null);
     }
 }

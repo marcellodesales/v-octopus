@@ -2,6 +2,7 @@ package edu.sfsu.cs.csc867.msales.voctopus.config;
 
 import java.io.File;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,15 +30,41 @@ public class ProtectedDirectoryTree {
      * <li>{@link DirectoryConfigHandler} = If the directory is protected;
      * <li>null = in case the directory is free to be displayed.
      */
-    public DirectoryConfigHandler isDirectoryProtected(URI uri) {
+    public DirectoryConfigHandler isDirectoryProtected(URI uri, URI parent) {
+        
+        if (parent != null && parent.getPath().equals("/")) {
+            return null;
+        }
+        
+        DirectoryConfigHandler found = null;
         for(DirectoryConfigHandler protectDir : this.protectedDirectories) {
-            String physicalDir = protectDir.getProtectedDirectory().getAbsolutePath() + "/";
-            String uriD = uri.getPath();
-            if (physicalDir.contains(uriD)) {
+            
+            URI relativeURI = this.getRelativeURI(protectDir.getProtectedDirectory());
+            if (relativeURI != null && relativeURI.getPath().contains(uri.getPath())) {
                 return protectDir;
+            } else {
+                found = this.isDirectoryProtected(uri, this.getRelativeURI(protectDir.getProtectedDirectory().getParentFile()));
+                if (found == null) {
+                    continue;
+                } else {
+                    return found;
+                }
             }
         }
         return null;
+    }
+    
+    /**
+     * @param requestedDirectory is the requested directory file.
+     * @return the relative URI from the file system directory file.
+     */
+    public URI getRelativeURI(File requestedDirectory) {
+        String documentRoot = VOctopusConfigurationManager.getInstance().getDocumentRoot();
+        try {
+            return new URI(requestedDirectory.getAbsolutePath().replace(documentRoot, "") + "/");
+        } catch (URISyntaxException e) {
+            return null;
+        }
     }
     
     /**

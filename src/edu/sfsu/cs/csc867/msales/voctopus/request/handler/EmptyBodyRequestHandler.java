@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 
 public abstract class EmptyBodyRequestHandler extends AbstractRequestHandler {
 
@@ -16,7 +16,7 @@ public abstract class EmptyBodyRequestHandler extends AbstractRequestHandler {
      * @param requestType
      * @param status
      */
-    public EmptyBodyRequestHandler(URI uri, File requestedFile, RequestType requestType, ReasonPhrase status) {
+    public EmptyBodyRequestHandler(URI uri, File requestedFile, RequestType requestType, ReasonPhase status) {
         super(uri, requestedFile, requestType, null);
         this.status = status;
     }

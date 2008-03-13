@@ -12,7 +12,7 @@ import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase;
+import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 
 /**
  * Handler for ASCII-based files.
@@ -30,7 +30,7 @@ public class AsciiContentRequestHandlerStrategy extends AbstractRequestHandler {
      * @param reasonPhrase
      */
     public AsciiContentRequestHandlerStrategy(URI uri, File requestedFile, String handlerFound,
-            ReasonPhrase reasonPhrase) {
+            ReasonPhase reasonPhrase) {
         super(uri, requestedFile, RequestType.ASCII, handlerFound);
         this.status = reasonPhrase;
         // TODO Auto-generated constructor stub
@@ -57,7 +57,7 @@ public class AsciiContentRequestHandlerStrategy extends AbstractRequestHandler {
 
             // in case there's no response, the reason phase is 204
             if (charBuffer.length() == 0) {
-                this.setStatus(ReasonPhrase.STATUS_204);
+                this.setStatus(ReasonPhase.STATUS_204);
                 return new String[] { "" };
             }
 
