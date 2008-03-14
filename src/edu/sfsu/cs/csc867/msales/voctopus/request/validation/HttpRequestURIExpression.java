@@ -25,9 +25,9 @@ public class HttpRequestURIExpression extends HttpRequestNonTerminalExpression {
     protected void validate() throws HttpRequestInterpreterException {
         if (!this.getEvaluatedToken().startsWith("/")) {
             throw new HttpRequestInterpreterException("The URI token is invalid", this.getEvaluatedToken());
-        } else if (this.getEvaluatedToken().contains("/cgi-bin/")) {
+        } else if (this.getEvaluatedToken().startsWith("/cgi-bin/")) {
             this.getContext().setRequestType(RequestType.SCRIPT_EXECUTION);
-        } else if (this.getEvaluatedToken().contains("/ws/")) {
+        } else if (this.getEvaluatedToken().startsWith("/ws/")) {
             this.getContext().setRequestType(RequestType.WEB_SERVICE);
         } else {
             this.getContext().setRequestType(RequestType.STATIC_CONTENT);

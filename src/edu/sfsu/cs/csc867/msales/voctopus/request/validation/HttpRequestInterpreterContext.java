@@ -1,5 +1,6 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request.validation;
 
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -24,22 +25,19 @@ public class HttpRequestInterpreterContext {
      * header variables.
      */
     private String[] requestLinesContext;
-    
+
     /**
-     * 
-     * @author marcello
-     * Feb 20, 2008 2:19:52 PM
+     * @author marcello Feb 20, 2008 2:19:52 PM
      */
     public static enum RequestType {
-        STATIC_CONTENT, 
-        SCRIPT_EXECUTION,
-        WEB_SERVICE;
+        STATIC_CONTENT, SCRIPT_EXECUTION, WEB_SERVICE;
     }
+
     /**
      * The content type of the execution. It defines the type of Content Handler to be used.
      */
     public RequestType requestType;
-        
+
     /**
      * The request method used on the request method.
      */
@@ -49,29 +47,29 @@ public class HttpRequestInterpreterContext {
      * The versions of the HTTP protocol that are accepted
      */
     public static enum RequestVersion {
-        HTTP_1_1("HTTP/1.1"),
-        HTTP_1_0("HTTP/1.0");
-        
+        HTTP_1_1("HTTP/1.1"), HTTP_1_0("HTTP/1.0");
+
         private String versionToken;
+
         private RequestVersion(String versionToken) {
             this.versionToken = versionToken;
         }
-        
+
         @Override
         public String toString() {
             return this.versionToken;
         };
     }
+
     /**
      * The version used on the request.
      */
     private RequestVersion requestVersion;
-    
+
     /**
-     * The query string from the request. It's part of the URI, just following the question mark
-     * <BR>
-     * <li>www.google.com/Resource?var1=value1&var2=value2
-     * <BR>The query string is ?var1=value1&var2=value2
+     * The query string from the request. It's part of the URI, just following the question mark <BR>
+     * <li>www.google.com/Resource?var1=value1&var2=value2 <BR>
+     * The query string is ?var1=value1&var2=value2
      */
     private String queryString;
 
@@ -81,10 +79,10 @@ public class HttpRequestInterpreterContext {
     private URI uri;
 
     /**
-     * Request parameters parsed from the query string 
+     * Request parameters parsed from the query string
      */
     private HashMap<String, String> requestParameters;
-    
+
     /**
      * @return The content type that matches to this request. It will be used to construct the request handler.
      */
@@ -142,12 +140,14 @@ public class HttpRequestInterpreterContext {
      * @param method is the method expression, that also holds the rest of the first line expression
      * @return the resulting instance of the HttpRequest depending on the type of the request
      */
-    public HttpRequest getParsedRequest(HttpRequestMethodExpression firstLineExpr, HttpRequestHeaderFieldVarExpression[] vars) {
-        return HttpRequestAbstractFactory.getInstance().createHttpRequest(firstLineExpr, vars);
+    public HttpRequest getParsedRequest(HttpRequestMethodExpression firstLineExpr,
+            HttpRequestHeaderFieldVarExpression[] vars, InetAddress clientAddress) {
+        return HttpRequestAbstractFactory.getInstance().createHttpRequest(firstLineExpr, vars, clientAddress);
     }
 
     /**
-     * Sets the Method type of the request. 
+     * Sets the Method type of the request.
+     * 
      * @param methodType
      */
     public void setMethodType(RequestMethodType methodType) {
@@ -156,31 +156,33 @@ public class HttpRequestInterpreterContext {
 
     /**
      * Sets the request Type
+     * 
      * @param requestType
      */
     public void setRequestType(RequestType requestType) {
         this.requestType = requestType;
-        
+
     }
 
     /**
      * Sets the query string of the request.
+     * 
      * @param queryString is the query string from the request.
      */
     public void setQueryString(String queryString) {
         this.queryString = queryString;
-        
+
     }
 
     /**
      * Sets the URI of the request.
+     * 
      * @param requestUri is the request URI sent by the request.
      */
     public void setURI(String requestUri) {
         try {
             this.uri = new URI(requestUri);
         } catch (URISyntaxException e) {
-            //TODO: This exception should not be thrown once the interpreter would catch the malformness
         }
     }
 
@@ -203,16 +205,16 @@ public class HttpRequestInterpreterContext {
     public HashMap<String, String> getRequestParameters() {
         return requestParameters;
     }
-    
+
     public Map<String, String> getRequestHeaderVars() {
-        Map<String, String> headerVars = new HashMap<String, String>(this.requestLinesContext.length-1);
+        Map<String, String> headerVars = new HashMap<String, String>(this.requestLinesContext.length - 1);
         String[] valeuVar = new String[2];
         for (int i = 1; i < this.requestLinesContext.length; i++) {
             valeuVar = this.requestLinesContext[i].split(": ");
             headerVars.put(valeuVar[0], valeuVar[1]);
         }
         return headerVars;
-     }
+    }
 
     public void setRequestVersion(RequestVersion version) {
         this.requestVersion = version;

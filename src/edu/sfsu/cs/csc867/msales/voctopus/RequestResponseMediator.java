@@ -149,7 +149,8 @@ public final class RequestResponseMediator {
     public RequestResponseMediator(HttpClientConnection clientConnection) throws HttpRequestInterpreterException {
         this.clientConnection = clientConnection;
         try {
-            this.request = new HttpRequestInterpreter(this.clientConnection.getConnectionLines()).interpret();
+            this.request = new HttpRequestInterpreter(this.clientConnection.getConnectionLines(), this.clientConnection
+                    .getClientConnection().getInetAddress()).interpret();
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
@@ -182,12 +183,12 @@ public final class RequestResponseMediator {
             e.printStackTrace();
         }
     }
-    
+
     /**
      * Closes the connection from the client. It has to maintain a persistent connection.
      */
     public void closeConnection() {
-        if (this.request.keepAlive())  {
+        if (this.request.keepAlive()) {
             try {
                 this.clientConnection.getOutputStream().close();
             } catch (IOException e) {

@@ -14,7 +14,6 @@ import java.util.List;
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager.LogFormats;
-import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpScriptRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
@@ -32,12 +31,26 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.handler.WebServiceRequestHandl
  */
 public abstract class AbstractHttpResponse implements HttpResponse {
 
+    /**
+     * The incoming request
+     */
     private HttpRequest request;
 
+    protected boolean scriptExecution;
+
+    /**
+     * The response body to be sent to the client. If the request was to a script, the content will be generated
+     */
     private String[] responseBody;
 
+    /**
+     * this is the response header
+     */
     private List<String> responseHeader;
 
+    /**
+     * The request size based on the calculated size of the response body
+     */
     private Long requestSize;
 
     public AbstractHttpResponse(HttpRequest originatingRequest) {
@@ -46,17 +59,8 @@ public abstract class AbstractHttpResponse implements HttpResponse {
 
         ReasonPhase status = this.request.getStatus();
 
-//        if (status.equals(ReasonPhase.STATUS_401)) {
-//            ProtectedContentRequestHandlerStrategy handler = (ProtectedContentRequestHandlerStrategy) this.request
-//                    .getRequestHandler();
-//            if (handler.containsAuthorization()) {
-//                if (handler.isAuthorizationValid()) {
-//                    // request.changeStatus(ReasonPhrase.STATUS_200);
-//                }
-//            }
-//        }
-
-        if (!status.equals(ReasonPhase.STATUS_404) && this.request instanceof HttpScriptRequest) {
+        if (!status.equals(ReasonPhase.STATUS_404) && !status.equals(ReasonPhase.STATUS_403)
+                && this.request instanceof HttpScriptRequest) {
             String[] responseBody = this.getResponseBody();
             if (!status.equals(ReasonPhase.STATUS_500)) {
                 String contentType = responseBody[0];
@@ -76,7 +80,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
                 this.responseHeader.add(contentType);
             } else {
                 // 500 content type
-                // if it were 500 or 404, the body will be automatically be handled before by the handler.
+                // if it were 500, 404, 403, the body will be automatically be handled before by the handler.
                 this.setDefaultHeaderValues();
                 this.responseHeader.add("Content-Type: text/html");
             }
@@ -163,14 +167,15 @@ public abstract class AbstractHttpResponse implements HttpResponse {
      */
     private boolean requestMustIncludeBody(ReasonPhase status) {
         switch (request.getStatus()) {
-            case STATUS_204:
-            case STATUS_304:
-                return false;
-            case STATUS_401:
-                //Extreme case where the user did not give the correct username and password.
-                return (this.request.getResourceLines() != null) && this.request.getResourceLines().length > 0;
-            default:
-                return !request.getMethodType().equals(RequestMethodType.HEAD);
+        case STATUS_204:
+        case STATUS_304:
+            return false;
+        case STATUS_401:
+            // Extreme case where the user did not give the correct username and password.
+            return (this.request.getResourceLines() != null) && this.request.getResourceLines().length > 0;
+        default:
+            return !request.getMethodType().equals(RequestMethodType.HEAD)
+                    && !request.getMethodType().equals(RequestMethodType.PUT);
         }
     }
 
@@ -250,9 +255,9 @@ public abstract class AbstractHttpResponse implements HttpResponse {
                     nsize += lines.length();
                 }
                 this.requestSize = new Long(nsize);
-                
+
             } else {
-                
+
                 this.requestSize = this.request.getRequestedResource().length();
             }
         }
@@ -264,8 +269,9 @@ public abstract class AbstractHttpResponse implements HttpResponse {
      * @return The modified status for the response.
      */
     public Date getLastModified(ReasonPhase status) {
-        if (this.request.getRequestHandler() instanceof ScriptRequestHandlerStrategy
-                || this.request.getRequestHandler() instanceof WebServiceRequestHandlerStrategy) {
+        if (this.request.getStatus().equals(ReasonPhase.STATUS_200)
+                && (this.request.getRequestHandler() instanceof ScriptRequestHandlerStrategy || this.request
+                        .getRequestHandler() instanceof WebServiceRequestHandlerStrategy)) {
             return new Date();
         } else {
             return new Date(this.request.getRequestedResource().lastModified());

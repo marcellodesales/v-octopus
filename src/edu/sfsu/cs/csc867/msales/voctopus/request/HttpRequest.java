@@ -1,6 +1,7 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.net.URI;
 
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
@@ -25,4 +26,5 @@ public interface HttpRequest {
     public boolean keepAlive();
     public String[] getRequestHeaders();
     public HttpRequestHandler getRequestHandler();
+    public InetAddress getInetAddress();
 }

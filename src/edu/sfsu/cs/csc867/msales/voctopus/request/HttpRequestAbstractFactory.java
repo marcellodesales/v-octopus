@@ -1,5 +1,7 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request;
 
+import java.net.InetAddress;
+
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestHeaderFieldVarExpression;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterContext;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestMethodExpression;
@@ -40,24 +42,24 @@ public class HttpRequestAbstractFactory {
      * @return a new instance of an HttpRequest.
      */
     public HttpRequest createHttpRequest(HttpRequestMethodExpression firstLineExpr,
-            HttpRequestHeaderFieldVarExpression[] vars) {
+            HttpRequestHeaderFieldVarExpression[] vars, InetAddress clientAddress) {
 
         HttpRequest req = null;
         HttpRequestInterpreterContext context = firstLineExpr.getContext();
 
         switch (firstLineExpr.getContext().getRequestType()) {
         case STATIC_CONTENT:
-            req = new HttpStaticRequest(context.getRequestMethod().toString(), context.getUri(), 
-                    context.getRequestVersion().toString(), context.getRequestHeaderVars());
+            req = new HttpStaticRequest(clientAddress, context.getRequestMethod().toString(), context.getUri(), context
+                    .getRequestVersion().toString(), context.getRequestHeaderVars());
             break;
         case SCRIPT_EXECUTION:
-            req = new HttpScriptRequest(context.getRequestMethod().toString(), context.getUri(), 
-                    context.getRequestVersion().toString(), context.getRequestHeaderVars());
+            req = new HttpScriptRequest(clientAddress, context.getRequestMethod().toString(), context.getUri(), context
+                    .getRequestVersion().toString(), context.getRequestHeaderVars());
             break;
-            
+
         case WEB_SERVICE:
-            req = new HttpWebServiceRequest(context.getRequestMethod().toString(), context.getUri(), 
-                    context.getRequestVersion().toString(), context.getRequestHeaderVars());
+            req = new HttpWebServiceRequest(clientAddress, context.getRequestMethod().toString(),
+                    context.getUri(), context.getRequestVersion().toString(), context.getRequestHeaderVars());
             break;
         }
         return req;

@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -24,7 +25,7 @@ import java.util.Map;
  */
 public final class VOctopusConfigurationManager {
 
-    private static final String VOCTOPUS_VERSION = "vOctopus/0.2.2";
+    private static final String VOCTOPUS_VERSION = "vOctopus/0.7";
 
     public static enum LogFormats {
         /**
@@ -35,21 +36,24 @@ public final class VOctopusConfigurationManager {
          * Used to format the access file
          */
         ACCESS_LOG_FILE(WebServerProperties.ALIAS.getPropertyValue("LogFormat"));
-        
+
         /**
          * Log format used
          */
         private String format;
-        
+
         /**
          * Creates a new LogFormats
+         * 
          * @param format
          */
         private LogFormats(String format) {
             this.format = format;
         }
-        
-        /* (non-Javadoc)
+
+        /*
+         * (non-Javadoc)
+         * 
          * @see java.lang.Enum#toString()
          */
         public String toString() {
@@ -58,14 +62,18 @@ public final class VOctopusConfigurationManager {
 
         /**
          * Formats the given date using one of the formats
+         * 
          * @param date is the given date to be formated
          * @return the formated signature of the given date using the SimpleDateFormat instance and patterns.
          */
         public String format(Date date) {
             switch (this) {
-                case HEADER_DATE_TIME: return (new SimpleDateFormat(toString()).format(date)).toString();
-                case ACCESS_LOG_FILE: return (new SimpleDateFormat(toString()).format(date).toString());
-                default: return new SimpleDateFormat(toString()).format(new Date()).toString();
+            case HEADER_DATE_TIME:
+                return (new SimpleDateFormat(toString()).format(date)).toString();
+            case ACCESS_LOG_FILE:
+                return (new SimpleDateFormat(toString()).format(date).toString());
+            default:
+                return new SimpleDateFormat(toString()).format(new Date()).toString();
             }
         }
     }
@@ -92,7 +100,7 @@ public final class VOctopusConfigurationManager {
     private static Map<String, String> icons = new HashMap<String, String>();
 
     /**
-     * The folder icon used 
+     * The folder icon used
      */
     private static String folderIcon;
 
@@ -100,6 +108,8 @@ public final class VOctopusConfigurationManager {
      * The default icon
      */
     private static String defaultIcon;
+
+    private static Map<String, String> cgiVersionsAvailable = new HashMap<String, String>();
 
     /**
      * Private constructor for the singleton.
@@ -372,6 +382,7 @@ public final class VOctopusConfigurationManager {
                     wsAlias[0] = vals[1];
                     wsAlias[1] = vals[2];
                 } else if (vals[0].equals("CgiHandler")) {
+                    cgiVersionsAvailable.put(vals[1], "");
                     vals[0] = vals[2];
                     vals[2] = vals[1];
                     vals[1] = vals[0];
@@ -394,6 +405,80 @@ public final class VOctopusConfigurationManager {
         }
         configReader.close();
         this.setMimeTypes(serverRootPath);
+        this.getCGIVersionsAvailable();
+    }
+
+    /**
+     * Gets the versions of the CGIs available in the machine.
+     */
+    private void getCGIVersionsAvailable() {
+
+        cgiversions: for (String cgiAvailable : cgiVersionsAvailable.keySet()) {
+            try {
+                String[] result = this.getProcessResult(new String[] { cgiAvailable, "--version" });
+                for (String line : result) {
+                    if (line.toLowerCase().contains(
+                            cgiAvailable.toLowerCase().substring(cgiAvailable.lastIndexOf("/") + 1))) {
+                        cgiVersionsAvailable.put(cgiAvailable, line.replace("This is perl,", "Perl"));
+                        continue cgiversions;
+                    }
+                }
+            } catch (IOException e) {
+            }
+        }
+    }
+
+    /**
+     * @return the version of the CGIs available in the machine where the server is installed by verifying the version
+     *         output from the cgis in use.
+     */
+    public static String getCGIHandlersVersion() {
+        String values = "";
+        for (String cgiVersion : cgiVersionsAvailable.keySet()) {
+            values = values + cgiVersionsAvailable.get(cgiVersion) + "; ";
+        }
+        return values.substring(0, values.length() - 2);
+    }
+
+    /**
+     * Executes a process. It's used to get the available CGI versions
+     * 
+     * @param arguments the command used. Can be a python, ruby or perl
+     * @return the lines from the process. For each of the process, implement a parser to get the correct version.
+     * @throws IOException if anything happens with the process.
+     */
+    private String[] getProcessResult(String... arguments) throws IOException {
+
+        Process process = new ProcessBuilder(arguments).start();
+
+        List<String> lines = new ArrayList<String>();
+
+        int scriptResult = -1;
+        try {
+            scriptResult = process.waitFor();
+        } catch (InterruptedException e) {
+        }
+
+        if (scriptResult == 0) {
+
+            BufferedReader buffer = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = buffer.readLine()) != null) {
+                lines.add(line);
+            }
+            // python returns an error stream for the system status... Totally wrong!!!!
+            if (lines.size() == 0) {
+                buffer = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                while ((line = buffer.readLine()) != null) {
+                    lines.add(line);
+                }
+            }
+            return lines.toArray(new String[lines.size()]);
+
+        } else {
+
+            return new String[] {};
+        }
     }
 
     public String getDefaultIconPath() {
@@ -517,7 +602,6 @@ public final class VOctopusConfigurationManager {
     public static File get404ErrorFile() {
         return new File(serverRootPath + WebServerProperties.ALIAS.getPropertyValue("404"));
     }
-    
 
     /**
      * @return The file representation for the 404 file
@@ -532,6 +616,13 @@ public final class VOctopusConfigurationManager {
     public static File get500ErrorFile() {
         return new File(serverRootPath + WebServerProperties.ALIAS.getPropertyValue("500"));
     }
+    
+    /**
+     * @return the file representation for the 503 file
+     */
+    public static File get403ErrorFile() {
+        return new File(serverRootPath + WebServerProperties.ALIAS.getPropertyValue("403"));
+    }
 
     /**
      * @param uri is the uri used
@@ -539,5 +630,12 @@ public final class VOctopusConfigurationManager {
      */
     public DirectoryConfigHandler isRequestedURIProtected(URI uri) {
         return protectedDirsTree.isDirectoryProtected(uri, null);
+    }
+
+    /**
+     * @return the name and version of this software as SERVER_SOFTWARE var.
+     */
+    public static String getSoftwareName() {
+        return VOCTOPUS_VERSION;
     }
 }

@@ -10,6 +10,9 @@ import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.config.DirectoryConfigHandler;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest;
+import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
+import edu.sfsu.cs.csc867.msales.voctopus.request.HttpScriptRequest;
+import edu.sfsu.cs.csc867.msales.voctopus.request.HttpWebServiceRequest;
 
 /**
  * This abstract factory is responsible for the construction of the handlers.
@@ -55,6 +58,12 @@ public class HttpRequestHandlerAbstractFactory {
         String fileSystem = VOctopusConfigurationManager.getInstance().getDocumentRoot() + uri.getPath();
         File file = new File(fileSystem);
         HttpRequestHandler handler = null;
+        
+        if (!this.doesUserhavePermission(uri)) {
+            file = VOctopusConfigurationManager.get403ErrorFile();
+            return new ScriptRequestHandlerStrategy(null, uri, file, TEXT_HTML, ReasonPhase.STATUS_403,
+                    abstractHttpRequest);
+        }
 
         DirectoryConfigHandler dirHandler = VOctopusConfigurationManager.getInstance().isRequestedURIProtected(uri);
         if (dirHandler != null) {
@@ -68,9 +77,10 @@ public class HttpRequestHandlerAbstractFactory {
             if (authorization != null) {
                 if (!new ProtectedContentRequestHandlerStrategy(uri, file, dirHandler, authorization)
                         .isAuthorizationValid()) {
-                    
+
                     File unAuthFile = VOctopusConfigurationManager.get401ErrorFile();
-                    return new ScriptRequestHandlerStrategy(null, uri, unAuthFile, TEXT_HTML, ReasonPhase.STATUS_401);
+                    return new ScriptRequestHandlerStrategy(null, uri, unAuthFile, TEXT_HTML, ReasonPhase.STATUS_401,
+                            abstractHttpRequest);
                 }
             } else {
                 return new ProtectedContentRequestHandlerStrategy(uri, file, dirHandler, null);
@@ -135,40 +145,51 @@ public class HttpRequestHandlerAbstractFactory {
                 file = new File(otherOnAliasPath);
                 if (!file.exists()) {
                     if (uri.getPath().startsWith("/icons/")) {
-                        otherOnAliasPath = VOctopusConfigurationManager.getInstance().getServerRootPath() 
-                        + "/icons/broken.gif";
+                        otherOnAliasPath = VOctopusConfigurationManager.getInstance().getServerRootPath()
+                                + "/icons/broken.gif";
                         file = new File(otherOnAliasPath);
                         if (!file.exists()) {
                             try {
-                                return this.getFileNotFoundHander(new URI("/icons/broken.gif"));
+                                return this.getFileNotFoundHander(new URI("/icons/broken.gif"), abstractHttpRequest);
                             } catch (URISyntaxException e) {
-                                //return this.getFileNotFoundHander(uri);
-                                //This will never happen!
+                                // return this.getFileNotFoundHander(uri);
+                                // This will never happen!
                             }
                         } else {
-                            handler = createFileHandler(uri, file);
+                            handler = createFileHandler(uri, file, abstractHttpRequest);
                         }
                     } else {
-                        return this.getFileNotFoundHander(uri);
+                        return this.getFileNotFoundHander(uri, abstractHttpRequest);
                     }
                 } else {
-                    handler = createFileHandler(uri, file);
+                    handler = createFileHandler(uri, file, abstractHttpRequest);
                 }
 
             } else {
-                handler = createFileHandler(uri, file);
+                handler = createFileHandler(uri, file, abstractHttpRequest);
             }
         }
         return handler;
     }
 
     /**
+     * Validates the permission on a requested URI
+     * 
+     * @param uri is the request URI from the client.
+     * @return if the client has permission on the uri.
+     */
+    private boolean doesUserhavePermission(URI uri) {
+        return !uri.getPath().equals("/cgi-bin/") && !uri.getPath().equals("/ws-soa/");
+        // TODO GET THE LIST OF PROTECTED DIRECTORIES FROM THE CONFIGURATION FILE!!! JUST HARD-CODING /cgi-bin /ws-soa
+    }
+
+    /**
      * @param uri
      * @return
      */
-    public HttpRequestHandler getFileNotFoundHander(URI uri) {
+    public HttpRequestHandler getFileNotFoundHander(URI uri, HttpRequest originRequest) {
         File file = VOctopusConfigurationManager.get404ErrorFile();
-        return new ScriptRequestHandlerStrategy(null, uri, file, TEXT_HTML, ReasonPhase.STATUS_404);
+        return new ScriptRequestHandlerStrategy(null, uri, file, TEXT_HTML, ReasonPhase.STATUS_404, originRequest);
     }
 
     /**
@@ -179,13 +200,12 @@ public class HttpRequestHandlerAbstractFactory {
      * @param file is the file located on the file system.
      * @return The request handler for the file on the file system.
      */
-    private HttpRequestHandler createFileHandler(URI uri, File file) {
+    private HttpRequestHandler createFileHandler(URI uri, File file, HttpRequest originRequest) {
         String path = file.getPath();
-        String requestedExtension = path.substring(path.lastIndexOf("."));
+        String requestedExtension = path.lastIndexOf(".") > 0 ? path.substring(path.lastIndexOf(".")) : "";
         Map<String, String> mimes = VOctopusConfigurationManager.WebServerProperties.MIME_TYPES.getProperties();
-        String cgiPath = VOctopusConfigurationManager.getDefaultCGIPath();
 
-        if (path.contains(cgiPath)) {
+        if (originRequest instanceof HttpScriptRequest) {
             // remove the ? question mark
             String params = null;
             Map<String, String> cgiParams = null;
@@ -198,10 +218,9 @@ public class HttpRequestHandlerAbstractFactory {
                     cgiParams.put(varValue[0], varValue[1]);
                 }
             }
-            return new ScriptRequestHandlerStrategy(cgiParams, uri, file, requestedExtension, ReasonPhase.STATUS_200);
-
-        } else if (path.contains(VOctopusConfigurationManager.getDefaultWebservicesPath())) {
-
+            return new ScriptRequestHandlerStrategy(cgiParams, uri, file, requestedExtension, ReasonPhase.STATUS_200,
+                    originRequest);
+        } else if (originRequest instanceof HttpWebServiceRequest) {
             return new WebServiceRequestHandlerStrategy(uri, file, requestedExtension, ReasonPhase.STATUS_200);
         }
 

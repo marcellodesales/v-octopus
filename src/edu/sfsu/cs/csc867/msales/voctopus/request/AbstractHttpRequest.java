@@ -1,6 +1,7 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,6 +13,14 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandlerAbst
  * The abstract Http request holds all the information from the request.
  * 
  * @author marcello Feb 20, 2008 2:56:38 PM
+ */
+/**
+ * @author marcello
+ * Mar 13, 2008 3:17:04 PM
+ */
+/**
+ * @author marcello
+ * Mar 13, 2008 3:17:05 PM
  */
 public abstract class AbstractHttpRequest implements HttpRequest {
 
@@ -49,6 +58,8 @@ public abstract class AbstractHttpRequest implements HttpRequest {
      * The handler is based on the type of handler.
      */
     protected HttpRequestHandler requestHandler;
+    
+    protected InetAddress clientInetAddress;
 
     /**
      * Constructs the abstract request based on the method type, uri, version, header variables and the handler
@@ -57,11 +68,12 @@ public abstract class AbstractHttpRequest implements HttpRequest {
      * @param version
      * @param headerVars
      */
-    public AbstractHttpRequest(String methodType, URI uri, String version, Map<String, String> headerVars) {
+    public AbstractHttpRequest(InetAddress clientConnection, String methodType, URI uri, String version, Map<String, String> headerVars) {
         this.methodType = RequestMethodType.valueOf(methodType.toUpperCase());
         this.uri = uri;
         this.version = version;
         this.headerVars = headerVars;
+        this.clientInetAddress = clientConnection;
         
         if (this.uri.getQuery() != null && !this.uri.getQuery().equals("")) {
             String[] varsAndValues = this.uri.getQuery().split("&");
@@ -87,13 +99,21 @@ public abstract class AbstractHttpRequest implements HttpRequest {
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getStatus()
      */
     public ReasonPhase getStatus() {
-        return this.requestHandler.getStatus();
+        //code snippet added because of the nature of the calls (if the response has not been created yet)
+        if (this.requestHandler == null) {
+            return ReasonPhase.STATUS_200;
+        } else {
+            return this.requestHandler.getStatus();
+        }
     }
     
     /* (non-Javadoc)
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getContentType()
      */
     public String getContentType() {
+        if (this.requestHandler == null) {
+            return "text/plain";
+        }
         return this.requestHandler.getContentType();
     }
     
@@ -171,11 +191,24 @@ public abstract class AbstractHttpRequest implements HttpRequest {
         return headers;
     }
 
+    /* (non-Javadoc)
+     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getRequestHandler()
+     */
     public HttpRequestHandler getRequestHandler() {
         return requestHandler;
     }
 
+    /**
+     * @return the version on this connection
+     */
     public String getVersion() {
         return version;
+    }
+    
+    /* (non-Javadoc)
+     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getInetAddress()
+     */
+    public InetAddress getInetAddress() {
+        return this.clientInetAddress;
     }
 }
