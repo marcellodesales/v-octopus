@@ -83,8 +83,7 @@ public class VOctopusWebServer {
         try {
             mediator = new RequestResponseMediator(new HttpClientConnection(clientSocket));
             mediator.sendResponse();
-            
-            
+
         } catch (HttpRequestInterpreterException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -102,6 +101,8 @@ public class VOctopusWebServer {
         System.out.println("# of open Connection " + pool.getActiveCount());
         System.out.println("# of open Connection " + pool.getMaximumPoolSize());
     }
+    
+    
 
     public static void main(String[] args) {
 

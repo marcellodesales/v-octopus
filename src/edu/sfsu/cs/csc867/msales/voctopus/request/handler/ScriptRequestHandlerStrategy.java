@@ -1,10 +1,12 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request.handler;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
@@ -16,9 +18,11 @@ import java.util.List;
 import java.util.Map;
 
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
-import edu.sfsu.cs.csc867.msales.voctopus.config.EnvironmentVariables;
+import edu.sfsu.cs.csc867.msales.voctopus.config.EnvironmentVariablesBuilder;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
+import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
+import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
 
 public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
 
@@ -145,9 +149,8 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
      */
     private ProcessBuilder buildProcess(String... arguments) {
         ProcessBuilder pb = new ProcessBuilder(arguments);
-        pb.environment().putAll(EnvironmentVariables.GENERAL_ENVIRONEMNT_VARS.getEnvVariables(this.request));
-        pb.environment().putAll(EnvironmentVariables.REQUEST_ENVIRONMENT_VARS.getEnvVariables(this.request));
-        pb.environment().putAll(EnvironmentVariables.REQUEST_HEADER_VARS.getEnvVariables(this.request));
+        EnvironmentVariablesBuilder envBuilder = EnvironmentVariablesBuilder.createNew(this.request);
+        pb.environment().putAll(envBuilder.getAllEn());
         return pb;
     }
 
@@ -171,6 +174,15 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
             }
         }
         Process process = this.buildProcess((String[]) processArgs.toArray(new String[processArgs.size()])).start();
+
+        //Additional data from a POST request.
+        String additionalData = ((AbstractHttpRequest)this.request).getAdditionalHeaderData();
+        if (this.request.getMethodType().equals(RequestMethodType.POST) && additionalData != null) {
+            OutputStreamWriter out = new OutputStreamWriter(new BufferedOutputStream(process.getOutputStream()));
+            out.write(additionalData);
+            out.flush();
+            //out.close();
+        }
 
         List<String> lines = new ArrayList<String>();
         InputStreamReader reader;

@@ -50,16 +50,17 @@ public class HttpRequestAbstractFactory {
         switch (firstLineExpr.getContext().getRequestType()) {
         case STATIC_CONTENT:
             req = new HttpStaticRequest(clientAddress, context.getRequestMethod().toString(), context.getUri(), context
-                    .getRequestVersion().toString(), context.getRequestHeaderVars());
+                    .getRequestVersion().toString(), context.getRequestHeaderVars(), context.getAdditionalEncodedData());
             break;
         case SCRIPT_EXECUTION:
             req = new HttpScriptRequest(clientAddress, context.getRequestMethod().toString(), context.getUri(), context
-                    .getRequestVersion().toString(), context.getRequestHeaderVars());
+                    .getRequestVersion().toString(), context.getRequestHeaderVars(), context.getAdditionalEncodedData());
             break;
 
         case WEB_SERVICE:
-            req = new HttpWebServiceRequest(clientAddress, context.getRequestMethod().toString(),
-                    context.getUri(), context.getRequestVersion().toString(), context.getRequestHeaderVars());
+            req = new HttpWebServiceRequest(clientAddress, context.getRequestMethod().toString(), context.getUri(),
+                    context.getRequestVersion().toString(), context.getRequestHeaderVars(), context
+                            .getAdditionalEncodedData());
             break;
         }
         return req;

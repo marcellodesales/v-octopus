@@ -149,8 +149,8 @@ public final class RequestResponseMediator {
     public RequestResponseMediator(HttpClientConnection clientConnection) throws HttpRequestInterpreterException {
         this.clientConnection = clientConnection;
         try {
-            this.request = new HttpRequestInterpreter(this.clientConnection.getConnectionLines(), this.clientConnection
-                    .getClientConnection().getInetAddress()).interpret();
+            this.request = new HttpRequestInterpreter(this.clientConnection.getConnectionLines(),
+                    this.clientConnection).interpret();
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }

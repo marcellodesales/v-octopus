@@ -17,7 +17,7 @@ public abstract class AbstractHttpRequestExpression {
     /**
      * Token to be evaluated
      */
-    private String evaluatedToken;
+    protected String evaluatedToken;
 
     /**
      * Constructs a new instance of this class using the context.

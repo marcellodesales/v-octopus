@@ -12,9 +12,18 @@ import java.util.Map;
  */
 public class HttpWebServiceRequest extends AbstractHttpRequest {
 
+    /**
+     * Build a webservice request
+     * @param clientAddress
+     * @param methodType
+     * @param uri
+     * @param version
+     * @param headerVars
+     * @param additionalData
+     */
     public HttpWebServiceRequest(InetAddress clientAddress, String methodType, URI uri, String version,
-            Map<String, String> headerVars) {
-        super(clientAddress, methodType, uri, version, headerVars);
+            Map<String, String> headerVars, String additionalData) {
+        super(clientAddress, methodType, uri, version, headerVars, additionalData);
         // TODO Auto-generated constructor stub
     }
 

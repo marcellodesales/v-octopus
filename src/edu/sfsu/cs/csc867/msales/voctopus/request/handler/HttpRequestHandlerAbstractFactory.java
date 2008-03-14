@@ -93,6 +93,10 @@ public class HttpRequestHandlerAbstractFactory {
             boolean foundIndexFile = false;
             String[] exts = VOctopusConfigurationManager.getInstance().getDirectoryIndexExtensions();
             for (String dirExts : exts) {
+                
+                if (!fileSystem.endsWith("/")) {
+                    fileSystem = fileSystem + "/";
+                }
                 file = new File(fileSystem + dirExts);
                 if (!file.exists()) {
                     continue;
@@ -202,8 +206,7 @@ public class HttpRequestHandlerAbstractFactory {
      */
     private HttpRequestHandler createFileHandler(URI uri, File file, HttpRequest originRequest) {
         String path = file.getPath();
-        String requestedExtension = path.lastIndexOf(".") > 0 ? path.substring(path.lastIndexOf(".")) : "";
-        Map<String, String> mimes = VOctopusConfigurationManager.WebServerProperties.MIME_TYPES.getProperties();
+        String requestedExtension = path.lastIndexOf(".") > 0 ? path.substring(path.lastIndexOf(".") + 1) : "";
 
         if (originRequest instanceof HttpScriptRequest) {
             // remove the ? question mark
@@ -215,7 +218,9 @@ public class HttpRequestHandlerAbstractFactory {
                 cgiParams = new HashMap<String, String>(paramVals.length);
                 for (String cgiP : paramVals) {
                     String[] varValue = cgiP.split("=");
-                    cgiParams.put(varValue[0], varValue[1]);
+                    if (varValue.length == 2) {
+                        cgiParams.put(varValue[0], varValue[1]);
+                    }
                 }
             }
             return new ScriptRequestHandlerStrategy(cgiParams, uri, file, requestedExtension, ReasonPhase.STATUS_200,
@@ -226,6 +231,7 @@ public class HttpRequestHandlerAbstractFactory {
 
         String handlerFound = "";
         String mimeValue = "";
+        Map<String, String> mimes = VOctopusConfigurationManager.WebServerProperties.MIME_TYPES.getProperties();
         outer: for (String handlerType : mimes.keySet()) {
             mimeValue = mimes.get(handlerType);
             for (String mimeExts : mimeValue.replace(",", "").split(" ")) {

@@ -84,6 +84,16 @@ public class HttpRequestInterpreterContext {
     private HashMap<String, String> requestParameters;
 
     /**
+     * Additional data sent to the POST and PUT request methods.
+     */
+    private String additionalEncodedData;
+
+    /**
+     * Additional data that was decoded from the encoded version
+     */
+    private String additionalDecodedData;
+
+    /**
      * @return The content type that matches to this request. It will be used to construct the request handler.
      */
     public RequestType getRequestType() {
@@ -161,7 +171,6 @@ public class HttpRequestInterpreterContext {
      */
     public void setRequestType(RequestType requestType) {
         this.requestType = requestType;
-
     }
 
     /**
@@ -206,10 +215,16 @@ public class HttpRequestInterpreterContext {
         return requestParameters;
     }
 
+    /**
+     * @return The list of the request header vars
+     */
     public Map<String, String> getRequestHeaderVars() {
         Map<String, String> headerVars = new HashMap<String, String>(this.requestLinesContext.length - 1);
         String[] valeuVar = new String[2];
         for (int i = 1; i < this.requestLinesContext.length; i++) {
+            if (this.requestLinesContext[i].indexOf(": ") < 0) {
+                continue;
+            }
             valeuVar = this.requestLinesContext[i].split(": ");
             headerVars.put(valeuVar[0], valeuVar[1]);
         }
@@ -218,5 +233,31 @@ public class HttpRequestInterpreterContext {
 
     public void setRequestVersion(RequestVersion version) {
         this.requestVersion = version;
+    }
+
+    /**
+     * @return the additional data from a POST or PUT request methods.
+     */
+    public String getAdditionalEncodedData() {
+        return this.additionalEncodedData;
+    }
+    
+    /**
+     * Sets a new additional encoded data from a POST or PUT request methods.
+     * @param additionalData
+     */
+    public void setAdditionalEncodedData(String additionalData) {
+        this.additionalEncodedData = additionalData;
+    }
+
+    /**
+     * @param additionalDecodedData sets the additional decoded data.
+     */
+    public void setAdditionalDecodedData(String additionalDecodedData) {
+        this.additionalDecodedData = additionalDecodedData;
+    }
+
+    public String getAdditionalDecodedData() {
+        return additionalDecodedData;
     }
 }

@@ -132,9 +132,9 @@ public final class VOctopusConfigurationManager {
     /**
      * It is the alias reserved for the execution of cgi-bin scripts (python, perl, ruby...)
      */
-    private static String[] scriptAlias = new String[2];
+    private static Map<String, String> scriptAlias = new HashMap<String, String>();
 
-    private static String[] wsAlias = new String[2];
+    private static Map<String, String> wsAlias = new HashMap<String, String>();
 
     private static ProtectedDirectoryTree protectedDirsTree = new ProtectedDirectoryTree();
 
@@ -245,13 +245,6 @@ public final class VOctopusConfigurationManager {
     }
 
     /**
-     * @return The default path for the cgi scripts from the url.
-     */
-    public static String getDefaultCGIPath() {
-        return serverRootPath + scriptAlias[0];
-    }
-
-    /**
      * Finds the executor command for a given fileExtension.
      * <li>Used for all the Alias and Script Alias
      * <li>Used for CgiHander, inverting the extension as the key for script name.
@@ -264,24 +257,37 @@ public final class VOctopusConfigurationManager {
     }
 
     /**
+     * @return The default path for the cgi scripts from the url.
+     */
+    public static String getDefaultCGIPath() {
+        return serverRootPath + "/cgi-bin/";
+    }
+
+    /**
      * @return The directory file where CGI scripts must be located based on the script alias configuration.
      */
-    public static File getCGIServerPath() {
-        return new File(scriptAlias[1]);
+    public static File getCGIServerPath(String alias) {
+        if (alias == null) {
+            alias = "/cgi-bin/";
+        }
+        return new File(scriptAlias.get(alias));
     }
 
     /**
      * @return The default path for the web services jars from the url.
      */
     public static String getDefaultWebservicesPath() {
-        return wsAlias[0];
+        return serverRootPath + "/ws-soa/";
     }
 
     /**
      * @return The directory file where web services jars must be located based on the web services alias configuration.
      */
-    public static File getWebServicesServerPath() {
-        return new File(wsAlias[1]);
+    public static File getWebServicesServerPath(String alias) {
+        if (alias == null) {
+            alias = "/ws-soa/";
+        }
+        return new File(wsAlias.get(alias));
     }
 
     /**
@@ -294,6 +300,7 @@ public final class VOctopusConfigurationManager {
 
         File configFile = new File(serverRootPathFromEnv + "/conf/httpd.conf");
         BufferedReader configReader = new BufferedReader(new FileReader(configFile));
+        
         serverRootPath = serverRootPathFromEnv;
         String configProperty = null;
         String[] vals;
@@ -376,11 +383,9 @@ public final class VOctopusConfigurationManager {
             } else {
 
                 if (vals[0].equals("ScriptAlias")) {
-                    scriptAlias[0] = vals[1];
-                    scriptAlias[1] = vals[2];
+                    scriptAlias.put(vals[1], vals[2]);
                 } else if (vals[0].equals("WebServices")) {
-                    wsAlias[0] = vals[1];
-                    wsAlias[1] = vals[2];
+                    wsAlias.put(vals[1], vals[2]);
                 } else if (vals[0].equals("CgiHandler")) {
                     cgiVersionsAvailable.put(vals[1], "");
                     vals[0] = vals[2];

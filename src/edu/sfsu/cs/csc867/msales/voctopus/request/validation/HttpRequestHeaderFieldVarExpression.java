@@ -15,6 +15,8 @@ public class HttpRequestHeaderFieldVarExpression extends HttpRequestNonTerminalE
         ACCEPT_CHARSET_TOKEN("Accept-Charset"),
         ACCEPT_ENCODING_TOKEN("Accept-Encoding"),
         ACCEPT_LANGUAGE_TOKEN("Accept-Language"),
+        CONTENT_TYPE("Content-Type"),
+        CONTENT_LENGTH("Content-Length"),
         AUTHORIZATION_TOKEN("Authorization"),
         EXPECT_TOKEN("Expect"),
         FROM_TOKEN("From"),
@@ -60,25 +62,10 @@ public class HttpRequestHeaderFieldVarExpression extends HttpRequestNonTerminalE
     public HttpRequestHeaderFieldVarExpression(HttpRequestInterpreterContext context,
             AbstractHttpRequestExpression next, String token) {
         super(context, next, token);
-        // TODO Auto-generated constructor stub
     }
 
     @Override
     protected void validate() throws HttpRequestInterpreterException {
         
-        boolean foundIt = false;
-        for (RequestHeaderVarTokens token : RequestHeaderVarTokens.values()) {
-            if (token.toString().equals(this.getEvaluatedToken())) {
-                foundIt = true;
-                break;
-            } else {
-                continue;
-            }
-        }
-        if (!foundIt) {
-            throw new HttpRequestInterpreterException("The header variable is invalid", this.getEvaluatedToken());
-        }
-
     }
-
 }

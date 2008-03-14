@@ -23,7 +23,9 @@ public class AsciiContentResponseDecorator extends AbstractHttpResponse {
      */
     public void sendBody(OutputStream outputStream, PrintWriter writer) {
         for (String line : this.getResponseBody()) {
-            writer.println(line);
+            if (!line.toLowerCase().startsWith("content-type: ")) {
+                writer.println(line);
+            }
         }
     }
 

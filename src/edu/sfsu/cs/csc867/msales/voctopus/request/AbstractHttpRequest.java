@@ -9,6 +9,7 @@ import java.util.Map;
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandlerAbstractFactory;
+
 /**
  * The abstract Http request holds all the information from the request.
  * 
@@ -19,20 +20,19 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandlerAbst
  * Mar 13, 2008 3:17:04 PM
  */
 /**
- * @author marcello
- * Mar 13, 2008 3:17:05 PM
+ * @author marcello Mar 13, 2008 3:17:05 PM
  */
 public abstract class AbstractHttpRequest implements HttpRequest {
 
     /**
      * This is the request method tokens constants accepted by the server
-     * @author marcello
-     * Feb 8, 2008 6:57:32 PM
+     * 
+     * @author marcello Feb 8, 2008 6:57:32 PM
      */
     public static enum RequestMethodType {
         GET, HEAD, POST, PUT, NOT_SUPPORTED
     }
-    
+
     /**
      * The method type of the request.
      */
@@ -58,22 +58,33 @@ public abstract class AbstractHttpRequest implements HttpRequest {
      * The handler is based on the type of handler.
      */
     protected HttpRequestHandler requestHandler;
-    
+
+    /**
+     * The Inet address from the client
+     */
     protected InetAddress clientInetAddress;
+    
+    /**
+     * Additional data sent from a POST, PUT request methods.
+     */
+    private String additionalHeaderData;
 
     /**
      * Constructs the abstract request based on the method type, uri, version, header variables and the handler
+     * 
      * @param methodType
      * @param uri
      * @param version
      * @param headerVars
      */
-    public AbstractHttpRequest(InetAddress clientConnection, String methodType, URI uri, String version, Map<String, String> headerVars) {
+    public AbstractHttpRequest(InetAddress clientConnection, String methodType, URI uri, String version,
+            Map<String, String> headerVars, String additionalHeaderData) {
         this.methodType = RequestMethodType.valueOf(methodType.toUpperCase());
         this.uri = uri;
         this.version = version;
         this.headerVars = headerVars;
         this.clientInetAddress = clientConnection;
+        this.additionalHeaderData = additionalHeaderData;
         
         if (this.uri.getQuery() != null && !this.uri.getQuery().equals("")) {
             String[] varsAndValues = this.uri.getQuery().split("&");
@@ -81,33 +92,40 @@ public abstract class AbstractHttpRequest implements HttpRequest {
             String[] vV;
             for (String varValue : varsAndValues) {
                 vV = varValue.split("=");
-                requestParameters.put(vV[0], vV[1]);
-            };
+                if (vV.length == 2) {
+                    requestParameters.put(vV[0], vV[1]);
+                }
+            }
         }
-        
         this.requestHandler = HttpRequestHandlerAbstractFactory.getInstance().createRequestHandler(this);
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#isResourceBinary()
      */
     public boolean isResourceBinary() {
         return this.requestHandler.isRequestedResourceBinary();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getStatus()
      */
     public ReasonPhase getStatus() {
-        //code snippet added because of the nature of the calls (if the response has not been created yet)
+        // code snippet added because of the nature of the calls (if the response has not been created yet)
         if (this.requestHandler == null) {
             return ReasonPhase.STATUS_200;
         } else {
             return this.requestHandler.getStatus();
         }
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getContentType()
      */
     public String getContentType() {
@@ -116,8 +134,10 @@ public abstract class AbstractHttpRequest implements HttpRequest {
         }
         return this.requestHandler.getContentType();
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getResourceLines()
      */
     public String[] getResourceLines() {
@@ -125,7 +145,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
             return this.requestHandler.getResourceLines();
         } catch (IOException e) {
             e.printStackTrace();
-            return new String[] {""};
+            return new String[] { "" };
         }
     }
 
@@ -136,20 +156,22 @@ public abstract class AbstractHttpRequest implements HttpRequest {
         return this.methodType;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getUri()
      */
     public URI getUri() {
         return uri;
     }
-    
+
     /**
      * @return The version of the request.
      */
     public String getRequestVersion() {
         return version;
     }
-    
+
     /**
      * @param headerVar is one of the variables that come on the header from a request
      * @return the value of a given header variable
@@ -164,22 +186,28 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     public Map<String, String> getRequestParameters() {
         return requestParameters;
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#isRequestSuccessful()
      */
     public boolean isRequestSuccessful() {
         return this.requestHandler.requestedResourceExists();
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#keepAlive()
      */
     public boolean keepAlive() {
         return false;
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getRequestHeaders()
      */
     public String[] getRequestHeaders() {
@@ -191,7 +219,9 @@ public abstract class AbstractHttpRequest implements HttpRequest {
         return headers;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getRequestHandler()
      */
     public HttpRequestHandler getRequestHandler() {
@@ -204,11 +234,20 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     public String getVersion() {
         return version;
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getInetAddress()
      */
     public InetAddress getInetAddress() {
         return this.clientInetAddress;
+    }
+
+    /**
+     * @return Data sent to the request that was encoded
+     */
+    public String getAdditionalHeaderData() {
+        return this.additionalHeaderData; 
     }
 }

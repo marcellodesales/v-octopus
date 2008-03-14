@@ -1,8 +1,11 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request.validation;
 
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
+import edu.sfsu.cs.csc867.msales.voctopus.HttpClientConnection;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 
 /**
@@ -17,44 +20,47 @@ public class HttpRequestInterpreter {
      * The context used on this interpreter.
      */
     private HttpRequestInterpreterContext context;
-    
+
     /**
      * Client'st address information
      */
     private InetAddress clientAddres;
 
-    public HttpRequestInterpreter(String[] requestedLines, InetAddress clientAddress)
+    public HttpRequestInterpreter(String[] requestedLines, HttpClientConnection httpClientConnection)
             throws HttpRequestInterpreterException {
         this.context = new HttpRequestInterpreterContext(requestedLines);
-        this.clientAddres = clientAddress;
+        this.clientAddres = httpClientConnection.getClientConnection().getInetAddress();
     }
-
+    
     /**
      * Interprets the request tokens
+     * 
      * @return an instance of the HttpRequest based on the type of the request.
-     * @throws HttpRequestInterpreterException if the request contains tokens not identified on HttpRequests.
-     * This behavior should return a correct http response header status code.
+     * @throws HttpRequestInterpreterException if the request contains tokens not identified on HttpRequests. This
+     *             behavior should return a correct http response header status code.
      */
     public HttpRequest interpret() throws HttpRequestInterpreterException {
 
-        AbstractHttpRequestExpression version = new HttpRequestVersionExpression(context);
-        AbstractHttpRequestExpression uri = new HttpRequestURIExpression(context, version);
-        HttpRequestMethodExpression method = new HttpRequestMethodExpression(context, uri);
-        method.interpret();
+        AbstractHttpRequestExpression versionExpr = new HttpRequestVersionExpression(context);
+        HttpRequestURIExpression uriExpr = new HttpRequestURIExpression(context, versionExpr);
+        HttpRequestMethodExpression methodExpr = new HttpRequestMethodExpression(context, uriExpr);
+        methodExpr.interpret();
 
         String[] lines = this.context.getRequestLines();
-        HttpRequestHeaderFieldVarExpression[] vars = new HttpRequestHeaderFieldVarExpression[lines.length - 1];
+        List<HttpRequestHeaderFieldVarExpression> vars = new ArrayList<HttpRequestHeaderFieldVarExpression>();
         for (int i = 1; i < lines.length; i++) {
+            if (lines[i].indexOf(": ") < 0) continue; 
             String[] headerVarValue = lines[i].split(": ");
             HttpRequestHeaderFieldValueExpression value = new HttpRequestHeaderFieldValueExpression(context,
                     headerVarValue[1]);
             HttpRequestHeaderFieldVarExpression var = new HttpRequestHeaderFieldVarExpression(context, value,
                     headerVarValue[0]);
-            vars[i - 1] = var;
+            vars.add(var);
             var.interpret();
         }
 
         // If no exception is thrown, then this section is executed.
-        return this.context.getParsedRequest(method, vars, this.clientAddres);
+        return this.context.getParsedRequest(methodExpr, vars.toArray(new HttpRequestHeaderFieldVarExpression[vars
+                .size()]), this.clientAddres);
     }
 }

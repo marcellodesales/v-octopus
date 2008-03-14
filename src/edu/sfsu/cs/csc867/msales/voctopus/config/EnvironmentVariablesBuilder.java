@@ -13,20 +13,7 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
  * 
  * @author marcello Mar 13, 2008 2:43:02 PM
  */
-public enum EnvironmentVariables {
-
-    /**
-     * General environment variables from the server, software version, etc
-     */
-    GENERAL_ENVIRONEMNT_VARS,
-    /**
-     * Environment variables related to the request
-     */
-    REQUEST_ENVIRONMENT_VARS,
-    /**
-     * Request header vars, converted to the HTTP_HEADER_VAR format
-     */
-    REQUEST_HEADER_VARS;
+public final class EnvironmentVariablesBuilder {
 
     /**
      * General vars
@@ -35,56 +22,34 @@ public enum EnvironmentVariables {
     /**
      * Request-related vars
      */
-    private static Map<String, String> requestVars = new HashMap<String, String>();
+    private Map<String, String> requestVars = new HashMap<String, String>();
     /**
      * Header vars
      */
-    private static Map<String, String> headerVars = new HashMap<String, String>();
-
+    private Map<String, String> headerVars = new HashMap<String, String>();
+    /**
+     * The originating request to these variables
+     */
+    private HttpRequest request;
+    
     /**
      * Builds this enumeration, having the general vars enabled.
+     * @param request 
      */
-    private EnvironmentVariables() {
-    }
-
-    /**
-     * @return All the environment variables from the server.
-     */
-    public Map<String, String> getEnvVariables(HttpRequest request) {
-        if (generalVars.size() == 0) {
-            this.buildGeneralVars();
-        }
-        switch (this) {
-        case GENERAL_ENVIRONEMNT_VARS: {
-            return generalVars;
-        }
-        case REQUEST_ENVIRONMENT_VARS: {
-            if (requestVars.size() == 0) {
-                this.buildRequestVars(request);
-            }
-            return requestVars;
-        }
-        case REQUEST_HEADER_VARS: {
-            if (headerVars.size() == 0) {
-                this.buildRequestHeaderVars(request);
-            }
-            return headerVars;
-        }
-        default:
-            return null;
-        }
+    public EnvironmentVariablesBuilder(HttpRequest request) {
+        this.request = request;
     }
 
     /**
      * @param mediator is the main mediator of the request/response.
      * @return all the environment variables
      */
-    public Map<String, String> getAllEn(HttpRequest request) {
+    public Map<String, String> getAllEn() {
         if (generalVars.size() == 0) {
-            this.buildGeneralVars();
+            buildGeneralVars();
         }
-        this.buildRequestVars(request);
-        this.buildRequestHeaderVars(request);
+        this.buildRequestVars();
+        this.buildRequestHeaderVars();
         Map<String, String> all = new HashMap<String, String>();
         all.putAll(generalVars);
         all.putAll(requestVars);
@@ -97,9 +62,9 @@ public enum EnvironmentVariables {
      * 
      * @param mediator is the mediator for the request
      */
-    private void buildRequestHeaderVars(HttpRequest request) {
+    private void buildRequestHeaderVars() {
         String[] varValue;
-        for (String requestHeaderVar : request.getRequestHeaders()) {
+        for (String requestHeaderVar : this.request.getRequestHeaders()) {
             varValue = requestHeaderVar.split(": ");
             headerVars.put("HTTP_" + varValue[0].toUpperCase().replace("-", "_"), varValue[1]);
         }
@@ -125,9 +90,9 @@ public enum EnvironmentVariables {
      * 
      * @param mainRequest the main http request from the client.
      */
-    private void buildRequestVars(HttpRequest mainRequest) {
+    private void buildRequestVars() {
         // These variables are set depending on each request
-        AbstractHttpRequest request = (AbstractHttpRequest) mainRequest;
+        AbstractHttpRequest request = (AbstractHttpRequest)this.request;
         URI uri = request.getUri();
         // the name and revision of the information protocol with which this request came in
         requestVars.put("SERVER_PROTOCOL", request.getRequestVersion());
@@ -182,5 +147,13 @@ public enum EnvironmentVariables {
         requestVars.put("CONTENT_TYPE", contentType);
         // the length of the content as given by the client
         requestVars.put("CONTENT_LENGTH", contentLength);
+    }
+
+    /**
+     * @param request is the originating request.
+     * @return Builds a new {@link EnvironmentVariablesBuilder} for the given request
+     */
+    public static EnvironmentVariablesBuilder createNew(HttpRequest request) {
+        return new EnvironmentVariablesBuilder(request);
     }
 }

@@ -56,7 +56,10 @@ public abstract class AbstractHttpResponse implements HttpResponse {
     public AbstractHttpResponse(HttpRequest originatingRequest) {
         this.request = originatingRequest;
         this.responseHeader = new ArrayList<String>();
-        this.responseBody = new String[this.request.getResourceLines().length];
+        if (!(this instanceof BinaryContentResponseDecorator)) {
+            //this.responseBody = new String[this.request.getResourceLines().length];
+            this.responseBody = this.request.getResourceLines();
+        }
         ReasonPhase status = this.request.getStatus();
 
         if (!status.equals(ReasonPhase.STATUS_404) && !status.equals(ReasonPhase.STATUS_403)
@@ -64,7 +67,6 @@ public abstract class AbstractHttpResponse implements HttpResponse {
             if (!status.equals(ReasonPhase.STATUS_500)) {
                 this.setDefaultHeaderValues();
                 this.responseHeader.add("Content-type: " + this.request.getContentType());
-                this.responseBody[0] = "";
             } else {
                 // 500 content type
                 // if it were 500, 404, 403, the body will be automatically be handled before by the handler.

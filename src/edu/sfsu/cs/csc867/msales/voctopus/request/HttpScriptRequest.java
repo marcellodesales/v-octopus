@@ -11,8 +11,8 @@ import java.util.Map;
 public class HttpScriptRequest extends AbstractHttpRequest {
 
     public HttpScriptRequest(InetAddress clientAddress, String methodType, URI uri, String version,
-            Map<String, String> headerVars) {
-        super(clientAddress, methodType, uri, version, headerVars);
+            Map<String, String> headerVars, String additionalData) {
+        super(clientAddress, methodType, uri, version, headerVars, additionalData);
     }
 
     /*
