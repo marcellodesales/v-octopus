@@ -131,8 +131,8 @@ public class HttpRequestHandlerAbstractFactory {
                 if (scriptPath != null) {
                     file = new File(scriptPath);
                 } else {
-                    scriptPath = VOctopusConfigurationManager.getDefaultCGIPath()
-                            + uri.getPath().replace("/cgi-bin", "");
+                    scriptPath = VOctopusConfigurationManager.getDefaultCGIPath();
+                    scriptPath = scriptPath + uri.getPath().replace("/cgi-bin/", "");
                     file = new File(scriptPath);
                 }
             }

@@ -248,7 +248,7 @@ public final class VOctopusConfigurationManager {
      * @return The default path for the cgi scripts from the url.
      */
     public static String getDefaultCGIPath() {
-        return scriptAlias[0];
+        return serverRootPath + scriptAlias[0];
     }
 
     /**

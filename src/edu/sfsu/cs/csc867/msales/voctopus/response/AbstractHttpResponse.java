@@ -56,33 +56,20 @@ public abstract class AbstractHttpResponse implements HttpResponse {
     public AbstractHttpResponse(HttpRequest originatingRequest) {
         this.request = originatingRequest;
         this.responseHeader = new ArrayList<String>();
-
+        this.responseBody = new String[this.request.getResourceLines().length];
         ReasonPhase status = this.request.getStatus();
 
         if (!status.equals(ReasonPhase.STATUS_404) && !status.equals(ReasonPhase.STATUS_403)
-                && this.request instanceof HttpScriptRequest) {
-            String[] responseBody = this.getResponseBody();
+                && !status.equals(ReasonPhase.STATUS_401) && this.request instanceof HttpScriptRequest) {
             if (!status.equals(ReasonPhase.STATUS_500)) {
-                String contentType = responseBody[0];
-                if (!contentType.contains("Content-Type: ")) {
-                    contentType = "Content-Type: text/plain";
-                } else {
-                    // this time we remove the header from the response.
-                    // also remove the blank line
-                    this.responseBody = new String[responseBody.length - 2];
-                    if (contentType.contains("text/")) {
-                        for (int i = 2; i < responseBody.length; i++) {
-                            this.responseBody[i - 2] = responseBody[i];
-                        }
-                    }
-                }
                 this.setDefaultHeaderValues();
-                this.responseHeader.add(contentType);
+                this.responseHeader.add("Content-type: " + this.request.getContentType());
+                this.responseBody[0] = "";
             } else {
                 // 500 content type
                 // if it were 500, 404, 403, the body will be automatically be handled before by the handler.
                 this.setDefaultHeaderValues();
-                this.responseHeader.add("Content-Type: text/html");
+                this.responseHeader.add("Content-type: text/html");
             }
 
         } else { // anything else
@@ -115,8 +102,8 @@ public abstract class AbstractHttpResponse implements HttpResponse {
      * @see edu.sfsu.cs.csc867.msales.voctopus.response.HttpResponse#getResponseBody()
      */
     public String[] getResponseBody() {
-        if (this.responseBody == null) {
-            responseBody = this.request.getResourceLines();
+        if (this.responseBody == null || this.responseBody[0] == null) {
+            this.responseBody = this.request.getResourceLines();
         }
         return this.responseBody;
     }
@@ -215,9 +202,10 @@ public abstract class AbstractHttpResponse implements HttpResponse {
             this.responseHeader.add(header.toString());
             header.delete(0, header.length());
 
-            if (!(this.request.getRequestHandler() instanceof ProtectedContentRequestHandlerStrategy)
-                    && !(this.request.getRequestHandler() instanceof DirectoryContentRequestHandlerStrategy)
-                    && !(this.request.getRequestHandler() instanceof ScriptRequestHandlerStrategy)) {
+            HttpRequestHandler handler = this.request.getRequestHandler();
+            if (!(handler instanceof ProtectedContentRequestHandlerStrategy)
+                    && !(handler instanceof DirectoryContentRequestHandlerStrategy)
+                    && !(handler instanceof ScriptRequestHandlerStrategy)) {
                 cal.add(Calendar.YEAR, 1);
                 Date expires = cal.getTime();
                 header.append("Expires: ");
@@ -231,7 +219,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
             this.responseHeader.add(header.toString());
             header.delete(0, header.length());
 
-            if (!(this.request.getRequestHandler() instanceof ProtectedContentRequestHandlerStrategy)) {
+            if (!(handler instanceof ProtectedContentRequestHandlerStrategy)) {
                 header.append("Content-Length: ");
                 header.append(this.getRequestSize());
                 this.responseHeader.add(header.toString());
@@ -252,7 +240,9 @@ public abstract class AbstractHttpResponse implements HttpResponse {
                 // TODO: Decide if this was a request to a directory, Script or something else and create more holders
                 long nsize = 0;
                 for (String lines : this.getResponseBody()) {
-                    nsize += lines.length();
+                    if (!lines.toLowerCase().startsWith("content-type: ")) {
+                        nsize += lines.length();
+                    }
                 }
                 this.requestSize = new Long(nsize);
 

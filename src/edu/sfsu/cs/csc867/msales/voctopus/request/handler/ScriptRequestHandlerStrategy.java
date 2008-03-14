@@ -96,14 +96,13 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
 
             try {
                 this.scriptsLines = this.getCgiExecutionResponse(args);
-                if (this.scriptsLines[0].contains("Content-type: ")) {
-                    this.contentType = this.scriptsLines[0];
+                if (this.scriptsLines[0].toLowerCase().contains("content-type:")) {
+                    this.contentType = this.scriptsLines[0].split(" ")[1].trim();
                 } else {
-                    this.contentType = "text/html";
-                    this.requestType = RequestType.ASCII;
+                    this.contentType = "text/plain";
                 }
                 // this.requestType = RequestType.BINARY; //TODO: THE REQUEST MUST BE DONE...
-
+                this.requestType = RequestType.ASCII;
                 this.status = ReasonPhase.STATUS_200;
 
             } catch (CgiExecutionException e) {
@@ -217,6 +216,9 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
         }
     }
 
+    /* (non-Javadoc)
+     * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getResourceLines()
+     */
     public String[] getResourceLines() throws IOException {
         return this.scriptsLines;
     }

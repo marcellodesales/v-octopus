@@ -164,10 +164,23 @@ public enum EnvironmentVariables {
         requestVars.put("REMOTE_USER", "");
         // the remote user name retrieved by the server using inetd identification (RFC 1413)‏
         requestVars.put("REMOTE_IDENT", "");
+        
+        String contentType = "", contentLength = "";
+        for(String header : request.getRequestHeaders()) {
+            if (header.startsWith("Content-Type: ")) {
+                contentType = header.split(": ")[1];
+            } else
+            if (header.startsWith("Content-Length: ")) {
+                contentLength = header.split(": ")[1];
+            }
+            if (!contentLength.equals("") && !contentType.equals("")) {
+                break;
+            }
+        }
+        
         // for queries that have attached information, such as POST method, this is the MIME content type of the data
-        requestVars.put("CONTENT_TYPE", request.getContentType());
+        requestVars.put("CONTENT_TYPE", contentType);
         // the length of the content as given by the client
-        requestVars.put("CONTENT_LENGTH", 0 + "");
-        // TODO: VERIFY HOW TO CHANGE GET THE CONTENT_LENGTH TO ADD ON THE ENVIRONMENT VARS (DEPENDENCY CHECK)
+        requestVars.put("CONTENT_LENGTH", contentLength);
     }
 }
