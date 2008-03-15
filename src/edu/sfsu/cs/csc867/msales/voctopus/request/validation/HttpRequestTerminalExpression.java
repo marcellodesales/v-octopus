@@ -1,6 +1,5 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request.validation;
 
-import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
 
 /**
  * The terminal expression of the Http Request Interpreter are the following entities:

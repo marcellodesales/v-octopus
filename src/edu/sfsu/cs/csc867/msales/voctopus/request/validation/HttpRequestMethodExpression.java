@@ -1,6 +1,5 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request.validation;
 
-import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
 
 /**
@@ -20,7 +19,12 @@ public class HttpRequestMethodExpression extends HttpRequestNonTerminalExpressio
 
     @Override
     protected void validate() throws HttpRequestInterpreterException {
-        RequestMethodType method = RequestMethodType.valueOf(this.getEvaluatedToken().toUpperCase());
+        RequestMethodType method = null;
+        try {
+            method = RequestMethodType.valueOf(this.getEvaluatedToken().toUpperCase());
+        } catch (IllegalArgumentException e){
+            throw new HttpRequestInterpreterException("The request method is incorrect!", this.getEvaluatedToken());
+        }
         if (method == null) {
             this.getContext().setMethodType(RequestMethodType.NOT_SUPPORTED);
         } else {

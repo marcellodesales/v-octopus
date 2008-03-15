@@ -1,6 +1,5 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request.validation;
 
-import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
 
 public class HttpRequestHeaderFieldVarExpression extends HttpRequestNonTerminalExpression {
 

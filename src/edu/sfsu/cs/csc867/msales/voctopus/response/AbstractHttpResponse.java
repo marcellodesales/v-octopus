@@ -19,6 +19,7 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.HttpScriptRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.DirectoryContentRequestHandlerStrategy;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.InvalidRequestHandler;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.ProtectedContentRequestHandlerStrategy;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.ScriptRequestHandlerStrategy;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.WebServiceRequestHandlerStrategy;
@@ -158,6 +159,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         switch (request.getStatus()) {
         case STATUS_204:
         case STATUS_304:
+        case STATUS_400:
             return false;
         case STATUS_401:
             // Extreme case where the user did not give the correct username and password.
@@ -188,9 +190,9 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         header.append(" ");
         ReasonPhase status = this.request.getStatus();
         header.append(status);
-        this.responseHeader.add(header.toString());
+        this.responseHeader.add(header.toString()); 
 
-        if (!status.equals(ReasonPhase.STATUS_304)) {
+        if (!status.equals(ReasonPhase.STATUS_304) && !status.equals(ReasonPhase.STATUS_400)) {
             header.delete(0, header.length());
             header.append("Date: ");
             Calendar cal = GregorianCalendar.getInstance();
@@ -214,6 +216,14 @@ public abstract class AbstractHttpResponse implements HttpResponse {
                 header.append(LogFormats.HEADER_DATE_TIME.format(expires));
                 this.responseHeader.add(header.toString());
                 header.delete(0, header.length());
+            } else 
+            if (handler instanceof InvalidRequestHandler) {
+                cal.add(Calendar.YEAR, 50);
+                Date expires = cal.getTime();
+                header.append("Expires: ");
+                header.append(LogFormats.HEADER_DATE_TIME.format(expires));
+                this.responseHeader.add(header.toString());
+                header.delete(0, header.length());
             }
 
             header.append("Server: ");
@@ -221,7 +231,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
             this.responseHeader.add(header.toString());
             header.delete(0, header.length());
 
-            if (!(handler instanceof ProtectedContentRequestHandlerStrategy)) {
+            if (this.requestMustIncludeBody(status)) {
                 header.append("Content-Length: ");
                 header.append(this.getRequestSize());
                 this.responseHeader.add(header.toString());

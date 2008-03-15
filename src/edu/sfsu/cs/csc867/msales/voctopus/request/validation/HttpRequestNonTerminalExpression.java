@@ -1,6 +1,5 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request.validation;
 
-import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
 
 /**
  * Marker class for the non-terminal expressions for the HttpRequestInterpreter, which contains the link to the

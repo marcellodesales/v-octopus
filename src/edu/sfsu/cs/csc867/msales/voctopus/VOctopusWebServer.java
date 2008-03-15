@@ -11,8 +11,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import edu.sfsu.cs.csc867.msales.httpd.HttpErrorException;
-import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
+import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterException;
 
 /**
  * The VoctopusWebServer is the main class from the server. It spawns the threads of the clients on the pool and keeps

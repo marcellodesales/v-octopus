@@ -1,6 +1,5 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request.validation;
 
-import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterContext.RequestVersion;
 
 public class HttpRequestVersionExpression extends HttpRequestTerminalExpression {
@@ -15,18 +14,12 @@ public class HttpRequestVersionExpression extends HttpRequestTerminalExpression 
     
     @Override
     public void interpret() throws HttpRequestInterpreterException {
-        //TODO:  java.lang.IllegalArgumentException: HTTP/1.1 BEING THROWN 
         RequestVersion version;
-        if (this.getEvaluatedToken().equals(RequestVersion.HTTP_1_1.toString())) {
-            version = RequestVersion.HTTP_1_1;
-        } else {
-            version = RequestVersion.HTTP_1_0;
-        }
-        
-        if (version == null) {
+        try {
+            version = RequestVersion.valueOf(this.getEvaluatedToken());
+        } catch (IllegalArgumentException e) {
             throw new HttpRequestInterpreterException("Http version token not supported", this.getEvaluatedToken());
-        } else {
-            this.getContext().setRequestVersion(version);
         }
+        this.getContext().setRequestVersion(version);
     }
 }

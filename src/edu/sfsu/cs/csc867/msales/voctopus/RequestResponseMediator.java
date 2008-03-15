@@ -2,9 +2,10 @@ package edu.sfsu.cs.csc867.msales.voctopus;
 
 import java.io.IOException;
 
-import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
+import edu.sfsu.cs.csc867.msales.voctopus.request.HttpInvalidRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreter;
+import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterException;
 import edu.sfsu.cs.csc867.msales.voctopus.response.HttpResponse;
 import edu.sfsu.cs.csc867.msales.voctopus.response.HttpResponseAbstractFactory;
 
@@ -151,10 +152,11 @@ public final class RequestResponseMediator {
         try {
             this.request = new HttpRequestInterpreter(this.clientConnection.getConnectionLines(),
                     this.clientConnection).interpret();
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
+        } catch (Exception ioe) {
+            this.request = new HttpInvalidRequest(clientConnection.getClientConnection().getInetAddress());
         }
-        System.out.println("Processing request for " + this.request.getUri());
+        String requested = (this.request.getUri() == null) ? "Invalid Request" : this.request.getUri().getPath();
+        System.out.println("Processing request for " + requested);
         this.response = HttpResponseAbstractFactory.getInstance().createNewHttpResponse(this.request);
     }
 

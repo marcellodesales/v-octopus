@@ -79,14 +79,19 @@ public abstract class AbstractHttpRequest implements HttpRequest {
      */
     public AbstractHttpRequest(InetAddress clientConnection, String methodType, URI uri, String version,
             Map<String, String> headerVars, String additionalHeaderData) {
-        this.methodType = RequestMethodType.valueOf(methodType.toUpperCase());
+        try {
+            this.methodType = RequestMethodType.valueOf(methodType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            this.methodType = RequestMethodType.NOT_SUPPORTED;
+        }
+        
         this.uri = uri;
         this.version = version;
         this.headerVars = headerVars;
         this.clientInetAddress = clientConnection;
         this.additionalHeaderData = additionalHeaderData;
         
-        if (this.uri.getQuery() != null && !this.uri.getQuery().equals("")) {
+        if (this.uri != null && this.uri.getQuery() != null && !this.uri.getQuery().equals("")) {
             String[] varsAndValues = this.uri.getQuery().split("&");
             this.requestParameters = new HashMap<String, String>(varsAndValues.length);
             String[] vV;

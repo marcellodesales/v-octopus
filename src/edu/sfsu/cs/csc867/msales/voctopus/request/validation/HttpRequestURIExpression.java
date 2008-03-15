@@ -3,7 +3,6 @@ package edu.sfsu.cs.csc867.msales.voctopus.request.validation;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
-import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterContext.RequestType;
 
 /**

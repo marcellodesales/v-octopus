@@ -23,7 +23,7 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
      * @author marcello Feb 24, 2008 2:28:24 PM
      */
     public enum RequestType {
-        ASCII, BINARY, CACHED, PROTECTED, PROHIBITED;
+        ASCII, BINARY, CACHED, PROTECTED, PROHIBITED, INVALID;
     }
 
     /**

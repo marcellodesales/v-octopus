@@ -6,7 +6,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
+import edu.sfsu.cs.csc867.msales.voctopus.request.HttpInvalidRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequestAbstractFactory;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
@@ -30,7 +30,7 @@ public class HttpRequestInterpreterContext {
      * @author marcello Feb 20, 2008 2:19:52 PM
      */
     public static enum RequestType {
-        STATIC_CONTENT, SCRIPT_EXECUTION, WEB_SERVICE;
+        STATIC_CONTENT, SCRIPT_EXECUTION, WEB_SERVICE, INVALID;
     }
 
     /**
@@ -92,6 +92,11 @@ public class HttpRequestInterpreterContext {
      * Additional data that was decoded from the encoded version
      */
     private String additionalDecodedData;
+
+    /**
+     * If the request is malformed, then the 400 error must be submitted.
+     */
+    private boolean malformedRequest;
 
     /**
      * @return The content type that matches to this request. It will be used to construct the request handler.
@@ -259,5 +264,16 @@ public class HttpRequestInterpreterContext {
 
     public String getAdditionalDecodedData() {
         return additionalDecodedData;
+    }
+
+    /**
+     * Signals the request included malformed tokens
+     */
+    public void signalMalformedRequest() {
+        this.malformedRequest = true;
+    }
+    
+    public boolean isRequestFormatMalformed() {
+        return this.malformedRequest;
     }
 }

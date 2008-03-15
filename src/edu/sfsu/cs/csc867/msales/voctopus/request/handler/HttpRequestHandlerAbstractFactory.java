@@ -10,6 +10,7 @@ import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.config.DirectoryConfigHandler;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest;
+import edu.sfsu.cs.csc867.msales.voctopus.request.HttpInvalidRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpScriptRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpWebServiceRequest;
@@ -53,6 +54,10 @@ public class HttpRequestHandlerAbstractFactory {
      * @return an instance of an HttpRequestHandler, with the correct ReasonPhase changed
      */
     public HttpRequestHandler createRequestHandler(AbstractHttpRequest abstractHttpRequest) {
+
+        if (abstractHttpRequest instanceof HttpInvalidRequest) {
+            return new InvalidRequestHandler();
+        }
 
         URI uri = abstractHttpRequest.getUri();
         String fileSystem = VOctopusConfigurationManager.getInstance().getDocumentRoot() + uri.getPath();

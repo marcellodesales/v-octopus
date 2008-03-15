@@ -40,7 +40,7 @@ public class HttpClientConnection {
      * @param inMsg BufferedReader which grabs the incoming message from the client socket
      * @throws IOException thrown from reading the buffered reader
      */
-    public String[] getConnectionLines() throws IOException {
+    public String[] getConnectionLines() throws Exception {
 
         return verifyConnection(this.clientConnection);
     }
@@ -57,7 +57,7 @@ public class HttpClientConnection {
         return clientConnection;
     }
 
-    private String[] verifyConnection(Socket clientConnection2) throws IOException {
+    private String[] verifyConnection(Socket clientConnection2) throws Exception {
         List<String> requestLines = new ArrayList<String>();
 
         InputStream is = clientConnection2.getInputStream();

@@ -4,9 +4,9 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
 import edu.sfsu.cs.csc867.msales.voctopus.HttpClientConnection;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.AbstractRequestHandler.RequestType;
 
 /**
  * The interpreter is responsible in parsing the incoming request from the client. The HttpRequest instance is then
@@ -39,12 +39,17 @@ public class HttpRequestInterpreter {
      * @throws HttpRequestInterpreterException if the request contains tokens not identified on HttpRequests. This
      *             behavior should return a correct http response header status code.
      */
-    public HttpRequest interpret() throws HttpRequestInterpreterException {
+    public HttpRequest interpret() {
 
         AbstractHttpRequestExpression versionExpr = new HttpRequestVersionExpression(context);
         HttpRequestURIExpression uriExpr = new HttpRequestURIExpression(context, versionExpr);
         HttpRequestMethodExpression methodExpr = new HttpRequestMethodExpression(context, uriExpr);
-        methodExpr.interpret();
+        try {
+            methodExpr.interpret();
+        } catch (HttpRequestInterpreterException e) {
+            this.context.signalMalformedRequest();
+            this.context.setRequestType(HttpRequestInterpreterContext.RequestType.INVALID);
+        }
 
         String[] lines = this.context.getRequestLines();
         List<HttpRequestHeaderFieldVarExpression> vars = new ArrayList<HttpRequestHeaderFieldVarExpression>();
@@ -56,7 +61,11 @@ public class HttpRequestInterpreter {
             HttpRequestHeaderFieldVarExpression var = new HttpRequestHeaderFieldVarExpression(context, value,
                     headerVarValue[0]);
             vars.add(var);
-            var.interpret();
+            try {
+                var.interpret();
+            } catch (HttpRequestInterpreterException e) {
+                this.context.setRequestType(HttpRequestInterpreterContext.RequestType.INVALID);
+            }
         }
 
         // If no exception is thrown, then this section is executed.
