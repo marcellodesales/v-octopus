@@ -6,6 +6,7 @@ import java.net.URI;
 
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
+import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestVersion;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
 
 /**
@@ -18,7 +19,7 @@ public interface HttpRequest {
     public File getRequestedResource();
     public ReasonPhase getStatus();
     public URI getUri();
-    public String getRequestVersion();
+    public RequestVersion getRequestVersion();
     public String[] getResourceLines();
     public String getContentType();
     public boolean isResourceBinary();

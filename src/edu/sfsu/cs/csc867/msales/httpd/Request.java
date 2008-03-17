@@ -24,7 +24,7 @@ import java.util.Map;
 import edu.sfsu.cs.csc867.msales.httpd.config.HttpdConf;
 import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestFirstLineInterpreter;
 import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestHeaderFieldsInterpreter;
-import edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException;
+import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterException;
 
 /**
  * This is the request the implementation of the HTTP request method. 
@@ -171,8 +171,9 @@ public class Request {
             
         } catch (IOException ioe) {
             throw HttpErrorException.buildNewException(ioe);
-        } catch (HttpRequestInterpreterException hrie) {
-            throw HttpErrorException.buildNewException(hrie);
+        } catch (edu.sfsu.cs.csc867.msales.httpd.validation.HttpRequestInterpreterException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
     }
 

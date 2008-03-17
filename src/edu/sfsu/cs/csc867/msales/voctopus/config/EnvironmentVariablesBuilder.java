@@ -95,7 +95,7 @@ public final class EnvironmentVariablesBuilder {
         AbstractHttpRequest request = (AbstractHttpRequest)this.request;
         URI uri = request.getUri();
         // the name and revision of the information protocol with which this request came in
-        requestVars.put("SERVER_PROTOCOL", request.getRequestVersion());
+        requestVars.put("SERVER_PROTOCOL", request.getRequestVersion().toString());
         // , the port number to which the request was sent
         requestVars.put("SERVER_PORT", VOctopusConfigurationManager.WebServerProperties.HTTPD_CONF
                 .getPropertyValue("Listen"));
@@ -106,7 +106,7 @@ public final class EnvironmentVariablesBuilder {
         requestVars.put("PATH_INFO", uri.getPath());
         // the PATH_INFO path translated into an absolute document path on the local system
         // PATH_TRANSLATED = /auto/home-scf-03/csci351/WebServer/apache_1.2.5/htdocs/extra/path
-        requestVars.put("PATH_TRANSLATED", VOctopusConfigurationManager.getInstance().getDocumentRoot()
+        requestVars.put("PATH_TRANSLATED", VOctopusConfigurationManager.getInstance().getDocumentRootPath()
                 + uri.getPath());
         // the path and name of the script being accessed as referenced in the URL SCRIPT_NAME = /cgi-bin/test-cgi
         requestVars.put("SCRIPT_NAME", uri.getPath().startsWith("/cgi-bin/") ? request.getUri().getPath() : "");

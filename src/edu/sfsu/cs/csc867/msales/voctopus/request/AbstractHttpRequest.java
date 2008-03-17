@@ -19,9 +19,6 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandlerAbst
  * @author marcello
  * Mar 13, 2008 3:17:04 PM
  */
-/**
- * @author marcello Mar 13, 2008 3:17:05 PM
- */
 public abstract class AbstractHttpRequest implements HttpRequest {
 
     /**
@@ -30,17 +27,80 @@ public abstract class AbstractHttpRequest implements HttpRequest {
      * @author marcello Feb 8, 2008 6:57:32 PM
      */
     public static enum RequestMethodType {
-        GET, HEAD, POST, PUT, NOT_SUPPORTED
+        GET, HEAD, POST, PUT, NOT_SUPPORTED, OPTIONS, DELETE, TRACE, CONNECT;
+        
+        /**
+         * @return if the method requested is implemented
+         */
+        public boolean isImplemented() {
+            switch (this) {
+                case OPTIONS:
+                case DELETE:
+                case TRACE:
+                case CONNECT:
+                    return false;
+                default: return true;
+            }
+        }
     }
+    
+    /**
+     * The request method used on the request method.
+     */
+    private RequestMethodType requestMethod;
+
+    /**
+     * The versions of the HTTP protocol that are accepted
+     */
+    public static enum RequestVersion {
+        HTTP_1_1("HTTP/1.1"), HTTP_1_0("HTTP/1.0"), INVALID("INVALID_VERSION");
+
+        private String versionString;
+
+        /**
+         * Constructs a new version 
+         * @param versionToken
+         */
+        private RequestVersion(String versionToken) {
+            this.versionString = versionToken;
+        }
+        
+        /**
+         * @param version is the version token used by the client. (Http/1.1)
+         * @return an instance of a valid RequestVersion
+         */
+        public static RequestVersion getVersion(String version){
+            for(RequestVersion versionAv : values()) {
+                if (versionAv.toString().equalsIgnoreCase(version)) {
+                    return versionAv;
+                }
+            }
+            return INVALID;
+        }
+
+        @Override
+        public String toString() {
+            return this.versionString;
+        };
+        
+        /**
+         * @return is the version is valid
+         */
+        public boolean isValid() {
+            return !this.equals(RequestVersion.INVALID);
+        }
+    }
+    
+    /**
+     * The requested version of this request.
+     */
+    private RequestVersion version;
 
     /**
      * The method type of the request.
      */
     private RequestMethodType methodType;
-    /**
-     * This is the version used on the request.
-     */
-    private String version;
+    
     /**
      * This is the resource requested.
      */
@@ -86,7 +146,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
         }
         
         this.uri = uri;
-        this.version = version;
+        this.version = RequestVersion.getVersion(version);
         this.headerVars = headerVars;
         this.clientInetAddress = clientConnection;
         this.additionalHeaderData = additionalHeaderData;
@@ -173,7 +233,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     /**
      * @return The version of the request.
      */
-    public String getRequestVersion() {
+    public RequestVersion getRequestVersion() {
         return version;
     }
 
@@ -231,13 +291,6 @@ public abstract class AbstractHttpRequest implements HttpRequest {
      */
     public HttpRequestHandler getRequestHandler() {
         return requestHandler;
-    }
-
-    /**
-     * @return the version on this connection
-     */
-    public String getVersion() {
-        return version;
     }
 
     /*

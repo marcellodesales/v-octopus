@@ -214,7 +214,7 @@ public class Base64Decoder {
 	 */
 
 	public static void main(String ... args ) {
-	    args = new String[] {"/home/marcello/development/workspace-sfsu/voctopusHttpd/webocean/maceio.jpg"};
+	    args = new String[] {"bWFyY2VsbG86dXRuMjlvYWQ="};
 		if (args.length == 1) {
 			try {
 				Base64Decoder b = new Base64Decoder(args[0]);

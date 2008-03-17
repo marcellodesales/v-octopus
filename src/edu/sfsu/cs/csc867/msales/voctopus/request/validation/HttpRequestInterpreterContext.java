@@ -6,10 +6,11 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.sfsu.cs.csc867.msales.voctopus.request.HttpInvalidRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequestAbstractFactory;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
+import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestVersion;
+import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterException.ErrorToken;
 
 /**
  * The context of the Interpretation of the HttpRequest is the list of lines sent by the client during an HTTP request
@@ -42,25 +43,7 @@ public class HttpRequestInterpreterContext {
      * The request method used on the request method.
      */
     private RequestMethodType requestMethod;
-
-    /**
-     * The versions of the HTTP protocol that are accepted
-     */
-    public static enum RequestVersion {
-        HTTP_1_1("HTTP/1.1"), HTTP_1_0("HTTP/1.0");
-
-        private String versionToken;
-
-        private RequestVersion(String versionToken) {
-            this.versionToken = versionToken;
-        }
-
-        @Override
-        public String toString() {
-            return this.versionToken;
-        };
-    }
-
+    
     /**
      * The version used on the request.
      */
@@ -126,10 +109,10 @@ public class HttpRequestInterpreterContext {
         String[] firstLineTokens = this.requestLinesContext[0].split(" ");
         for (String token : firstLineTokens) {
             if (token == null || token.equals(" ")) {
-                throw new HttpRequestInterpreterException("Http Request is malformed!", firstLineTokens[0]);
+                throw new HttpRequestInterpreterException("Http Request is malformed!", ErrorToken.METHOD_TYPE
+                        .setToken(firstLineTokens[0]));
             }
         }
-        // TODO: VALIDATE THE REST OF THE REQUEST METHOD VARIABLES.
     }
 
     /**
@@ -138,6 +121,10 @@ public class HttpRequestInterpreterContext {
      */
     public String[] getRequestLines() {
         return requestLinesContext;
+    }
+    
+    public void setRequestLines(String[] newLines) {
+        this.requestLinesContext = newLines;
     }
 
     /**
@@ -221,12 +208,12 @@ public class HttpRequestInterpreterContext {
     }
 
     /**
-     * @return The list of the request header vars
+     * @return The list of the request header vars. The last var might be from the post request
      */
     public Map<String, String> getRequestHeaderVars() {
-        Map<String, String> headerVars = new HashMap<String, String>(this.requestLinesContext.length - 1);
+        Map<String, String> headerVars = new HashMap<String, String>(this.requestLinesContext.length);
         String[] valeuVar = new String[2];
-        for (int i = 1; i < this.requestLinesContext.length; i++) {
+        for (int i = 1; i < requestLinesContext.length; i++) {
             if (this.requestLinesContext[i].indexOf(": ") < 0) {
                 continue;
             }
@@ -246,9 +233,10 @@ public class HttpRequestInterpreterContext {
     public String getAdditionalEncodedData() {
         return this.additionalEncodedData;
     }
-    
+
     /**
      * Sets a new additional encoded data from a POST or PUT request methods.
+     * 
      * @param additionalData
      */
     public void setAdditionalEncodedData(String additionalData) {
@@ -272,7 +260,7 @@ public class HttpRequestInterpreterContext {
     public void signalMalformedRequest() {
         this.malformedRequest = true;
     }
-    
+
     public boolean isRequestFormatMalformed() {
         return this.malformedRequest;
     }

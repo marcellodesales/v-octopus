@@ -109,6 +109,9 @@ public final class VOctopusConfigurationManager {
      */
     private static String defaultIcon;
 
+    /**
+     * Information about the versions of the scripting languages on the server by sub-processes.
+     */
     private static Map<String, String> cgiVersionsAvailable = new HashMap<String, String>();
 
     /**
@@ -240,7 +243,7 @@ public final class VOctopusConfigurationManager {
     /**
      * @return The document root of the server.
      */
-    public String getDocumentRoot() {
+    public String getDocumentRootPath() {
         return WebServerProperties.HTTPD_CONF.serverProps.get("DocumentRoot");
     }
 
@@ -330,8 +333,8 @@ public final class VOctopusConfigurationManager {
             } else if (configProperty.startsWith("<Directory ") && !readingDirectoryBlock) {
                 String path = configProperty.substring("<Directory ".length(), configProperty.length() - 1).trim();
 
-                if (!path.contains(VOctopusConfigurationManager.getInstance().getDocumentRoot())) {
-                    path = VOctopusConfigurationManager.getInstance().getDocumentRoot() + path;
+                if (!path.contains(VOctopusConfigurationManager.getInstance().getDocumentRootPath())) {
+                    path = VOctopusConfigurationManager.getInstance().getDocumentRootPath() + path;
                 }
 
                 File theFile = null;
@@ -378,7 +381,6 @@ public final class VOctopusConfigurationManager {
             }
 
             if (vals.length == 2) {
-                vals[1] = vals[1];
                 WebServerProperties.HTTPD_CONF.getProperties().put(vals[0].trim(), vals[1].trim());
             } else {
 
@@ -583,7 +585,7 @@ public final class VOctopusConfigurationManager {
      * @return the value of the configuration variable 'Listen' on the httpd.conf
      */
     public File getAccessLogFile() {
-        return new File(WebServerProperties.HTTPD_CONF.getPropertyValue("CustomLog"));
+        return new File(WebServerProperties.HTTPD_CONF.getPropertyValue("LogFile"));
     }
 
     /**

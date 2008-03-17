@@ -1,6 +1,7 @@
 package edu.sfsu.cs.csc867.msales.voctopus.request.validation;
 
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
+import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterException.ErrorToken;
 
 /**
  * @author marcello Feb 15, 2008 1:59:10 PM
@@ -23,15 +24,28 @@ public class HttpRequestMethodExpression extends HttpRequestNonTerminalExpressio
         try {
             method = RequestMethodType.valueOf(this.getEvaluatedToken().toUpperCase());
         } catch (IllegalArgumentException e){
-            throw new HttpRequestInterpreterException("The request method is incorrect!", this.getEvaluatedToken());
+            this.getContext().setMethodType(RequestMethodType.NOT_SUPPORTED);
+            throw new HttpRequestInterpreterException("The request method is incorrect!", 
+                    ErrorToken.METHOD_TYPE.setToken(this.getEvaluatedToken()));
         }
         if (method == null) {
             this.getContext().setMethodType(RequestMethodType.NOT_SUPPORTED);
+            throw new HttpRequestInterpreterException("Method request invalid", 
+                    ErrorToken.METHOD_TYPE.setToken(this.getEvaluatedToken()));
+                    
         } else {
             this.getContext().setMethodType(method);
             if (method.equals(RequestMethodType.POST)) {
-                this.getContext().setAdditionalEncodedData(
-                        this.getContext().getRequestLine(this.getContext().getRequestLines().length - 1));
+                String[] lines = this.getContext().getRequestLines();
+                if (lines[lines.length - 1].contains("ADDITIONAL")){
+                    this.getContext().setAdditionalEncodedData(lines[lines.length - 1].replace("ADDITIONAL", ""));
+                    String[] newRequestLines = new String[lines.length-1];
+                    for (int i = 0; i < newRequestLines.length; i++) {
+                        newRequestLines[i] = lines[i];
+                    }
+                    this.getContext().setRequestLines(newRequestLines);
+                    
+                }
             }
         }
     }

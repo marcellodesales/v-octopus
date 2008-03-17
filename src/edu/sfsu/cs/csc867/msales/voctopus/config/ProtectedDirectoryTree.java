@@ -59,7 +59,7 @@ public class ProtectedDirectoryTree {
      * @return the relative URI from the file system directory file.
      */
     public URI getRelativeURI(File requestedDirectory) {
-        String documentRoot = VOctopusConfigurationManager.getInstance().getDocumentRoot();
+        String documentRoot = VOctopusConfigurationManager.getInstance().getDocumentRootPath();
         try {
             return new URI(requestedDirectory.getAbsolutePath().replace(documentRoot, "") + "/");
         } catch (URISyntaxException e) {

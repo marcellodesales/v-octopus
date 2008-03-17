@@ -6,7 +6,9 @@ import java.util.List;
 
 import edu.sfsu.cs.csc867.msales.voctopus.HttpClientConnection;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
-import edu.sfsu.cs.csc867.msales.voctopus.request.handler.AbstractRequestHandler.RequestType;
+import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
+import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestVersion;
+import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterException.ErrorToken;
 
 /**
  * The interpreter is responsible in parsing the incoming request from the client. The HttpRequest instance is then
@@ -47,8 +49,17 @@ public class HttpRequestInterpreter {
         try {
             methodExpr.interpret();
         } catch (HttpRequestInterpreterException e) {
+            
             this.context.signalMalformedRequest();
             this.context.setRequestType(HttpRequestInterpreterContext.RequestType.INVALID);
+            
+            if (e.getToken().equals(ErrorToken.VERSION_TYPE)) {
+                this.context.setRequestVersion(RequestVersion.INVALID);;
+            } else
+            if (e.getToken().equals(ErrorToken.URI_TYPE) || e.getToken().equals(ErrorToken.METHOD_TYPE)) {
+                this.context.setRequestVersion(RequestVersion.HTTP_1_1);
+                this.context.setMethodType(RequestMethodType.NOT_SUPPORTED);
+            }
         }
 
         String[] lines = this.context.getRequestLines();
@@ -61,13 +72,8 @@ public class HttpRequestInterpreter {
             HttpRequestHeaderFieldVarExpression var = new HttpRequestHeaderFieldVarExpression(context, value,
                     headerVarValue[0]);
             vars.add(var);
-            try {
-                var.interpret();
-            } catch (HttpRequestInterpreterException e) {
-                this.context.setRequestType(HttpRequestInterpreterContext.RequestType.INVALID);
-            }
         }
-
+        //don't validate the parameters... relax on them, too much stuff...
         // If no exception is thrown, then this section is executed.
         return this.context.getParsedRequest(methodExpr, vars.toArray(new HttpRequestHeaderFieldVarExpression[vars
                 .size()]), this.clientAddres);

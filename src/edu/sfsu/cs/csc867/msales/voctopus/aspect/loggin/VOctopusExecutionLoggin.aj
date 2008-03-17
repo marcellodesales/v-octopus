@@ -1,5 +1,6 @@
 package edu.sfsu.cs.csc867.msales.voctopus.aspect.loggin;
 
+import edu.sfsu.cs.csc867.msales.voctopus.request.HttpInvalidRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest;
@@ -68,10 +69,13 @@ public aspect VOctopusExecutionLoggin {
             AbstractHttpRequest request = (AbstractHttpRequest)mediator.getRequest();
             AbstractHttpResponse response = (AbstractHttpResponse)mediator.getResponse();
             
-            if (request.getUri() != null && request.getVersion() != null && request.getMethodType() != null){
+            if (request.getUri() != null && request.getRequestVersion() != null && request.getMethodType() != null){
                 this.buffer.append("\"" + request.getMethodType() + " " + request.getUri().getRawPath() + " "); 
-                this.buffer.append(request.getVersion() + "\" ");
-                this.buffer.append(request.getStatus().getCode() + " " + response.getRequestSize() + "\n");
+                this.buffer.append(request.getRequestVersion() + "\" ");
+                
+                long size = request instanceof HttpInvalidRequest ? 0 : response.getRequestSize();
+                
+                this.buffer.append(request.getStatus().getCode() + " " + size + "\n");
             } else {
                 this.buffer.append("\"" + ReasonPhase.STATUS_400 + "\"");
             }

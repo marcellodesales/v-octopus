@@ -4,8 +4,10 @@ import java.io.IOException;
 
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpInvalidRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
+import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestVersion;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreter;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterException;
+import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterException.ErrorToken;
 import edu.sfsu.cs.csc867.msales.voctopus.response.HttpResponse;
 import edu.sfsu.cs.csc867.msales.voctopus.response.HttpResponseAbstractFactory;
 
@@ -52,7 +54,11 @@ public final class RequestResponseMediator {
          * response. If the HEAD method was used, the response should only contain the Entity-Header information and no
          * Entity-Body.
          */
-        STATUS_200("OK"), STATUS_201("Created"), STATUS_202("Accepted"), STATUS_203("Non-Authoritative Information"),
+        STATUS_200("OK"),
+        /**
+         * The request was successful and a new resource was created.
+         */
+        STATUS_201("Created"), STATUS_202("Accepted"), STATUS_203("Non-Authoritative Information"),
         /**
          * The server has fulfilled the request but there is no new information to send back. If the client is a user
          * agent, it should not change its document view. This response is primarily intended to allow input for scripts
@@ -60,6 +66,7 @@ public final class RequestResponseMediator {
          */
         STATUS_204("No Content"), STATUS_205("Reset Content"), STATUS_206("Partial Content"), STATUS_300(
                 "Multiple Choices"), STATUS_301("Moved Permanently"), STATUS_302("Found"), STATUS_303("See Other"),
+
         /**
          * If the client has performed a conditional GET request and access is allowed, but the document has not been
          * modified since the date and time specified in the If-Modified-Since field, the server shall respond with this
@@ -67,7 +74,11 @@ public final class RequestResponseMediator {
          * include information which is relevant to cache managers and which may have changed independently of the
          * entity's Last-Modified date. Examples of relevant header fields include: Date, Server, and Expires.
          */
-        STATUS_304("Not Modified"), STATUS_305("Use Proxy"), STATUS_307("Temporary Redirect"), STATUS_400("Bad Request"),
+        STATUS_304("Not Modified"), STATUS_305("Use Proxy"), STATUS_307("Temporary Redirect"),
+        /**
+         * The syntax of the request was not understood by the server.
+         */
+        STATUS_400("Bad Request"),
         /**
          * The request requires user authentication. The response must include a WWW-Authenticate header field
          * containing a challenge applicable to the requested resource. The client may repeat the request with a
@@ -95,17 +106,24 @@ public final class RequestResponseMediator {
          * The method specified in the Request-Line is not allowed for the resource identified by the Request-URI. The
          * response must include an Allow header containing a list of valid method's for the requested resource.
          */
-        STATUS_405("Method Not Allowed"), STATUS_406("Not Acceptable"), STATUS_407("Proxy Authentication Required"), STATUS_408(
-                "Request Time-out"), STATUS_409("Conflict"), STATUS_410("Gone"), STATUS_411("Length Required"), STATUS_412(
-                "Precondition Failed"), STATUS_413("Request Entity Too Large"), STATUS_414("Request-URI Too Large"), STATUS_415(
-                "Unsupported Media Type"),
+        STATUS_405("Method Not Allowed"),
+
+        STATUS_406("Not Acceptable"), STATUS_407("Proxy Authentication Required"), STATUS_408("Request Time-out"), STATUS_409(
+                "Conflict"), STATUS_410("Gone"), STATUS_411("Length Required"), STATUS_412("Precondition Failed"), STATUS_413(
+                "Request Entity Too Large"), STATUS_414("Request-URI Too Large"), STATUS_415("Unsupported Media Type"),
         /**
          * The server encountered an unexpected condition which prevented it from fulfilling the request.
          */
-        STATUS_500("Internal Server Error"), STATUS_501("Not Implemented"), STATUS_502("Bad Gateway"), STATUS_503(
-                "Service Unavailable"), STATUS_504("Gateway Time-out"),
+        STATUS_500("Internal Server Error"),
+
         /**
-         * 
+         * The request was unsuccessful because the server can not support the functionality needed to fulfill the
+         * request.
+         */
+        STATUS_501("Not Implemented"), STATUS_502("Bad Gateway"), STATUS_503("Service Unavailable"), STATUS_504(
+                "Gateway Time-out"),
+        /**
+         * The server does not support or is not allowing the HTTP protocol version specified in the request.
          */
         STATUS_505("HTTP Version not supported");
 
@@ -147,12 +165,17 @@ public final class RequestResponseMediator {
      * @param clientConnection is the connection from the client
      * @throws HttpRequestInterpreterException if the request
      */
-    public RequestResponseMediator(HttpClientConnection clientConnection) throws HttpRequestInterpreterException {
+    public RequestResponseMediator(HttpClientConnection clientConnection) {
         this.clientConnection = clientConnection;
         try {
-            this.request = new HttpRequestInterpreter(this.clientConnection.getConnectionLines(),
-                    this.clientConnection).interpret();
-        } catch (Exception ioe) {
+            this.request = new HttpRequestInterpreter(this.clientConnection.getConnectionLines(), this.clientConnection)
+                    .interpret();
+        } catch (HttpRequestInterpreterException ioe) {
+            if (ioe.getToken().equals(ErrorToken.VERSION_TYPE)) {
+                this.request = new HttpInvalidRequest(clientConnection.getClientConnection().getInetAddress(),
+                        RequestVersion.HTTP_1_1);
+            }
+        } catch (IOException e) {
             this.request = new HttpInvalidRequest(clientConnection.getClientConnection().getInetAddress());
         }
         String requested = (this.request.getUri() == null) ? "Invalid Request" : this.request.getUri().getPath();

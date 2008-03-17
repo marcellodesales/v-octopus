@@ -70,7 +70,7 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
         StringBuilder builder = new StringBuilder();
 
         if (this.wasErrorOnRequestBeforeScriptExecution()) {
-            System.out.println("Error handler: handler chose " + this.getRequestedFile().getPath());
+            System.out.println("Error handler: handler chosen " + this.getRequestedFile().getPath());
             channel = new FileInputStream(this.getRequestedFile()).getChannel();
             buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, this.getRequestedFile().length());
             CharBuffer charBuffer = decoder.decode(buffer);
@@ -81,7 +81,9 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
                 if (charValue != '\n') {
                     builder.append(charValue);
                 } else {
-                    lines.add(builder.toString().replace("$REQUESTED_RESOURCE", this.getRequestedResource().getPath()));
+                    lines.add(builder.toString().replace("$SERVER_ADMIN", VOctopusConfigurationManager.WebServerProperties.
+                            HTTPD_CONF.getPropertyValue("ServerAdmin")).replace("$REQUESTED_RESOURCE",
+                                    this.getRequestedResource().getPath()));
                     builder.delete(0, builder.capacity());
                 }
             }
@@ -173,15 +175,14 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
                 processArgs.add(arg);
             }
         }
-        Process process = this.buildProcess((String[]) processArgs.toArray(new String[processArgs.size()])).start();
+        Process process = this.buildProcess((String[])processArgs.toArray(new String[processArgs.size()])).start();
 
-        //Additional data from a POST request.
-        String additionalData = ((AbstractHttpRequest)this.request).getAdditionalHeaderData();
+        // Additional data from a POST request.
+        String additionalData = ((AbstractHttpRequest) this.request).getAdditionalHeaderData();
         if (this.request.getMethodType().equals(RequestMethodType.POST) && additionalData != null) {
-            OutputStreamWriter out = new OutputStreamWriter(new BufferedOutputStream(process.getOutputStream()));
-            out.write(additionalData);
-            out.flush();
-            //out.close();
+            OutputStreamWriter outProcess = new OutputStreamWriter(new BufferedOutputStream(process.getOutputStream()));
+            outProcess.write(additionalData);
+            outProcess.close();
         }
 
         List<String> lines = new ArrayList<String>();
@@ -228,7 +229,9 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
         }
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getResourceLines()
      */
     public String[] getResourceLines() throws IOException {
@@ -242,7 +245,7 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
 
     /**
      * @return Verifies if the request status has a value of {@link ReasonPhase#STATUS_404} or
-     *         {@link ReasonPhase#STATUS_403}  || {@link ReasonPhase#STATUS_500} || {@link ReasonPhase#STATUS_401}
+     *         {@link ReasonPhase#STATUS_403} || {@link ReasonPhase#STATUS_500} || {@link ReasonPhase#STATUS_401}
      */
     private boolean wasErrorOnRequestBeforeScriptExecution() {
         return this.status.equals(ReasonPhase.STATUS_404) || this.status.equals(ReasonPhase.STATUS_403)

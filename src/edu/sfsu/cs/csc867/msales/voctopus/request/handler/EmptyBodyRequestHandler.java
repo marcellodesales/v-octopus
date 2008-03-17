@@ -6,7 +6,7 @@ import java.net.URI;
 
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 
-public abstract class EmptyBodyRequestHandler extends AbstractRequestHandler {
+public class EmptyBodyRequestHandler extends AbstractRequestHandler {
 
     /**
      * Constructs a new Request Type
@@ -27,6 +27,11 @@ public abstract class EmptyBodyRequestHandler extends AbstractRequestHandler {
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getResourceLines()
      */
     public String[] getResourceLines() throws IOException {
+        return null;
+    }
+
+    public String[] getParticularResponseHeaders() {
+        // TODO Auto-generated method stub
         return null;
     }
 }

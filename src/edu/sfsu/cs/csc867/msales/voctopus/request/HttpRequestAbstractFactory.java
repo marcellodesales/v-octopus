@@ -62,10 +62,13 @@ public class HttpRequestAbstractFactory {
                     context.getRequestVersion().toString(), context.getRequestHeaderVars(), context
                             .getAdditionalEncodedData());
             break;
+            
+
         case INVALID:
             req = new HttpInvalidRequest(clientAddress, context.getRequestMethod().toString(), context.getUri(),
-                    context.getRequestVersion().toString(), context.getRequestHeaderVars(), context
-                            .getAdditionalEncodedData());
+                    context.getRequestVersion().toString(), null, null);
+            break;
+            
         }
         return req;
     }

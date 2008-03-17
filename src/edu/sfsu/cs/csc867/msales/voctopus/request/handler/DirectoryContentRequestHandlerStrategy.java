@@ -83,7 +83,7 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
         File currentFile = getRequestedFile();
         URI uri = this.getRequestedResource();
         String parentPath = this.getRequestedFile().getParentFile().getAbsolutePath();
-        String documentRootPath = VOctopusConfigurationManager.getInstance().getDocumentRoot();
+        String documentRootPath = VOctopusConfigurationManager.getInstance().getDocumentRootPath();
         if (!parentPath.equals(documentRootPath)) {
             files.add("<tr>\n");
             files.add("<td width=\"50%\"><img src=\"/icons/back.gif\" alt=\"Parent Directory\" border=\"0\">"

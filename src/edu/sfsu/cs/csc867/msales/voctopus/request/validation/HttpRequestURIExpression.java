@@ -3,7 +3,9 @@ package edu.sfsu.cs.csc867.msales.voctopus.request.validation;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
+import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
 import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterContext.RequestType;
+import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterException.ErrorToken;
 
 /**
  * Evaluates the URI token from the request. It extracts the
@@ -77,13 +79,22 @@ public class HttpRequestURIExpression extends HttpRequestNonTerminalExpression {
     @Override
     protected void validate() throws HttpRequestInterpreterException {
         if (!this.getEvaluatedToken().startsWith("/")) {
-            throw new HttpRequestInterpreterException("The URI token is invalid", this.getEvaluatedToken());
+            throw new HttpRequestInterpreterException("The URI token is invalid",  
+                    ErrorToken.URI_TYPE.setToken(this.getEvaluatedToken()));
         } else if (this.getEvaluatedToken().startsWith("/cgi-bin/")) {
             this.getContext().setRequestType(RequestType.SCRIPT_EXECUTION);
         } else if (this.getEvaluatedToken().startsWith("/ws/")) {
             this.getContext().setRequestType(RequestType.WEB_SERVICE);
         } else {
             this.getContext().setRequestType(RequestType.STATIC_CONTENT);
+        }
+        if (this.getContext().getRequestMethod().equals(RequestMethodType.PUT)) {
+            for (String requestVars : this.getContext().getRequestLines()) {
+                if (requestVars.contains("filename: ")) {
+                    this.getContext().setURI(this.getEvaluatedToken() + requestVars.split(": ")[1]);
+                    return;
+                }
+            }
         }
         this.getContext().setURI(this.getEvaluatedToken());
     }

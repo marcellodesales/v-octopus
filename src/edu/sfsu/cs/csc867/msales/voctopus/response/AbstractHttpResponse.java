@@ -17,10 +17,11 @@ import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager.Lo
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpScriptRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
+import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestVersion;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.DirectoryContentRequestHandlerStrategy;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.EmptyBodyRequestHandler;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.InvalidRequestHandler;
-import edu.sfsu.cs.csc867.msales.voctopus.request.handler.ProtectedContentRequestHandlerStrategy;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.ScriptRequestHandlerStrategy;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.WebServiceRequestHandlerStrategy;
 
@@ -61,8 +62,8 @@ public abstract class AbstractHttpResponse implements HttpResponse {
             //this.responseBody = new String[this.request.getResourceLines().length];
             this.responseBody = this.request.getResourceLines();
         }
+        
         ReasonPhase status = this.request.getStatus();
-
         if (!status.equals(ReasonPhase.STATUS_404) && !status.equals(ReasonPhase.STATUS_403)
                 && !status.equals(ReasonPhase.STATUS_401) && this.request instanceof HttpScriptRequest) {
             if (!status.equals(ReasonPhase.STATUS_500)) {
@@ -157,9 +158,13 @@ public abstract class AbstractHttpResponse implements HttpResponse {
      */
     private boolean requestMustIncludeBody(ReasonPhase status) {
         switch (request.getStatus()) {
+        case STATUS_201:
+        case STATUS_202:
+        case STATUS_203:
         case STATUS_204:
         case STATUS_304:
         case STATUS_400:
+        case STATUS_501:
             return false;
         case STATUS_401:
             // Extreme case where the user did not give the correct username and password.
@@ -186,9 +191,22 @@ public abstract class AbstractHttpResponse implements HttpResponse {
      */
     private void setDefaultHeaderValues() {
         StringBuilder header = new StringBuilder();
-        header.append(this.request.getRequestVersion());
-        header.append(" ");
+        RequestVersion version = this.request.getRequestVersion();
         ReasonPhase status = this.request.getStatus();
+        RequestMethodType method = this.request.getMethodType();
+        
+        if (method.equals(RequestMethodType.NOT_SUPPORTED)) {
+            status = ReasonPhase.STATUS_501;
+        }
+        
+        if (version.equals(RequestVersion.INVALID)) {
+            version = RequestVersion.HTTP_1_1;
+            status = ReasonPhase.STATUS_505;
+            this.responseHeader.add(header.toString());
+        } 
+
+        header.append(version);
+        header.append(" ");
         header.append(status);
         this.responseHeader.add(header.toString()); 
 
@@ -201,13 +219,22 @@ public abstract class AbstractHttpResponse implements HttpResponse {
             this.responseHeader.add(header.toString());
             header.delete(0, header.length());
 
-            header.append("Last-Modified: ");
-            header.append(LogFormats.HEADER_DATE_TIME.format(this.getLastModified(status)));
-            this.responseHeader.add(header.toString());
-            header.delete(0, header.length());
+            if (!status.equals(ReasonPhase.STATUS_201) && !status.equals(ReasonPhase.STATUS_505) 
+                    && !status.equals(ReasonPhase.STATUS_501)) {
+                header.append("Last-Modified: ");
+                header.append(LogFormats.HEADER_DATE_TIME.format(this.getLastModified(status)));
+                this.responseHeader.add(header.toString());
+                header.delete(0, header.length());
+            } else
+            if (status.equals(ReasonPhase.STATUS_201)) {
+                header.append("Location: ");
+                header.append(request.getUri());
+                this.responseHeader.add(header.toString());
+                header.delete(0, header.length());
+            }
 
             HttpRequestHandler handler = this.request.getRequestHandler();
-            if (!(handler instanceof ProtectedContentRequestHandlerStrategy)
+            if (!(handler instanceof EmptyBodyRequestHandler)
                     && !(handler instanceof DirectoryContentRequestHandlerStrategy)
                     && !(handler instanceof ScriptRequestHandlerStrategy)) {
                 cal.add(Calendar.YEAR, 1);
@@ -231,7 +258,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
             this.responseHeader.add(header.toString());
             header.delete(0, header.length());
 
-            if (this.requestMustIncludeBody(status)) {
+            if (status.equals(ReasonPhase.STATUS_201) || this.requestMustIncludeBody(status)) {
                 header.append("Content-Length: ");
                 header.append(this.getRequestSize());
                 this.responseHeader.add(header.toString());

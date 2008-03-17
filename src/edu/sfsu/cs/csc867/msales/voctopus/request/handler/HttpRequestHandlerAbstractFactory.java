@@ -14,6 +14,8 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.HttpInvalidRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpScriptRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpWebServiceRequest;
+import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.AbstractRequestHandler.RequestType;
 
 /**
  * This abstract factory is responsible for the construction of the handlers.
@@ -54,15 +56,32 @@ public class HttpRequestHandlerAbstractFactory {
      * @return an instance of an HttpRequestHandler, with the correct ReasonPhase changed
      */
     public HttpRequestHandler createRequestHandler(AbstractHttpRequest abstractHttpRequest) {
-
+        
         if (abstractHttpRequest instanceof HttpInvalidRequest) {
             return new InvalidRequestHandler();
         }
-
+        
         URI uri = abstractHttpRequest.getUri();
-        String fileSystem = VOctopusConfigurationManager.getInstance().getDocumentRoot() + uri.getPath();
+        String fileSystem = VOctopusConfigurationManager.getInstance().getDocumentRootPath() + uri.getPath();
         File file = new File(fileSystem);
         HttpRequestHandler handler = null;
+        
+        if (abstractHttpRequest.getMethodType().equals(RequestMethodType.PUT) && file.exists()) {
+            return new EmptyBodyRequestHandler(abstractHttpRequest.getUri(), file, RequestType.BINARY, 
+                    ReasonPhase.STATUS_201);
+        } else
+        if (abstractHttpRequest.getMethodType().equals(RequestMethodType.PUT) && !file.exists()) {
+            return new EmptyBodyRequestHandler(abstractHttpRequest.getUri(), file, RequestType.INVALID, 
+                    ReasonPhase.STATUS_400);
+        } else
+        if (!abstractHttpRequest.getMethodType().isImplemented()) {
+            return new EmptyBodyRequestHandler(abstractHttpRequest.getUri(), file, RequestType.INVALID, 
+                    ReasonPhase.STATUS_501);
+        } else 
+        if (!abstractHttpRequest.getRequestVersion().isValid()) {
+            return new EmptyBodyRequestHandler(abstractHttpRequest.getUri(), file, RequestType.INVALID, 
+                    ReasonPhase.STATUS_505);
+        }
         
         if (!this.doesUserhavePermission(uri)) {
             file = VOctopusConfigurationManager.get403ErrorFile();
