@@ -486,6 +486,12 @@ public class CryptPassword {
     }
 
     public static void main(String args[]) {
+        
+        String value = getMD5Hash("marcello:voctopus");
+        System.out.println(value);
+        System.out.println(isMD5DigestValid("marcello", "voctopus", value));
+        
+        
         args = new String[] { "qREz.MxTW6ll2", "utn29oad" };
         if (args.length >= 2) {
             System.out

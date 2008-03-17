@@ -84,7 +84,8 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
         URI uri = this.getRequestedResource();
         String parentPath = this.getRequestedFile().getParentFile().getAbsolutePath();
         String documentRootPath = VOctopusConfigurationManager.getInstance().getDocumentRootPath();
-        if (!parentPath.equals(documentRootPath)) {
+        
+        if (!parentPath.equals(documentRootPath) && parentPath.length() > documentRootPath.length()) {
             files.add("<tr>\n");
             files.add("<td width=\"50%\"><img src=\"/icons/back.gif\" alt=\"Parent Directory\" border=\"0\">"
                     + " <a href=\"" + parentPath.replace(documentRootPath, "") + "\">Parent Directory</a></td>\n");
@@ -95,7 +96,7 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
 
         String extension = "", link = "";
         // this time, the file that comes is the dirs.html file, but this time we are going to get the list of the
-        // files.
+       // files.
         for (File file : currentFile.listFiles()) {
 
             files.add("<tr>\n");

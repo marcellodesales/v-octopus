@@ -7,6 +7,7 @@ import java.net.URI;
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 
 /**
+ * The Http request handler is responsible for the information from the handling mechanism.
  * @author marcello Feb 24, 2008 7:55:58 AM
  */
 public interface HttpRequestHandler {
@@ -16,6 +17,9 @@ public interface HttpRequestHandler {
      */
     public File getRequestedFile();
 
+    /**
+     * @return The requested URI from the connection
+     */
     public URI getRequestedResource();
 
     /**

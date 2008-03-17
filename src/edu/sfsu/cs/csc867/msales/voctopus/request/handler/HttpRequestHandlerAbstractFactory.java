@@ -2,7 +2,6 @@ package edu.sfsu.cs.csc867.msales.voctopus.request.handler;
 
 import java.io.File;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,33 +55,33 @@ public class HttpRequestHandlerAbstractFactory {
      * @return an instance of an HttpRequestHandler, with the correct ReasonPhase changed
      */
     public HttpRequestHandler createRequestHandler(AbstractHttpRequest abstractHttpRequest) {
-        
+
         if (abstractHttpRequest instanceof HttpInvalidRequest) {
             return new InvalidRequestHandler();
         }
-        
+
         URI uri = abstractHttpRequest.getUri();
         String fileSystem = VOctopusConfigurationManager.getInstance().getDocumentRootPath() + uri.getPath();
         File file = new File(fileSystem);
         HttpRequestHandler handler = null;
-        
+
         if (abstractHttpRequest.getMethodType().equals(RequestMethodType.PUT) && file.exists()) {
-            return new EmptyBodyRequestHandler(abstractHttpRequest.getUri(), file, RequestType.BINARY, 
+            return new EmptyBodyRequestHandler(abstractHttpRequest.getUri(), file, RequestType.BINARY,
                     ReasonPhase.STATUS_201);
-        } else
-        if (abstractHttpRequest.getMethodType().equals(RequestMethodType.PUT) && !file.exists()) {
-            return new EmptyBodyRequestHandler(abstractHttpRequest.getUri(), file, RequestType.INVALID, 
+        } else if (abstractHttpRequest.getMethodType().equals(RequestMethodType.PUT) && !file.exists()) {
+            return new EmptyBodyRequestHandler(abstractHttpRequest.getUri(), file, RequestType.INVALID,
                     ReasonPhase.STATUS_400);
-        } else
-        if (!abstractHttpRequest.getMethodType().isImplemented()) {
-            return new EmptyBodyRequestHandler(abstractHttpRequest.getUri(), file, RequestType.INVALID, 
+        } else if (abstractHttpRequest.getMethodType().equals(RequestMethodType.NOT_SUPPORTED)) {
+            return new EmptyBodyRequestHandler(abstractHttpRequest.getUri(), file, RequestType.INVALID,
+                    ReasonPhase.STATUS_400);
+        } else if (!abstractHttpRequest.getMethodType().isImplemented()) {
+            return new EmptyBodyRequestHandler(abstractHttpRequest.getUri(), file, RequestType.INVALID,
                     ReasonPhase.STATUS_501);
-        } else 
-        if (!abstractHttpRequest.getRequestVersion().isValid()) {
-            return new EmptyBodyRequestHandler(abstractHttpRequest.getUri(), file, RequestType.INVALID, 
+        } else if (!abstractHttpRequest.getRequestVersion().isValid()) {
+            return new EmptyBodyRequestHandler(abstractHttpRequest.getUri(), file, RequestType.INVALID,
                     ReasonPhase.STATUS_505);
         }
-        
+
         if (!this.doesUserhavePermission(uri)) {
             file = VOctopusConfigurationManager.get403ErrorFile();
             return new ScriptRequestHandlerStrategy(null, uri, file, TEXT_HTML, ReasonPhase.STATUS_403,
@@ -96,8 +95,7 @@ public class HttpRequestHandlerAbstractFactory {
                 if (headerVarValue.startsWith("Authorization: Basic ")) {
                     authorization = headerVarValue.replace("Authorization: Basic ", "").trim();
                     break;
-                } else 
-                if (headerVarValue.startsWith("Authorization: Digest ")) {
+                } else if (headerVarValue.startsWith("Authorization: Digest ")) {
                     authorization = headerVarValue.replace("Authorization: Digest ", "").trim();
                     break;
                 }
@@ -114,94 +112,84 @@ public class HttpRequestHandlerAbstractFactory {
                 return new ProtectedContentRequestHandlerStrategy(uri, file, dirHandler, null);
             }
         }
-
-        // Show the contents of the directory if there is no index file on the directory
-        if (file.isDirectory()) {
-
-            boolean foundIndexFile = false;
-            String[] exts = VOctopusConfigurationManager.getInstance().getDirectoryIndexExtensions();
-            for (String dirExts : exts) {
-                
-                if (!fileSystem.endsWith("/")) {
-                    fileSystem = fileSystem + "/";
-                }
-                file = new File(fileSystem + dirExts);
-                if (!file.exists()) {
-                    continue;
-                } else {
-                    foundIndexFile = true;
-                    break;
-                }
-            }
-
-            ReasonPhase requestStatus = null;
-            if (foundIndexFile) {
-                requestStatus = CacheStateControl.getRequestReasonPhase(file, abstractHttpRequest.getRequestHeaders());
-            } else {
-                requestStatus = CacheStateControl.getRequestReasonPhase(file = new File(fileSystem),
-                        abstractHttpRequest.getRequestHeaders());
-            }
-
-            if (requestStatus.equals(ReasonPhase.STATUS_304) || requestStatus.equals(ReasonPhase.STATUS_405)
-                    || requestStatus.equals(ReasonPhase.STATUS_204)) {
-                return new CachedRequestHandler(abstractHttpRequest.getUri(), file);
-            }
-
-            if (foundIndexFile) {
-                handler = new AsciiContentRequestHandlerStrategy(uri, file, "text/html", ReasonPhase.STATUS_200);
-            } else {
-                handler = new DirectoryContentRequestHandlerStrategy(uri, new File(fileSystem), ReasonPhase.STATUS_200);
-            }
+        
+        file = ScriptRequestHandlerStrategy.getScriptPathForAlias(uri);
+        if (file != null) {
+            return createFileHandler(uri, file, abstractHttpRequest);
+//        if (uri.getPath().startsWith("/soa-ws/")
+//                || VOctopusConfigurationManager.getWebServicesAlias().get("/" + alias + "/") != null) {
+//            //TODO: implement the handler for webservices here....
+//            
+        } 
+        
+        file = AsciiContentRequestHandlerStrategy.getFilePathForAlias(uri);
+        if (file != null) {
+            
+            if (!file.canRead()) {
+                return new EmptyBodyRequestHandler(abstractHttpRequest.getUri(), file, RequestType.INVALID,
+                        ReasonPhase.STATUS_403);
+            } else
+            if (file.exists() && file.isDirectory()) {
+                return handleDirectoryRequest(abstractHttpRequest, uri, file.getAbsolutePath(), file);
+            } else
+            if (file.exists() && file.isFile())
+                return createFileHandler(uri, file, abstractHttpRequest);
 
         } else {
-            String scriptPath = "";
-            if (uri.getPath().startsWith("/cgi-bin/")) {
-                scriptPath = uri.getPath().substring(uri.getPath().indexOf("/cgi-bin/") + "/cgi-bin/".length());
-                scriptPath = VOctopusConfigurationManager.WebServerProperties.ALIAS.getProperties().get(
-                        "/" + scriptPath + "/");
-                // No match found on the aliases. Scripts need to be registered!
-                if (scriptPath != null) {
-                    file = new File(scriptPath);
-                } else {
-                    scriptPath = VOctopusConfigurationManager.getDefaultCGIPath();
-                    scriptPath = scriptPath + uri.getPath().replace("/cgi-bin/", "");
-                    file = new File(scriptPath);
-                }
+
+            uri = abstractHttpRequest.getUri();
+            fileSystem = VOctopusConfigurationManager.getInstance().getDocumentRootPath() + uri.getPath();            
+            if (!fileSystem.endsWith("/")) {
+                fileSystem = fileSystem + "/";
             }
+            file = new File(fileSystem);
 
-            if ((scriptPath == null) || !file.exists()) {
-
-                // maybe icons
-                String otherOnAliasPath = VOctopusConfigurationManager.getInstance().getServerRootPath()
-                        + uri.getPath();
-                file = new File(otherOnAliasPath);
-                if (!file.exists()) {
-                    if (uri.getPath().startsWith("/icons/")) {
-                        otherOnAliasPath = VOctopusConfigurationManager.getInstance().getServerRootPath()
-                                + "/icons/broken.gif";
-                        file = new File(otherOnAliasPath);
-                        if (!file.exists()) {
-                            try {
-                                return this.getFileNotFoundHander(new URI("/icons/broken.gif"), abstractHttpRequest);
-                            } catch (URISyntaxException e) {
-                                // return this.getFileNotFoundHander(uri);
-                                // This will never happen!
-                            }
-                        } else {
-                            handler = createFileHandler(uri, file, abstractHttpRequest);
-                        }
-                    } else {
-                        return this.getFileNotFoundHander(uri, abstractHttpRequest);
-                    }
-                } else {
-                    handler = createFileHandler(uri, file, abstractHttpRequest);
-                }
-
+            if (!file.exists()) {
+//            file = VOctopusConfigurationManager.getInstance().matchAlias(uri);
+//            if (file == null) {
+                return this.getFileNotFoundHander(uri, abstractHttpRequest);
+            
+            } else if (file.isDirectory()) { // updating the file system var with the updated alias path
+                handler = handleDirectoryRequest(abstractHttpRequest, uri, file.getAbsolutePath(), file);
             } else {
                 handler = createFileHandler(uri, file, abstractHttpRequest);
             }
         }
         return handler;
+    }
+
+    private HttpRequestHandler handleDirectoryRequest(AbstractHttpRequest abstractHttpRequest, URI uri,
+            String fileSystem, File file) {
+
+        boolean foundIndexFile = false;
+        String[] exts = VOctopusConfigurationManager.getInstance().getDirectoryIndexExtensions();
+        for (String dirExts : exts) {
+
+            if (!fileSystem.endsWith("/")) {
+                fileSystem = fileSystem + "/";
+            }
+            file = new File(fileSystem + dirExts);
+            if (!file.exists()) {
+                continue;
+            } else {
+                foundIndexFile = true;
+                break;
+            }
+        }
+
+        ReasonPhase requestStatus = ReasonPhase.STATUS_200;
+        if (foundIndexFile) {
+            requestStatus = CacheStateControl.getRequestReasonPhase(file, abstractHttpRequest.getRequestHeaders());
+        } 
+
+        if (requestStatus.equals(ReasonPhase.STATUS_304) || requestStatus.equals(ReasonPhase.STATUS_204)) {
+            return new CachedRequestHandler(abstractHttpRequest.getUri(), file);
+
+        } else if (foundIndexFile) {
+            return new AsciiContentRequestHandlerStrategy(uri, file, "text/html", ReasonPhase.STATUS_200);
+        } else {
+            return new DirectoryContentRequestHandlerStrategy(uri, new File(fileSystem), ReasonPhase.STATUS_200);
+        }
     }
 
     /**
@@ -211,8 +199,9 @@ public class HttpRequestHandlerAbstractFactory {
      * @return if the client has permission on the uri.
      */
     private boolean doesUserhavePermission(URI uri) {
-        return !uri.getPath().equals("/cgi-bin/") && !uri.getPath().equals("/ws-soa/");
+        return !uri.getPath().equals("/cgi-bin/") && !uri.getPath().contains("/soa-ws/");
         // TODO GET THE LIST OF PROTECTED DIRECTORIES FROM THE CONFIGURATION FILE!!! JUST HARD-CODING /cgi-bin /ws-soa
+        //the contains must be changed later on...
     }
 
     /**
@@ -269,11 +258,18 @@ public class HttpRequestHandlerAbstractFactory {
                 }
             }
         }
+        
+        ReasonPhase requestStatus = CacheStateControl.getRequestReasonPhase(file, originRequest.getRequestHeaders());
+        if (requestStatus.equals(ReasonPhase.STATUS_304) || requestStatus.equals(ReasonPhase.STATUS_204)) {
+            return new CachedRequestHandler(originRequest.getUri(), file);
+        }
 
         if (handlerFound.equals("")) {
             return new UnknownContentRequestHandlerStrategy(uri, file, ReasonPhase.STATUS_200);
+        
         } else if (handlerFound.contains("text/")) {
             return new AsciiContentRequestHandlerStrategy(uri, file, handlerFound, ReasonPhase.STATUS_200);
+        
         } else {
             return new BinaryContentRequestHandlerStrategy(uri, file, handlerFound, ReasonPhase.STATUS_200);
         }

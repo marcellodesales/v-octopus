@@ -48,7 +48,7 @@ public class HttpClientConnection {
      * @param inMsg BufferedReader which grabs the incoming message from the client socket 
      * @throws IOException thrown from reading the buffered reader
      */
-    public String[] getConnectionLines() throws IOException {
+    public String[] getConnectionLines() throws Exception {
         return verifyConnection(this.clientConnection);
     }
 
@@ -76,7 +76,7 @@ public class HttpClientConnection {
      * <li>It will no include the boundary delimiter tokens.
      * @throws IOException if an problem with the connection to the client happens.
      */
-    private String[] verifyConnection(Socket clientConnection) throws IOException {
+    private String[] verifyConnection(Socket clientConnection) throws Exception {
         List<String> requestLines = new ArrayList<String>();
 
         InputStream is = clientConnection.getInputStream();
@@ -85,14 +85,17 @@ public class HttpClientConnection {
         // Read the request line
         StringTokenizer st = new StringTokenizer(in.readLine());
         if (!st.hasMoreTokens()) {
+            throw new IllegalArgumentException("There's no method token in this connection");
         }
         String method = st.nextToken();
 
         if (!st.hasMoreTokens()) {
+            throw new IllegalArgumentException("There's no URI token in this connection");
         }
         String uri = decodePercent(st.nextToken());
 
         if (!st.hasMoreTokens()) {
+            throw new IllegalArgumentException("There's no version token in this connection");
         }
         String version = st.nextToken();
 

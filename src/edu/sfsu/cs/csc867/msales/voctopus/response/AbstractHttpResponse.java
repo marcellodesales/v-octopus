@@ -18,6 +18,8 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.HttpScriptRequest;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestMethodType;
 import edu.sfsu.cs.csc867.msales.voctopus.request.AbstractHttpRequest.RequestVersion;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.AsciiContentRequestHandlerStrategy;
+import edu.sfsu.cs.csc867.msales.voctopus.request.handler.BinaryContentRequestHandlerStrategy;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.DirectoryContentRequestHandlerStrategy;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.EmptyBodyRequestHandler;
 import edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler;
@@ -195,11 +197,19 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         ReasonPhase status = this.request.getStatus();
         RequestMethodType method = this.request.getMethodType();
         
-        if (method.equals(RequestMethodType.NOT_SUPPORTED)) {
+//        if (method.equals(RequestMethodType.NOT_SUPPORTED)) {
+//            status = ReasonPhase.STATUS_501;
+//        }
+//      
+        if (!method.isImplemented() && version.equals(RequestVersion.INVALID)) {
+            version = RequestVersion.HTTP_1_1;
+        }
+        
+        if (!method.isImplemented() && this.request.getUri() != null) {
             status = ReasonPhase.STATUS_501;
         }
         
-        if (version.equals(RequestVersion.INVALID)) {
+        if (method.isImplemented() && version.equals(RequestVersion.INVALID)) {
             version = RequestVersion.HTTP_1_1;
             status = ReasonPhase.STATUS_505;
             this.responseHeader.add(header.toString());
@@ -261,6 +271,20 @@ public abstract class AbstractHttpResponse implements HttpResponse {
             if (status.equals(ReasonPhase.STATUS_201) || this.requestMustIncludeBody(status)) {
                 header.append("Content-Length: ");
                 header.append(this.getRequestSize());
+                this.responseHeader.add(header.toString());
+                header.delete(0, header.length());
+            }
+
+            if (status.equals(ReasonPhase.STATUS_200) 
+                    && VOctopusConfigurationManager.getInstance().isCacheControlEnabled()) {
+                header.append("CACHE-CONTROL: ");
+                
+                if (this.request.getRequestHandler() instanceof BinaryContentRequestHandlerStrategy
+                        || this.request.getRequestHandler() instanceof AsciiContentRequestHandlerStrategy) {
+                    header.append("private");
+                } else 
+                    header.append("no-store");
+                
                 this.responseHeader.add(header.toString());
                 header.delete(0, header.length());
             }

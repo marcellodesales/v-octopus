@@ -24,8 +24,8 @@ public aspect CachingStaticContentAspect {
      * This pointcut identifies the call for the getResourceLines from any request handler
      * @param handler
      */
-    pointcut returningAsciiFiles(HttpRequestHandler handler) : 
-            target(handler) && execution(* HttpRequestHandler.getResourceLines()); 
+    pointcut returningAsciiFiles(AsciiContentRequestHandlerStrategy handler) : 
+            target(handler) && execution(* AsciiContentRequestHandlerStrategy.getResourceLines()); 
     
     /**
      * Advice around the pointcut "returningAsciiFiles".
@@ -34,7 +34,7 @@ public aspect CachingStaticContentAspect {
      * @return the list of the lines of a given ascii files from the cache after the first
      * request to this method and a file.
      */
-    String[] around (HttpRequestHandler handler) : returningAsciiFiles(handler) {
+    String[] around (AsciiContentRequestHandlerStrategy handler) : returningAsciiFiles(handler) {
         if (handler instanceof AsciiContentRequestHandlerStrategy) {
             String key = handler.getRequestedFile().getAbsolutePath();
             String[] cachedLines = this.asciiCache.get(key);

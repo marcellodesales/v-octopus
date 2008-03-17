@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
+import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
 
 /**
  * Handler for ASCII-based files.
@@ -80,5 +81,35 @@ public class AsciiContentRequestHandlerStrategy extends AbstractRequestHandler {
     public String[] getParticularResponseHeaders() {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public static File getFilePathForAlias(URI uri) {
+        if (uri.getPath().equals("/")) return null;
+        
+        String alias = "/" + uri.getPath().split("/")[1] + "/";
+        String aliasValue = VOctopusConfigurationManager.WebServerProperties.ALIAS.getPropertyValue(alias);
+        if (aliasValue != null) {
+            
+            String paths[] = uri.getPath().split("/");
+            String filePath = aliasValue;
+            for (int i = 2; i < paths.length; i++) {
+                filePath = filePath + "/" + paths[i];
+            }
+            
+//            if (uri.getPath().split("/")[uri.getPath().split("/").length -1].contains(".")) {
+//                filePath = aliasValue + "/" + uri.getPath().replace(alias, "");
+//            } else {
+//                filePath = aliasValue  + uri.getPath().replace(alias, "");
+//            }
+//            
+            File fileAlias = new File(filePath);
+            if (fileAlias.exists()) {
+                return fileAlias;
+                
+            } else return null;
+            
+        } else {
+            return null;    
+        }
     }
 }

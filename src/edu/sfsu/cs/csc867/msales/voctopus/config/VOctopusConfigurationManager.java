@@ -275,7 +275,21 @@ public final class VOctopusConfigurationManager {
         }
         return new File(scriptAlias.get(alias));
     }
-
+    
+    /**
+     * @return The aliases for the regular web content.
+     */
+    public static Map<String, String> getScriptAlias() {
+        return scriptAlias;
+    }
+    
+    /**
+     * @return The aliases for the web services configuration
+     */
+    public static Map<String, String> getWebServicesAlias() {
+        return wsAlias;
+    }
+    
     /**
      * @return The default path for the web services jars from the url.
      */
@@ -644,5 +658,63 @@ public final class VOctopusConfigurationManager {
      */
     public static String getSoftwareName() {
         return VOCTOPUS_VERSION;
+    }
+
+    /**
+     * @param uri is the given URI from the request.
+     * @return the file matching an alias defined in the configuration file.
+     */
+    public File matchAlias(URI uri) {
+        String fixedPath = uri.getPath();
+        String paths[] = fixedPath.split("/");
+        if (!fixedPath.endsWith("/")) {
+            if (!paths[paths.length - 1].contains(".")) {
+                fixedPath = fixedPath + "/";
+            } else {
+                StringBuilder builder = new StringBuilder();
+                for (int i = 1; i < paths.length - 1; i++) { //counts from 1 because the split of / gives an empty first el
+                    builder.append("/" + paths[i]);
+                }
+                fixedPath = builder.toString() + "/";
+            }
+        }
+        
+        String alias = WebServerProperties.ALIAS.getPropertyValue(fixedPath);
+        if (alias == null) {
+            return null;
+        }
+        
+        fixedPath = alias.endsWith("/") ? alias : alias + "/";
+        
+        if (!fixedPath.contains(uri.getPath())) {
+            fixedPath = fixedPath + paths[paths.length-1];
+        }
+        
+        return new File(fixedPath);
+    }
+
+    /**
+     * @return If the cache mechanism is enabled or not.
+     */
+    public boolean isCacheControlEnabled() {
+        boolean enabled = false;
+        try {
+            enabled = WebServerProperties.HTTPD_CONF.getPropertyValue("CacheEnabled").equals("ON");
+        } catch (NullPointerException e) {
+            return false;
+        }
+        return enabled;
+    }
+    
+    /**
+     * @return If the persistent connection mechanism is enabled or not.
+     */
+    public boolean isPersistentConnectionEnabled() {
+        boolean enabled = false;
+        try {
+            enabled = WebServerProperties.HTTPD_CONF.getPropertyValue("PersistentConnection").equals("ON");
+        } catch (NullPointerException e) {
+        }
+        return enabled;
     }
 }

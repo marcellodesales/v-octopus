@@ -39,7 +39,7 @@ public class VOctopusWebServer {
                 System.exit(1);
                 // TODO: LOGGIN NEEDED
             }
-            
+
         } catch (FileNotFoundException e) {
             System.out.println("############### ERROR INITIALIZING VOCTOPUS WEB SERVER ####################");
             System.out.println("# CAUSE: Your environment var 'VOCTOPUS_SERVER_ROOT' is set to: '"
@@ -114,7 +114,8 @@ public class VOctopusWebServer {
     public static void main(String[] args) {
 
         String listeningPort = VOctopusConfigurationManager.WebServerProperties.HTTPD_CONF.getPropertyValue("Listen");
-        System.out.println("V-Octopus Web Serving running, waiting connections on port " + listeningPort);
+        String name = VOctopusConfigurationManager.WebServerProperties.HTTPD_CONF.getPropertyValue("ServerName");
+        System.out.println("V-Octopus Web Serving running, waiting connections on " + name + ":" + listeningPort);
 
         try {
             ServerSocket socketServer = new ServerSocket(Integer.parseInt(listeningPort));

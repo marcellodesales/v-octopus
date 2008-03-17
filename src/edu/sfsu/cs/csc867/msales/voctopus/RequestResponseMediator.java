@@ -175,7 +175,7 @@ public final class RequestResponseMediator {
                 this.request = new HttpInvalidRequest(clientConnection.getClientConnection().getInetAddress(),
                         RequestVersion.HTTP_1_1);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             this.request = new HttpInvalidRequest(clientConnection.getClientConnection().getInetAddress());
         }
         String requested = (this.request.getUri() == null) ? "Invalid Request" : this.request.getUri().getPath();

@@ -51,6 +51,39 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
             e.printStackTrace();
         }
     }
+    
+    /**
+     * @param uri the requested URI.
+     * @return The script path for a given URI that's supposed to be an alias.
+     */
+    public static File getScriptPathForAlias(URI uri) {
+        if (!uri.getPath().contains("/cgi-bin/")) {
+            return null;
+        }
+        
+        if (uri.getPath().equals("/cgi-bin/")) {
+            return new File(uri.getPath());
+        }
+        
+        //detecting full paths for scripts
+        String scriptPath = VOctopusConfigurationManager.getScriptAlias().get(uri.getPath());
+        if (scriptPath != null) {
+            return new File(scriptPath);
+        }
+        if (uri.getPath().split("/").length == 1) {
+            return null;
+        } else {
+            String alias = "/" + uri.getPath().split("/")[1] + "/";
+            scriptPath = uri.getPath().replace(alias, "/cgi-bin/");
+            scriptPath = VOctopusConfigurationManager.getInstance().getServerRootPath() + scriptPath;
+            File file = new File(scriptPath);
+            if (file.exists()) {
+                return file;
+            } else {
+                return null;
+            }
+        }
+    }
 
     /**
      * Performs the execution of the script
@@ -89,7 +122,7 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
             }
             this.scriptsLines = lines.toArray(new String[lines.size()]);
 
-        } else if (this.request.getUri().getPath().startsWith("/cgi-bin/")) {
+        } else if (getScriptPathForAlias(this.request.getUri()) != null) {
 
             String[] args = null;
             if (this.requestParameters != null) {

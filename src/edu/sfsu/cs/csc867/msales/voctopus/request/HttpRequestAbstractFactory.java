@@ -63,12 +63,10 @@ public class HttpRequestAbstractFactory {
                             .getAdditionalEncodedData());
             break;
             
-
         case INVALID:
             req = new HttpInvalidRequest(clientAddress, context.getRequestMethod().toString(), context.getUri(),
                     context.getRequestVersion().toString(), null, null);
             break;
-            
         }
         return req;
     }

@@ -38,6 +38,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
                 case DELETE:
                 case TRACE:
                 case CONNECT:
+                case NOT_SUPPORTED:
                     return false;
                 default: return true;
             }
