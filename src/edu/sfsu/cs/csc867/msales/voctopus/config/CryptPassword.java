@@ -1,6 +1,8 @@
 package edu.sfsu.cs.csc867.msales.voctopus.config;
 
+import java.math.BigInteger;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Password is a class to implement password encryption as used on Unix systems. It is compatible with the crypt(3c)
@@ -36,6 +38,27 @@ public class CryptPassword {
             e.printStackTrace();
         }
         return hexString.toString();
+    }
+    
+    /**
+     * @param username
+     * @param realm
+     * @param md5Password
+     * @return is the Digest password valid with the given real
+     */
+    public static boolean isMD5DigestValid(String username, String realm, String md5Password) {
+        byte b[];
+        try {
+            b = MessageDigest.getInstance("MD5").digest((username + ":" + realm + ":" + md5Password).getBytes());
+        } catch (NoSuchAlgorithmException e) {
+            return false;
+        }
+        BigInteger bi = new BigInteger(b);
+        String s = bi.toString(16);
+        if (s.length() % 2 != 0) {
+            s = "0" + s; // String s is the encrypted password
+        }
+        return s.equals(md5Password);
     }
 
     /**

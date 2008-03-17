@@ -24,7 +24,7 @@ public final class DirectoryConfigHandler {
     public static enum AuthType {
 
         BASIC("Basic"), 
-        ADVANCED("Advanced");
+        DIGEST("Digest");
         
         private String value;
         
@@ -39,7 +39,7 @@ public final class DirectoryConfigHandler {
         
         public static AuthType getAuthType(String stringValue) {
             for (AuthType type : values()) {
-                if (stringValue.equalsIgnoreCase(stringValue)) {
+                if (stringValue.equalsIgnoreCase(type.toString())) {
                     return type;
                 } else {
                     continue;
@@ -107,7 +107,7 @@ public final class DirectoryConfigHandler {
      * @throws IOException
      */
     public DirectoryConfigHandler(String[] directoryLines) throws IOException {
-        
+        boolean digestUserFileFound = false, digestGroupFileFound = false;
         for(String line : directoryLines) {
             line = line.replace("\"", "");
             if (line.contains("<Directory ")) {
@@ -122,11 +122,9 @@ public final class DirectoryConfigHandler {
             if (line.contains("AuthName ")) {
                 this.authName = line.replace("AuthName ", "").trim();
             } else 
-            if (line.contains("Require ")) {
-                this.require = line.replace("Require ", "").trim();
-            } else 
             if (line.contains("AuthType")) {
-            this.authType = AuthType.getAuthType(line.replace("AuthType ", "").trim());
+                this.authType = AuthType.getAuthType(line.replace("AuthType ", "").trim());
+
             } else
             if (line.contains("AuthUserFile ")) {
                 String path = line.replace("AuthUserFile ", "").trim();
@@ -137,7 +135,35 @@ public final class DirectoryConfigHandler {
                 this.authUserFile = authFile;
                 this.loadUSersFromFile();
             } else
-                
+            if (line.contains("AuthGroupFile ")) {
+                String path = line.replace("AuthGroupFile ", "").trim();
+                File authFile = new File(path);
+                if (!authFile.exists()) {
+                    throw new FileNotFoundException("AuthGroupFile not found on the system: " + authFile);
+                }
+                this.authGroupFile = authFile;
+                this.loadUSersFromFile();
+            } else
+            if (line.contains("AuthDigestFile ")) {
+                String path = line.replace("AuthDigestFile ", "").trim();
+                File authFile = new File(path);
+                if (!authFile.exists()) {
+                    throw new FileNotFoundException("AuthDigestFile not found on the system: " + authFile);
+                }
+                this.authUserFile = authFile;
+                this.loadUSersFromFile();
+                digestUserFileFound = true;
+            } else
+            if (line.contains("AuthDigestGroupFile ")) {
+                String path = line.replace("AuthDigestGroupFile ", "").trim();
+                File authFile = new File(path);
+                if (!authFile.exists()) {
+                    throw new FileNotFoundException("AuthDigestGroupFile not found on the system: " + authFile);
+                }
+                this.authGroupFile = authFile;
+                this.loadUSersFromFile();
+                digestGroupFileFound = true;
+            } else
             if (line.toLowerCase().contains("require ")) {
                 
                 if (line.contains("user")) {
@@ -155,9 +181,12 @@ public final class DirectoryConfigHandler {
                     this.allowedGroups[0] = this.allowedGroups[0].substring(this.allowedGroups[0].lastIndexOf(" ") + 1);
                 }
                 
-                this.require = line.replace("Require ", "").trim().replace(" ", "");
+                this.require = line.toLowerCase().replace("require ", "").trim().replace(" ", "");
             }
             
+        }
+        if (this.authType.equals(AuthType.DIGEST) && (!digestUserFileFound)) {
+            throw new IllegalArgumentException("The AuthType 'Digest' requires at least the AuthDigestFile");
         }
     }
     
@@ -170,28 +199,33 @@ public final class DirectoryConfigHandler {
         
         BufferedReader configReader = new BufferedReader(new FileReader(this.authUserFile));
         String usrPwd = null;
-        List<String> lines = new ArrayList<String>();
+        List<String> usersPasswords = new ArrayList<String>();
         
         while ((usrPwd = configReader.readLine()) != null) {
             if (usrPwd.equals("") || usrPwd.charAt(0) == '#') {
                 continue;
             } else {
                 String[] values = usrPwd.split(":");
-                if (values.length > 2) {
-                    throw new IllegalArgumentException("Wrong format of username/password on the .htpasswd: Must be  " +
-                    		"username:password. Username nor password can't contain collon");
+                
+                if (this.authType.equals(AuthType.DIGEST) && values.length < 3) {
+                    throw new IllegalArgumentException("Wrong format of username/password for the AuthType Digest." +
+                    		"They must be in the format username:realm:password. Username can't contain collon.");
+                } else 
+                if (this.authType.equals(AuthType.BASIC) && values.length < 2) {
+                    throw new IllegalArgumentException("Wrong format of username/password for the AuthType Basic." +
+                            "They must be in the format username:password. Username can't contain collon.");
                 }
                 
                 Pattern pp = Pattern.compile("[^:]*");
                 if (pp.matcher(values[0]).matches()){
-                    lines.add(usrPwd);
+                    usersPasswords.add(usrPwd);
                 } else {
                     throw new IllegalArgumentException("Wrong format of username/password on the .htpasswd: Must be  " +
                     "username:password. Username nor password can't contain collon");
                 }
             }
         }
-        this.usersPasswords = lines.toArray(new String[lines.size()]);
+        this.usersPasswords = usersPasswords.toArray(new String[usersPasswords.size()]);
     }
     
     /**

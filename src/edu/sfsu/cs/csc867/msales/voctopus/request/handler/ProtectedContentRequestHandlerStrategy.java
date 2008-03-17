@@ -8,6 +8,7 @@ import edu.sfsu.cs.csc867.msales.voctopus.config.Base64Decoder;
 import edu.sfsu.cs.csc867.msales.voctopus.config.Base64FormatException;
 import edu.sfsu.cs.csc867.msales.voctopus.config.CryptPassword;
 import edu.sfsu.cs.csc867.msales.voctopus.config.DirectoryConfigHandler;
+import edu.sfsu.cs.csc867.msales.voctopus.config.DirectoryConfigHandler.AuthType;
 
 public class ProtectedContentRequestHandlerStrategy extends EmptyBodyRequestHandler {
 
@@ -51,8 +52,18 @@ public class ProtectedContentRequestHandlerStrategy extends EmptyBodyRequestHand
      * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getParticularResponseHeaders()
      */
     public String[] getParticularResponseHeaders() {
-        return new String[] { "WWW-Authenticate: Basic realm=\"" + this.getProtectedDirectoryHandler().getAuthName() 
-                +"\"", "Connection: close", "Transfer-Encoding: chunked" };
+        if (this.protectedDirHandler.getAuthType().equals(AuthType.BASIC)) {
+            return new String[] {
+                    "WWW-Authenticate: " + this.protectedDirHandler.getAuthType().toString() + " realm=\""
+                            + this.getProtectedDirectoryHandler().getAuthName() + "\"", "Connection: close",
+                    "Transfer-Encoding: chunked" };
+        } else {
+            return new String[] {
+                    "WWW-Authenticate: " + this.protectedDirHandler.getAuthType().toString() + " realm=\""
+                            + "voctopus" + "\"", "Connection: close",
+                    "Transfer-Encoding: chunked" };
+
+        }
     }
 
     /**
@@ -62,26 +73,47 @@ public class ProtectedContentRequestHandlerStrategy extends EmptyBodyRequestHand
         if (this.authorization == null) {
             return false;
         }
+        String decodedAuthorization = "";
         try {
-            String decodedAuthorization = new Base64Decoder(this.authorization).processString();
-            String[] httpUsrPwd = decodedAuthorization.split(":");
+            if (this.protectedDirHandler.getAuthType().equals(AuthType.BASIC)) {
+                decodedAuthorization  = new Base64Decoder(this.authorization).processString();
+            
+                String[] httpUsrPwd = decodedAuthorization.split(":");
 
-            boolean found = false;
-            String saltedPasswd = "";
-            for (String allowedUser : this.protectedDirHandler.getHtpasswdUsersPasswords()) {
-                String[] passwdUsrPwd = allowedUser.split(":");
-                if (passwdUsrPwd[0].equals(httpUsrPwd[0])) {
-                    found = true;
-                    saltedPasswd = passwdUsrPwd[1];
-                    break;
+                boolean found = false;
+                String saltedPasswd = "";
+                for (String allowedUser : this.protectedDirHandler.getHtpasswdUsersPasswords()) {
+                    String[] passwdUsrPwd = allowedUser.split(":");
+                    if (passwdUsrPwd[0].equals(httpUsrPwd[0])) {
+                        found = true;
+                        saltedPasswd = passwdUsrPwd[1];
+                        break;
+                    }
                 }
+
+                if (found) {
+                    return CryptPassword.crypt(saltedPasswd, httpUsrPwd[1]).equals(saltedPasswd);
+                } else {
+                    return false;
+                }
+            
+            } else {
+                //username="marcello", realm="Selected Users MD5-secured Directories", nonce="", uri="/", 
+                //response="6215ff0f8b0195bfdff0fff68160e29f"
+
+                String[] httpUsrPwd = this.authorization.replace("\"", "").split(", ");
+                
+                String[] passwdUsrPwd = new String[3];
+                for (String allowedUser : this.protectedDirHandler.getHtpasswdUsersPasswords()) {
+                    passwdUsrPwd = allowedUser.split(":");
+                    if (httpUsrPwd[0].split("=")[0].equals(passwdUsrPwd[0]) //username:realm:md5passw
+                            && httpUsrPwd[1].split("=")[1].equals(httpUsrPwd[1])) {
+                        break;
+                    }
+                }
+                return CryptPassword.isMD5DigestValid(passwdUsrPwd[0], passwdUsrPwd[1], passwdUsrPwd[2]);
             }
 
-            if (found) {
-                return CryptPassword.crypt(saltedPasswd, httpUsrPwd[1]).equals(saltedPasswd);
-            } else {
-                return false;
-            }
         } catch (Base64FormatException e) {
             return false;
         }

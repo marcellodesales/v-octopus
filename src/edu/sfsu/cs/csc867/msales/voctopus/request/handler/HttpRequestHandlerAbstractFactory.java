@@ -96,6 +96,10 @@ public class HttpRequestHandlerAbstractFactory {
                 if (headerVarValue.startsWith("Authorization: Basic ")) {
                     authorization = headerVarValue.replace("Authorization: Basic ", "").trim();
                     break;
+                } else 
+                if (headerVarValue.startsWith("Authorization: Digest ")) {
+                    authorization = headerVarValue.replace("Authorization: Digest ", "").trim();
+                    break;
                 }
             }
             if (authorization != null) {
