@@ -717,4 +717,12 @@ public final class VOctopusConfigurationManager {
         }
         return enabled;
     }
+
+    /**
+     * @return the value of the configuration variable 'errorlog'
+     */
+
+    public File getErrorLogFile() {
+        return new File(WebServerProperties.HTTPD_CONF.getPropertyValue("ErrorLog"));
+    }
 }

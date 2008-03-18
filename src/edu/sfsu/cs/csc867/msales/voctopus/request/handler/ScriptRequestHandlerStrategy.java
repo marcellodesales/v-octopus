@@ -57,7 +57,8 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
      * @return The script path for a given URI that's supposed to be an alias.
      */
     public static File getScriptPathForAlias(URI uri) {
-        if (!uri.getPath().contains("/cgi-bin/")) {
+        
+        if (uri.getPath().equals("/")) {
             return null;
         }
         
@@ -65,7 +66,15 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
             return new File(uri.getPath());
         }
         
-        //detecting full paths for scripts
+        //directory based script
+        String aliasTest = "/" + uri.getPath().split("/")[1] + "/";
+        if (!uri.getPath().startsWith("/cgi-bin/")) {
+            if (VOctopusConfigurationManager.getScriptAlias().get(aliasTest) == null) {
+                return null;
+            }
+        }
+        
+        //complete script description
         String scriptPath = VOctopusConfigurationManager.getScriptAlias().get(uri.getPath());
         if (scriptPath != null) {
             return new File(scriptPath);

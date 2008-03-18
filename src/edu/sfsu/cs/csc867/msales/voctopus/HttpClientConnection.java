@@ -89,16 +89,20 @@ public class HttpClientConnection {
         }
         String method = st.nextToken();
 
+        System.out.print(method + " ");
+        
         if (!st.hasMoreTokens()) {
             throw new IllegalArgumentException("There's no URI token in this connection");
         }
         String uri = decodePercent(st.nextToken());
-
+        System.out.print(uri + " ");
+        
         if (!st.hasMoreTokens()) {
             throw new IllegalArgumentException("There's no version token in this connection");
         }
         String version = st.nextToken();
-
+        System.out.println(version);
+        
         // Decode parameters from the URI
         Properties parms = new Properties();
         int qmi = uri.indexOf('?');
@@ -110,8 +114,9 @@ public class HttpClientConnection {
         if (parms.size() > 0) {
             params = "?";
             for (Object key : parms.keySet()) {
-                params = params + key + "=" + parms.getProperty(((String) key)) + "&";
+                params = params + key + "=" + parms.getProperty(((String)key)) + "&";
             }
+            params = params.substring(0, params.length()-1).replace(" ", "%20");//removing last &
         }
 
         requestLines.add(method + " " + uri + params + " " + version);

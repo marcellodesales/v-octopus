@@ -88,7 +88,7 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
         if (!parentPath.equals(documentRootPath) && parentPath.length() > documentRootPath.length()) {
             files.add("<tr>\n");
             files.add("<td width=\"50%\"><img src=\"/icons/back.gif\" alt=\"Parent Directory\" border=\"0\">"
-                    + " <a href=\"" + parentPath.replace(documentRootPath, "") + "\">Parent Directory</a></td>\n");
+                    + " <a href=\"../\">Parent Directory</a></td>\n");
             files.add("<td width=\"40%\" align=\"right\">"
                     + new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(currentFile.lastModified()) + "</td>\n");
             files.add("<td width=\"10%\" align=\"right\">=</td></tr>\n");
@@ -117,8 +117,8 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
             }
 
             link = uri.getPath() + (uri.getPath().endsWith("/") ? "" : "/");
-            
-            files.add("<a href=\"" + link + file.getName() + "\">" + file.getName() + "</a></td>\n");
+            link = link + file.getName() + (file.isDirectory() ? "/" : "");
+            files.add("<a href=\"" + link + "\">" + file.getName() + "</a></td>\n");
             files.add("<td width=\"40%\" align=\"right\">"
                     + new SimpleDateFormat(RESPONSE_DATE_FORMAT).format(file.lastModified()) + "</td>\n");
             files.add("<td width=\"10%\" align=\"right\">" + (file.isDirectory() ? "=" : file.length())

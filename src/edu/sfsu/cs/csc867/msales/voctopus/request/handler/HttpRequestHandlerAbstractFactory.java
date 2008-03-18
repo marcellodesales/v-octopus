@@ -136,10 +136,10 @@ public class HttpRequestHandlerAbstractFactory {
                 return createFileHandler(uri, file, abstractHttpRequest);
 
         } else {
-
+            
             uri = abstractHttpRequest.getUri();
             fileSystem = VOctopusConfigurationManager.getInstance().getDocumentRootPath() + uri.getPath();            
-            if (!fileSystem.endsWith("/")) {
+            if (!fileSystem.contains(".") && !fileSystem.endsWith("/")) {
                 fileSystem = fileSystem + "/";
             }
             file = new File(fileSystem);
@@ -179,7 +179,7 @@ public class HttpRequestHandlerAbstractFactory {
 
         ReasonPhase requestStatus = ReasonPhase.STATUS_200;
         if (foundIndexFile) {
-            requestStatus = CacheStateControl.getRequestReasonPhase(file, abstractHttpRequest.getRequestHeaders());
+            requestStatus = RequestCacheStateControl.getRequestReasonPhase(file, abstractHttpRequest.getRequestHeaders());
         } 
 
         if (requestStatus.equals(ReasonPhase.STATUS_304) || requestStatus.equals(ReasonPhase.STATUS_204)) {
@@ -259,7 +259,7 @@ public class HttpRequestHandlerAbstractFactory {
             }
         }
         
-        ReasonPhase requestStatus = CacheStateControl.getRequestReasonPhase(file, originRequest.getRequestHeaders());
+        ReasonPhase requestStatus = RequestCacheStateControl.getRequestReasonPhase(file, originRequest.getRequestHeaders());
         if (requestStatus.equals(ReasonPhase.STATUS_304) || requestStatus.equals(ReasonPhase.STATUS_204)) {
             return new CachedRequestHandler(originRequest.getUri(), file);
         }

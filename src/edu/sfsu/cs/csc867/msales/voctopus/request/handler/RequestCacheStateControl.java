@@ -8,7 +8,7 @@ import java.util.Date;
 import edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhase;
 import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager.LogFormats;
 
-public enum CacheStateControl {
+public enum RequestCacheStateControl {
     
     /**
      * The client is unwilling to accept any cached responses from caches along the 
@@ -25,14 +25,20 @@ public enum CacheStateControl {
      * different than the value provided by the client. An  ETAG is a unique identifier 
      * representing a particular version of a file.
      */
-    IF_NONE_MATCH("If-None-Match");
+    IF_NONE_MATCH("If-None-Match"),
+    
+    /**
+     * Explains the server that the request has some kind of properties.
+     */
+    CACHE_CONTROL("Cache-Control");
+    
     
     /**
      * The header variable value that can come on a request header
      */
     private String headerValue;
     
-    private CacheStateControl(String headerValue) {
+    private RequestCacheStateControl(String headerValue) {
         this.headerValue = headerValue;
     }
     
@@ -56,13 +62,18 @@ public enum CacheStateControl {
             keyValue = pair.split(": ");
             
             //Verify cache
-            for(CacheStateControl control : CacheStateControl.values()) {
+            for(RequestCacheStateControl control : RequestCacheStateControl.values()) {
                 
                 if (keyValue[0].equalsIgnoreCase(control.toString())) {
                     switch (control) {
+                        
                         case PRAGMA:
                             if (requestedFile.exists()) {
-                                chosen = ReasonPhase.STATUS_200;
+                                if (keyValue[1].equals("no-cache")) {
+                                    chosen = ReasonPhase.STATUS_200;
+                                } else {
+                                    chosen = ReasonPhase.STATUS_304;
+                                }
                                 break pars;
                             } else {
                                 chosen = ReasonPhase.STATUS_404;

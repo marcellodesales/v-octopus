@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class ProtectedDirectoryTree {
 
-    List<DirectoryConfigHandler> protectedDirectories = new ArrayList<DirectoryConfigHandler>();
+    private List<DirectoryConfigHandler> protectedDirectories = new ArrayList<DirectoryConfigHandler>();
     
     /**
      * Adds a new protected directory to the tree

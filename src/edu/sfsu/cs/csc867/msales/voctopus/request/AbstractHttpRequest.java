@@ -153,7 +153,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
         this.additionalHeaderData = additionalHeaderData;
         
         if (this.uri != null && this.uri.getQuery() != null && !this.uri.getQuery().equals("")) {
-            String[] varsAndValues = this.uri.getQuery().split("&");
+            String[] varsAndValues = this.uri.getQuery().replace("?","").split("&");
             this.requestParameters = new HashMap<String, String>(varsAndValues.length);
             String[] vV;
             for (String varValue : varsAndValues) {
@@ -309,4 +309,5 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     public String getAdditionalHeaderData() {
         return this.additionalHeaderData; 
     }
+
 }
