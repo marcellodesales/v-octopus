@@ -27,10 +27,7 @@
 	</target>
 
     <target name="del" description="clean up">
-        <delete>
-            <fileset dir="${build-temp}" includes="**/*.class" />
-            <fileset dir="${build-temp}" includes="**/*.xml" />
-        </delete>
+        <delete dir="${build-temp}" />
     </target>
 
 	<patternset id="jar.files">
@@ -43,7 +40,7 @@
 		<include name="**/*.java" />
 	</patternset>
 
-	<target name="compile" depends="init,del" description="Compile the source ">
+	<target name="compile" depends="del,init" description="Compile the source ">
 		<!-- Compile the java code from ${src} into ${build} -->
 		<mkdir dir="${build-temp}" />
 		<javac debug="on" srcdir="${src}" destdir="${build-temp}" />

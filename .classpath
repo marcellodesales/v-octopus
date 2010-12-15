@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="dist/12-14/v-octopus-webserver-201012141828-0.7-b2.jar"/>
+	<classpathentry kind="lib" path="dist/12-14/v-octopus-webserver-201012141835-0.7-b3.jar"/>
+	<classpathentry kind="lib" path="dist/exec/bin/v-octopus-webserver-0.7.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="tmp/classes"/>
+</classpath>
