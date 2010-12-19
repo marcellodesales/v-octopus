@@ -13,9 +13,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
-import edu.sfsu.cs.csc867.msales.httpd.HttpErrorException;
-import edu.sfsu.cs.csc867.msales.voctopus.config.VOctopusConfigurationManager;
-import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpreterException;
+import com.googlecode.voctopus.config.VOctopusConfigurationManager;
+import com.googlecode.voctopus.request.validation.HttpRequestInterpreterException;
 
 /**
  * The VoctopusWebServer is the main class from the server. It spawns the threads of the clients on the pool and keeps
@@ -26,7 +25,7 @@ import edu.sfsu.cs.csc867.msales.voctopus.request.validation.HttpRequestInterpre
 public class VOctopusWebServer {
 
     private static final Logger logger = Logger.getLogger(VOctopusWebServer.class);
-    
+
     static {
         String serverRootPath = null;
         try {
@@ -97,12 +96,11 @@ public class VOctopusWebServer {
      * Prints the clients thread pool.
      */
     private static void printServerPoolStatus() {
-
         ThreadPoolExecutor pool = (ThreadPoolExecutor) threadsPool;
-        logger.debug("Thread Pool [ " + pool.getCorePoolSize() + " , " + pool.getMaximumPoolSize() + " ]");
-        logger.debug("The Largest Pool size: " + pool.getLargestPoolSize());
-        logger.debug("# of active threads: " + pool.getActiveCount());
-        logger.debug("# of maximum pool size:" + pool.getMaximumPoolSize());
+        logger.trace("Thread Pool [ " + pool.getCorePoolSize() + " , " + pool.getMaximumPoolSize() + " ]");
+        logger.trace("The Largest Pool size: " + pool.getLargestPoolSize());
+        logger.trace("# of active threads: " + pool.getActiveCount());
+        logger.trace("# of maximum pool size:" + pool.getMaximumPoolSize());
     }
 
     public static void main(String[] args) {
@@ -120,8 +118,8 @@ public class VOctopusWebServer {
                         long initial = System.currentTimeMillis();
                         handleClientConnection(clientSocket);
                         long end = System.currentTimeMillis();
-                        logger.debug("Served " + clientSocket.getInetAddress().getHostAddress() + " in " 
-                                + (end - initial) + "ms");
+                        logger.debug("Served the request of " + clientSocket.getInetAddress().getCanonicalHostName() + 
+                                " in " + (end - initial) + " ms");
                     }
                 };
 

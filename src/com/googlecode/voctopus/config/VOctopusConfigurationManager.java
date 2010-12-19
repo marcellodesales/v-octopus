@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The management of the configuration files from the server. This sinpleton controls must load the following files:
+ * The management of the configuration files from the server. This singleton controls must load the following files:
  * <li>Load httpd.conf file as the main configuration resource.
  * <li>Load mime.types values
  * 
@@ -84,7 +84,6 @@ public final class VOctopusConfigurationManager {
     private static ThreadLocal<VOctopusConfigurationManager> singleton = new ThreadLocal<VOctopusConfigurationManager>() {
         @Override
         protected VOctopusConfigurationManager initialValue() {
-            // TODO Auto-generated method stub
             return new VOctopusConfigurationManager();
         }
     };
@@ -153,10 +152,12 @@ public final class VOctopusConfigurationManager {
         HTTPD_CONF("httpd.conf"),
 
         /**
-         * Complete list of aliases from the httpd.conf file. #ScriptAlias: This controls which directories contain
-         * server scripts. # ScriptAliases are essentially the same as Aliases, except that # documents in the realname
-         * directory are treated as applications and # run by the server when requested rather than as documents sent to
-         * the client. # The same rules about trailing "/" apply to ScriptAlias directives as to # Alias. #
+         * Complete list of aliases from the httpd.conf file. 
+         * #ScriptAlias: This controls which directories contain server scripts. 
+         * # ScriptAliases are essentially the same as Aliases, except that # documents in the realname
+         * directory are treated as applications and 
+         * # run by the server when requested rather than as documents sent to the client. 
+         * # The same rules about trailing "/" apply to ScriptAlias directives as to # Alias. #
          */
         ALIAS("httpd.conf"),
         /**

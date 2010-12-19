@@ -40,7 +40,7 @@ public abstract class HttpRequestNonTerminalExpression extends AbstractHttpReque
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.AbstractHttpRequestExpression#interpret()
+     * @see com.googlecode.voctopus.AbstractHttpRequestExpression#interpret()
      */
     public final void interpret() throws HttpRequestInterpreterException {
         this.validate();

@@ -17,15 +17,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import com.googlecode.voctopus.RequestResponseMediator.ReasonPhase;
 import com.googlecode.voctopus.config.EnvironmentVariablesBuilder;
 import com.googlecode.voctopus.config.VOctopusConfigurationManager;
 import com.googlecode.voctopus.request.AbstractHttpRequest;
-import com.googlecode.voctopus.request.HttpRequest;
 import com.googlecode.voctopus.request.AbstractHttpRequest.RequestMethodType;
+import com.googlecode.voctopus.request.HttpRequest;
 
 
 public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
+
+    private static final Logger logger = Logger.getLogger(ScriptRequestHandlerStrategy.class);
 
     /**
      * The request parameters from the request to be used on the script.
@@ -46,13 +50,13 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
         this.requestParameters = requestParameters;
         this.request = request;
         try {
+            logger.debug("Handling Script '" + uri + "' -> '" + requestedFile + "'");
             executeScriptToGetResponseLines();
         } catch (IOException e) {
-            // TODO decide on what to do while creating a script...
-            e.printStackTrace();
+            logger.debug("Unexpected error while executing the script '" + requestedFile + "'");
         }
     }
-    
+
     /**
      * @param uri the requested URI.
      * @return The script path for a given URI that's supposed to be an alias.
@@ -101,7 +105,7 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
      * @throws IOException
      */
     private void executeScriptToGetResponseLines() throws IOException {
-        System.out.println("handling the requested resource " + this.getRequestedResource().getPath());
+        logger.debug("Ready to execute the script " + this.getRequestedResource().getPath());
 
         FileChannel channel = new FileInputStream(this.getRequestedFile()).getChannel();
         MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, this.getRequestedFile().length());
@@ -113,7 +117,7 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
         StringBuilder builder = new StringBuilder();
 
         if (this.wasErrorOnRequestBeforeScriptExecution()) {
-            System.out.println("Error handler: handler chosen " + this.getRequestedFile().getPath());
+            logger.debug("Handler error: executing the script with " + this.getClass().getSimpleName());
             channel = new FileInputStream(this.getRequestedFile()).getChannel();
             buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, this.getRequestedFile().length());
             CharBuffer charBuffer = decoder.decode(buffer);
@@ -264,10 +268,10 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
             while ((line = buffer.readLine()) != null) {
                 lines.add(line);
             }
-
             return lines.toArray(new String[lines.size()]);
+
         } else {
-            // never returned... just to make it compile...
+
             return null;
         }
     }
@@ -275,7 +279,7 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getResourceLines()
+     * @see com.googlecode.voctopus.request.handler.HttpRequestHandler#getResourceLines()
      */
     public String[] getResourceLines() throws IOException {
         return this.scriptsLines;
@@ -296,7 +300,6 @@ public class ScriptRequestHandlerStrategy extends AbstractRequestHandler {
     }
 
     public String[] getParticularResponseHeaders() {
-        // TODO Auto-generated method stub
         return null;
     }
 }

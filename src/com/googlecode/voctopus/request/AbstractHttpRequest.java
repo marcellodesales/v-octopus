@@ -170,7 +170,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#isResourceBinary()
+     * @see com.googlecode.voctopus.request.HttpRequest#isResourceBinary()
      */
     public boolean isResourceBinary() {
         return this.requestHandler.isRequestedResourceBinary();
@@ -179,7 +179,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getStatus()
+     * @see com.googlecode.voctopus.request.HttpRequest#getStatus()
      */
     public ReasonPhase getStatus() {
         // code snippet added because of the nature of the calls (if the response has not been created yet)
@@ -193,7 +193,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getContentType()
+     * @see com.googlecode.voctopus.request.HttpRequest#getContentType()
      */
     public String getContentType() {
         if (this.requestHandler == null) {
@@ -205,7 +205,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getResourceLines()
+     * @see com.googlecode.voctopus.request.HttpRequest#getResourceLines()
      */
     public String[] getResourceLines() {
         try {
@@ -226,7 +226,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getUri()
+     * @see com.googlecode.voctopus.request.HttpRequest#getUri()
      */
     public URI getUri() {
         return uri;
@@ -257,7 +257,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#isRequestSuccessful()
+     * @see com.googlecode.voctopus.request.HttpRequest#isRequestSuccessful()
      */
     public boolean isRequestSuccessful() {
         return this.requestHandler.requestedResourceExists();
@@ -266,7 +266,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#keepAlive()
+     * @see com.googlecode.voctopus.request.HttpRequest#keepAlive()
      */
     public boolean keepAlive() {
         return false;
@@ -275,7 +275,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getRequestHeaders()
+     * @see com.googlecode.voctopus.request.HttpRequest#getRequestHeaders()
      */
     public String[] getRequestHeaders() {
         String[] headers = new String[this.headerVars.size()];
@@ -289,7 +289,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getRequestHandler()
+     * @see com.googlecode.voctopus.request.HttpRequest#getRequestHandler()
      */
     public HttpRequestHandler getRequestHandler() {
         return requestHandler;
@@ -298,7 +298,7 @@ public abstract class AbstractHttpRequest implements HttpRequest {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getInetAddress()
+     * @see com.googlecode.voctopus.request.HttpRequest#getInetAddress()
      */
     public InetAddress getInetAddress() {
         return this.clientInetAddress;

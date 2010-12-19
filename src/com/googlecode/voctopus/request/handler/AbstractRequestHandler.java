@@ -95,7 +95,7 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getRequestedResource()
+     * @see com.googlecode.voctopus.request.handler.HttpRequestHandler#getRequestedResource()
      */
     public File getRequestedFile() {
         return this.physicalFile;
@@ -104,7 +104,7 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getStatus()
+     * @see com.googlecode.voctopus.request.handler.HttpRequestHandler#getStatus()
      */
     public ReasonPhase getStatus() {
         return this.status;
@@ -113,7 +113,7 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getContentType()
+     * @see com.googlecode.voctopus.request.handler.HttpRequestHandler#getContentType()
      */
     public String getContentType() {
         return this.contentType;
@@ -122,7 +122,7 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#isRequestedResourceBinary()
+     * @see com.googlecode.voctopus.request.handler.HttpRequestHandler#isRequestedResourceBinary()
      */
     public boolean isRequestedResourceBinary() {
         return this.requestType.equals(RequestType.BINARY);
@@ -131,7 +131,7 @@ public abstract class AbstractRequestHandler implements HttpRequestHandler {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#setStatus(edu.sfsu.cs.csc867.msales.voctopus.RequestResponseMediator.ReasonPhrase)
+     * @see com.googlecode.voctopus.request.handler.HttpRequestHandler#setStatus(com.googlecode.voctopus.RequestResponseMediator.ReasonPhrase)
      */
     public void setStatus(ReasonPhase status) {
         this.status = status;

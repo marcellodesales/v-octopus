@@ -6,7 +6,7 @@
 	<!-- set global properties for this build -->
 	<property name="src" location="src" />
 	<property name="build" location="classes" />
-    <property name="document-root" location="webocean" />
+    <property name="document-root" location="htdocs" />
 	<property name="build-temp" location="tmp/classes" />
 	<property name="dist" location="dist" />
 	<property name="lib.dir" location="lib" />
@@ -16,14 +16,32 @@
     <property name="version.num" value="0.8"/>
     <buildnumber file="build.num"/>
 
+	 <!-- required libraries - install or predefine --> 
+      <property name="aspectjrt.jar"
+            location="lib/aspectjrt.jar"/> 
+      <property name="aspectjtools.jar"
+            location="lib/aspectjtools.jar"/> 
+      <property name="aspectjweaver.jar"
+            location="lib/aspectjweaver.jar"/> 
+	
+	<taskdef resource="org/aspectj/tools/ant/taskdefs/aspectjTaskdefs.properties"> 
+      <classpath> 
+        <pathelement path="${aspectjtools.jar}"/> 
+      </classpath> 
+    </taskdef> 
+	
 	<target name="init">
 	    <tstamp />
 		<tstamp>
 			  <format property="build.dir.day" pattern="MM-dd" />
 		  </tstamp>
 
-	    <!-- Create the build directory structure used by compile -->
-	    <!--<mkdir dir="${build}" />-->
+      <!-- sets name of new task to iajc, old task to ajc --> 
+      <taskdef resource="org/aspectj/tools/ant/taskdefs/aspectjTaskdefs.properties"> 
+          <classpath> 
+            <pathelement path="${aspectjtools.jar}"/> 
+          </classpath> 
+      </taskdef> 
 	</target>
 
     <target name="del" description="clean up">
@@ -42,14 +60,20 @@
 
 	<target name="compile" depends="del,init" description="Compile the source ">
 		<!-- Compile the java code from ${src} into ${build} -->
+		
 		<mkdir dir="${build-temp}" />
-		<javac debug="on" srcdir="${src}" destdir="${build-temp}">
-			  <classpath>
-			    <filelist dir="${lib.dir}">
-			    	<file name="*.jar"/>
-			    </filelist>
-			  </classpath>
-	    </javac>
+		<path id="required.libs">
+		    <pathelement location="lib/log4j-1.2.16.jar"/>
+		</path>
+		
+       <!-- can use ajc or iajc here --> 
+       <iajc source="1.6" debug="on" destdir="${build-temp}" srcdir="${src}"
+            fork="true" forkclasspath="${aspectjtools.jar}">
+
+       	  <classpath refid="required.libs" />
+       	  <classpath location="${aspectjrt.jar}" />
+       </iajc>
+
 		<copy todir="${build-temp}">
 			<fileset dir="${src}">
 				<patternset refid="jar.files" />
@@ -66,7 +90,7 @@
 			<attribute name="Created-By" value="Marcello de Sales - marcello.desales@gmail.com" />
 	        <attribute name="Built-By" value="${user}"/>
 	        <attribute name="Main-Class" value="${main-class}"/>
-            <attribute name="Class-Path" value="lib/log4j-1.2.16.jar"/> 
+            <attribute name="Class-Path" value="log4j-1.2.16.jar aspectjrt-1.6.10.jar"/> 
 	        <attribute name="Implementation-Version" value="${version.num}-b${build.number}"/> 
 	    </manifest>
 
@@ -91,9 +115,12 @@
 		<mkdir dir="${exec-dir}/icons" description="Default icons from the server"/>
 		<mkdir dir="${exec-dir}/logs" description="The output from the execution from the server"/>
 		<mkdir dir="${exec-dir}/cgi-bin" description="The old-school cgi-bin is now called scripts"/>
-		<mkdir dir="${exec-dir}/webocean" description="The webroot now is the webocean"/>
+		<mkdir dir="${exec-dir}/htdocs" description="The webroot now is the htdocs"/>
 		<mkdir dir="${exec-dir}/src" description="The source code from voctopus"/>
-		
+
+		<copy file="lib/log4j-1.2.16.jar" todir="${exec-dir}/bin" />
+	    <copy file="lib/aspectjrt.jar" tofile="${exec-dir}/bin/aspectjrt-1.6.10.jar" />
+
         <copy todir="${exec-dir}/src">
             <fileset dir="${src}">
                 <include name="**/*.java" />
@@ -120,16 +147,17 @@
             </fileset>
         </copy>
 		
-        <copy file="${document-root}/index.html" todir="${exec-dir}/webocean"/>
+        <copy file="${document-root}/index.html" todir="${exec-dir}/htdocs"/>
+		<copy file="${document-root}/favicon.ico" todir="${exec-dir}/htdocs"/>
 		
 		<copy file="${dist}/${app.name}-${version.num}.jar" todir="${exec-dir}/bin"/>
 		<delete file="${dist}/${app.name}-${version.num}.jar"/>
-		<copy file="/etc/mime.types" todir="${exec-dir}/conf" />
+		<copy file="conf/mime.types" todir="${exec-dir}/conf" />
 		<copy file="conf/httpd.conf" todir="${exec-dir}/conf" />
+        <copy file="conf/log4j.properties" todir="${exec-dir}/conf" />
 		
 		<echo file="${exec-dir}/vocotpus-start.sh">#!/bin/bash
-export VOCTOPUS_SERVER_ROOT=${exec-dir}
-java -jar bin/${app.name}-${version.num}.jar
+java -Dlog4j.configuration=file:./conf/log4j.properties -jar bin/${app.name}-${version.num}.jar
 		</echo>
 
 		<chmod perm="755" file="${exec-dir}/vocotpus-start.sh" />

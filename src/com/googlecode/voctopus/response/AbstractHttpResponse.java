@@ -11,13 +11,15 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.googlecode.voctopus.RequestResponseMediator.ReasonPhase;
 import com.googlecode.voctopus.config.VOctopusConfigurationManager;
 import com.googlecode.voctopus.config.VOctopusConfigurationManager.LogFormats;
-import com.googlecode.voctopus.request.HttpRequest;
-import com.googlecode.voctopus.request.HttpScriptRequest;
 import com.googlecode.voctopus.request.AbstractHttpRequest.RequestMethodType;
 import com.googlecode.voctopus.request.AbstractHttpRequest.RequestVersion;
+import com.googlecode.voctopus.request.HttpRequest;
+import com.googlecode.voctopus.request.HttpScriptRequest;
 import com.googlecode.voctopus.request.handler.AsciiContentRequestHandlerStrategy;
 import com.googlecode.voctopus.request.handler.BinaryContentRequestHandlerStrategy;
 import com.googlecode.voctopus.request.handler.DirectoryContentRequestHandlerStrategy;
@@ -35,6 +37,8 @@ import com.googlecode.voctopus.request.handler.WebServiceRequestHandlerStrategy;
  * @author marcello Feb 18, 2008 7:21:12 PM
  */
 public abstract class AbstractHttpResponse implements HttpResponse {
+
+    private static final Logger logger = Logger.getLogger(AbstractHttpResponse.class);
 
     /**
      * The incoming request
@@ -62,7 +66,6 @@ public abstract class AbstractHttpResponse implements HttpResponse {
         this.request = originatingRequest;
         this.responseHeader = new ArrayList<String>();
         if (!(this instanceof BinaryContentResponseDecorator)) {
-            //this.responseBody = new String[this.request.getResourceLines().length];
             this.responseBody = this.request.getResourceLines();
         }
         
@@ -106,7 +109,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.response.HttpResponse#getResponseBody()
+     * @see com.googlecode.voctopus.response.HttpResponse#getResponseBody()
      */
     public String[] getResponseBody() {
         if (this.responseBody == null || this.responseBody[0] == null) {
@@ -118,7 +121,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.response.HttpResponse#getStatusCode()
+     * @see com.googlecode.voctopus.response.HttpResponse#getStatusCode()
      */
     public ReasonPhase getStatusCode() {
         return this.request.getStatus();
@@ -134,7 +137,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.response.HttpResponse#sendResponse(java.io.OutputStream)
+     * @see com.googlecode.voctopus.response.HttpResponse#sendResponse(java.io.OutputStream)
      */
     public void sendResponse(OutputStream clientOutput) throws IOException {
 
@@ -186,6 +189,7 @@ public abstract class AbstractHttpResponse implements HttpResponse {
     private void sendDefaultHeaders(PrintWriter writer) {
         for (String headerLine : this.responseHeader) {
             writer.println(headerLine);
+            logger.debug("HTTP Response Header: " + headerLine);
         }
     }
 

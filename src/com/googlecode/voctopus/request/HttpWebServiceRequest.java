@@ -30,7 +30,7 @@ public class HttpWebServiceRequest extends AbstractHttpRequest {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.HttpRequest#getRequestedResource()
+     * @see com.googlecode.voctopus.request.HttpRequest#getRequestedResource()
      */
     public File getRequestedResource() {
         return null;

@@ -44,7 +44,7 @@ public class HttpRequestInterpreter {
      */
     public HttpRequest interpret() {
 
-        AbstractHttpRequestExpression versionExpr = new HttpRequestVersionExpression(context);
+        HttpRequestVersionExpression versionExpr = new HttpRequestVersionExpression(context);
         HttpRequestURIExpression uriExpr = new HttpRequestURIExpression(context, versionExpr);
         HttpRequestMethodExpression methodExpr = new HttpRequestMethodExpression(context, uriExpr);
         try {
@@ -76,7 +76,7 @@ public class HttpRequestInterpreter {
         }
         //don't validate the parameters... relax on them, too much stuff...
         // If no exception is thrown, then this section is executed.
-        return this.context.getParsedRequest(methodExpr, vars.toArray(new HttpRequestHeaderFieldVarExpression[vars
-                .size()]), this.clientAddres);
+        return this.context.getParsedRequest(methodExpr, vars.toArray(
+                new HttpRequestHeaderFieldVarExpression[vars.size()]), this.clientAddres);
     }
 }

@@ -2,6 +2,8 @@ package com.googlecode.voctopus;
 
 import java.io.IOException;
 
+import org.apache.log4j.Logger;
+
 import com.googlecode.voctopus.request.AbstractHttpRequest.RequestVersion;
 import com.googlecode.voctopus.request.HttpInvalidRequest;
 import com.googlecode.voctopus.request.HttpRequest;
@@ -19,6 +21,8 @@ import com.googlecode.voctopus.response.HttpResponseAbstractFactory;
  * @author marcello Feb 16, 2008 10:26:58 AM
  */
 public final class RequestResponseMediator {
+
+    private static final Logger logger = Logger.getLogger(RequestResponseMediator.class);
 
     /**
      * Holds the connection from the client on the socket level.
@@ -180,7 +184,7 @@ public final class RequestResponseMediator {
             this.request = new HttpInvalidRequest(clientConnection.getClientConnection().getInetAddress());
         }
         String requested = (this.request.getUri() == null) ? "Invalid Request" : this.request.getUri().getPath();
-        System.out.println("Processing request for " + requested);
+        logger.debug("Processing request for URL = '" + requested + "'");
         this.response = HttpResponseAbstractFactory.getInstance().createNewHttpResponse(this.request);
     }
 
@@ -203,10 +207,10 @@ public final class RequestResponseMediator {
      */
     public void sendResponse() {
         try {
+            logger.debug("Ready to send HTTP Response to client.");
             this.response.sendResponse(this.clientConnection.getOutputStream());
-        } catch (IOException e) {
-            // TODO LOG THIS INFORMATION.
-            e.printStackTrace();
+        } catch (IOException ioe) {
+            logger.error("Error while sending the response to the client", ioe);
         }
     }
 

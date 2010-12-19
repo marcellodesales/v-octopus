@@ -70,7 +70,7 @@ public class DirectoryContentRequestHandlerStrategy extends AbstractRequestHandl
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getResourceLines()
+     * @see com.googlecode.voctopus.request.handler.HttpRequestHandler#getResourceLines()
      */
     public String[] getResourceLines() throws IOException {
 

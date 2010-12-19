@@ -4,10 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import org.aspectj.lang.Signature;
+import org.apache.log4j.Logger;
 
 import com.googlecode.voctopus.RequestResponseMediator;
 import com.googlecode.voctopus.RequestResponseMediator.ReasonPhase;
@@ -24,27 +22,29 @@ import com.googlecode.voctopus.response.AbstractHttpResponse;
  */
 public aspect VOctopusExecutionLoggin {
     
-    private Logger vologger = Logger.getLogger("tracer");
-    
-    private Logger acclogger = Logger.getLogger("accessLogger");
+    private static final Logger logger = Logger.getLogger(VOctopusExecutionLoggin.class);
 
     private StringBuffer buffer = new StringBuffer();
     
     private VOctopusExecutionLoggin() {
-        this.vologger.setLevel(Level.ALL);
-        this.acclogger.setLevel(Level.ALL);
     }
 
-    pointcut excludedObjectCalls() : execution(* Logger.*(..));
-    pointcut aspects() : within(VOctopusExecutionLoggin);
-    
+    /**
+     * The cross-cutting concern of sending the response.
+     * @param mediator is the mediator instance.
+     */
     pointcut sendingResponse(RequestResponseMediator mediator) :
         target(mediator) && execution(* RequestResponseMediator.sendResponse());
 
+    /**
+     * The advice of after the execution of the cross-cutting concern that sends the response. That is, after the
+     * method execution, the Access Log is updated.
+     * @param mediator is the instance of the request-response mediator.
+     */
     after (RequestResponseMediator mediator) : sendingResponse(mediator) {
         
         synchronized (thisJoinPoint) {
-            String ip = mediator.getClientConnection().getClientConnection().getInetAddress().getHostAddress();
+            String ip = mediator.getClientConnection().getClientConnection().getInetAddress().getCanonicalHostName();
             String dateTime = VOctopusConfigurationManager.LogFormats.ACCESS_LOG_FILE.format(new Date());
             this.buffer.append(ip + " - - " + dateTime + " ");
             
@@ -61,19 +61,26 @@ public aspect VOctopusExecutionLoggin {
             } else {
                 this.buffer.append("\"" + ReasonPhase.STATUS_400 + "\"");
             }
-            this.logAccess();
+            this.writeRequestToAccessLog();
         }
     }
-    
-//    pointcut loggingAccess(AbstractHttpResponse abstractResp, OutputStream clientOutput) :
-//        target(abstractResp) && args(clientOutput) && execution(* AbstractHttpResponse.sendResponse(OutputStream));
-//    
-//    after (AbstractHttpResponse abstractResp, OutputStream clientOutput) : loggingAccess(abstractResp, clientOutput) {
-//        
-//    }
-    
-    private void logAccess() {
+
+    private void writeRequestToAccessLog() {
         File accessLogFile = VOctopusConfigurationManager.getInstance().getAccessLogFile();
+        if (!accessLogFile.exists()) {
+            try {
+                logger.debug("Attempting to create the log file '" + accessLogFile + "'");
+                boolean fileCreated = accessLogFile.createNewFile();
+                if (!fileCreated) {
+                    logger.error("It seems that the webserver does not have write permissions to create the file '" 
+                            + accessLogFile + "'");
+                } else {
+                    logger.debug("Access Log file created successfully: '" + accessLogFile + "'");
+                }
+            } catch (IOException ioe) {
+                logger.error("An error occurred while creating the access log: '" + accessLogFile + "'", ioe);
+            }
+        }
         if (accessLogFile.exists()) {
             try {
                 FileWriter writer = new FileWriter(accessLogFile, true);
@@ -83,19 +90,9 @@ public aspect VOctopusExecutionLoggin {
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }
-        }
-    }
-    
-    pointcut vOcotpusPackage() : execution(* edu.sfsu.cs.csc867.msales.voctopus..public(..)) 
-                                 || execution(edu.sfsu.cs.csc867.msales.voctopus..new(..));
-      
-    pointcut loggableCalls() : vOcotpusPackage() && !aspects() && !excludedObjectCalls();
-      
-    before() : loggableCalls() {
-        
-        if (this.vologger.isLoggable(Level.INFO)) {
-            Signature sig = thisJoinPointStaticPart.getSignature();
-            this.vologger.logp(Level.INFO, sig.getDeclaringTypeName(), sig.getName(), "Entering");
+        } else {
+            logger.error("Records for the Access Log can't be created: '" + accessLogFile + "'. Verify " +
+                "permissions for the running user.");
         }
     }
 }

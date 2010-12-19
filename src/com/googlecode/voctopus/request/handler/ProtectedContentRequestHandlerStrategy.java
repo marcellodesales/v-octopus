@@ -50,7 +50,7 @@ public class ProtectedContentRequestHandlerStrategy extends EmptyBodyRequestHand
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getParticularResponseHeaders()
+     * @see com.googlecode.voctopus.request.handler.HttpRequestHandler#getParticularResponseHeaders()
      */
     public String[] getParticularResponseHeaders() {
         if (this.protectedDirHandler.getAuthType().equals(AuthType.BASIC)) {

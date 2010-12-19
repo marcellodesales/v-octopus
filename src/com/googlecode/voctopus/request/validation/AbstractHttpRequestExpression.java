@@ -47,4 +47,9 @@ public abstract class AbstractHttpRequestExpression {
      */
     public abstract void interpret() throws HttpRequestInterpreterException;
 
+    @Override
+    public String toString() {
+        return this.getEvaluatedToken();
+    }
+
 }

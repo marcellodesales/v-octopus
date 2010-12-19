@@ -12,6 +12,8 @@ import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.googlecode.voctopus.RequestResponseMediator.ReasonPhase;
 import com.googlecode.voctopus.config.VOctopusConfigurationManager;
 
@@ -22,6 +24,8 @@ import com.googlecode.voctopus.config.VOctopusConfigurationManager;
  * @author marcello Feb 11, 2008 4:16:43 PM
  */
 public class AsciiContentRequestHandlerStrategy extends AbstractRequestHandler {
+    
+    private static final Logger logger = Logger.getLogger(AsciiContentRequestHandlerStrategy.class);
 
     /**
      * Creates a new handler for ASCII based content
@@ -41,12 +45,12 @@ public class AsciiContentRequestHandlerStrategy extends AbstractRequestHandler {
     /*
      * (non-Javadoc)
      * 
-     * @see edu.sfsu.cs.csc867.msales.voctopus.request.handler.HttpRequestHandler#getResourceLines()
+     * @see com.googlecode.voctopus.request.handler.HttpRequestHandler#getResourceLines()
      */
     public String[] getResourceLines() throws IOException {
 
         if (this.requestedResourceExists()) {
-            System.out.println("serving the file " + this.getRequestedFile());
+            logger.debug("Serving the file " + this.getRequestedFile());
             FileChannel channel = new FileInputStream(this.getRequestedFile()).getChannel();
             MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, this.getRequestedFile().length());
 
