@@ -1,4 +1,4 @@
-# V-Octopus
+# V-Octopus HTTPD
 
 This set of files is designed to get you started on your web server project from SFSU, 2008 class.
 It contains classes and functions that can be used to implement your server. Please note you are
